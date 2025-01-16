@@ -1,15 +1,42 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { User } from '@prisma/client';
+import { PrismaService } from 'src/prisma.service';
+import { compare, hash } from 'bcrypt';
+import { RegisterDto } from './dto/auth-register-dto';
+import { LoginDto } from './dto/auth-login-dto';
 
 @Injectable()
 export class AuthService {
-  signup(createAuthDto: User) {
-    return 'This action adds a new auth';
+  constructor(private prisma: PrismaService) {}
+
+  async signup(createAuthDto: RegisterDto) {
+    const { phone, password } = createAuthDto;
+    const saltOrRounds = 10;
+
+    const isPhoneExsist = await this.prisma.user.findUnique({
+      where: { phone },
+    });
+    if (isPhoneExsist) throw new Error('Phone number already exists');
+
+    const hashedPassword = await hash(password, saltOrRounds);
+
+    const newUser = await this.prisma.user.create({
+      data: { ...createAuthDto, password: hashedPassword },
+    });
+    return newUser;
   }
-  login(createAuthDto: User) {
-    return 'This action adds a new auth';
+  async login(createAuthDto: LoginDto) {
+    const { phone, password } = createAuthDto;
+
+    const user = await this.prisma.user.findUnique({
+      where: { phone },
+    });
+    if (!user) throw new NotFoundException('phone number or password is wrong');
+    const isPasswordCorrect = await compare(password, user.password);
+    if (!isPasswordCorrect)
+      throw new NotFoundException('phone number or password is wrong');
+
+    return user;
   }
-  logout(createAuthDto: User) {
-    return 'This action adds a new auth';
-  }
+  logout(createAuthDto: User) {}
 }

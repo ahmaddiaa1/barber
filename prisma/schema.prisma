@@ -20,7 +20,7 @@ model User {
   lastName    String
   password    String
   avatar      String   @default("https://i.ibb.co/P50Hk9p/avatar.png")
-  phone       String
+  phone       String   @unique
   complain    String?
   referalCode String?
   role        Role     @default(USER)

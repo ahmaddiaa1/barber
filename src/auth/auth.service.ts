@@ -13,18 +13,18 @@ export class AuthService {
     const { phone, password } = createAuthDto;
     const saltOrRounds = 10;
 
-    const isPhoneExsist = await this.prisma.user.findUnique({
+    const isPhoneExist = await this.prisma.user.findUnique({
       where: { phone },
     });
-    if (isPhoneExsist) throw new Error('Phone number already exists');
+    if (isPhoneExist) throw new Error('Phone number already exists');
 
     const hashedPassword = await hash(password, saltOrRounds);
 
-    const newUser = await this.prisma.user.create({
+    return this.prisma.user.create({
       data: { ...createAuthDto, password: hashedPassword },
     });
-    return newUser;
   }
+
   async login(createAuthDto: LoginDto) {
     const { phone, password } = createAuthDto;
 
@@ -38,5 +38,6 @@ export class AuthService {
 
     return user;
   }
+
   logout(createAuthDto: User) {}
 }

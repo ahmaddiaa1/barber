@@ -15,17 +15,17 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  firstName String
-  lastName  String
-  password  String
-  avatar    String
-  phone     String
-  complian  String
-  role      Role     @default(USER)
-  ReferCode String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid())
+  firstName   String
+  lastName    String
+  password    String
+  avatar      String   @default("https://i.ibb.co/P50Hk9p/avatar.png")
+  phone       String
+  complain    String?
+  referalCode String?
+  role        Role     @default(USER)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 enum Role {

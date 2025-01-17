@@ -12,10 +12,12 @@ export class AuthController {
   signup(@Body() createAuthDto: RegisterDto) {
     return this.authService.signup(createAuthDto);
   }
+
   @Post('/login')
   login(@Body() createAuthDto: LoginDto) {
     return this.authService.login(createAuthDto);
   }
+
   @Post('/logout')
   logout() {
     return this.authService.logout();

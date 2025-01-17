@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  Global,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -11,6 +12,7 @@ import { LoginDto } from './dto/auth-login-dto';
 import * as jwt from 'jsonwebtoken';
 import { AppSuccess } from 'utils/AppSuccess';
 
+@Global()
 @Injectable()
 export class AuthService {
   private readonly jwtSecret = process.env.JWT_SECRET;

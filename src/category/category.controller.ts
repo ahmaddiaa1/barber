@@ -14,10 +14,10 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { AuthGuard } from 'guard/auth.guard';
 
 @Controller('category')
+@UseGuards(AuthGuard)
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
-  @UseGuards(AuthGuard)
   @Get()
   public async findAllCategories(): Promise<Category[]> {
     return await this.categoryService.findAllCategories();
@@ -37,14 +37,14 @@ export class CategoryController {
 
   @Put(':id')
   public async updateCategory(
-    @Param() id: string,
+    @Param('id') id: string,
     @Body() updateCategoryDto: CreateCategoryDto,
   ): Promise<Category> {
     return await this.categoryService.updateCategory(id, updateCategoryDto);
   }
 
   @Delete(':id')
-  public async deleteCategory(id: string): Promise<Category> {
+  public async deleteCategory(@Param('id') id: string): Promise<Category> {
     return await this.categoryService.deleteCategory(id);
   }
 }

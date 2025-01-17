@@ -36,6 +36,7 @@ export class AuthService {
     });
     return new AppSuccess(newUser, 'user created successfully', 201);
   }
+
   async login(createAuthDto: LoginDto) {
     const { phone, password } = createAuthDto;
 
@@ -56,6 +57,7 @@ export class AuthService {
       statusCode: 201,
     };
   }
+
   async logout() {}
 
   verifyToken(token: string) {

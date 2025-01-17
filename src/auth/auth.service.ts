@@ -26,7 +26,6 @@ export class AuthService {
     const isPhoneExsist = await this.prisma.user.findUnique({
       where: { phone },
     });
-    console.log(isPhoneExsist);
     if (isPhoneExsist)
       throw new ConflictException('phone number is already in use');
     const hashedPassword = await hash(password, saltOrRounds);

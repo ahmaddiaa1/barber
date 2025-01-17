@@ -1,12 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { User } from '@prisma/client';
-import { PrismaService } from 'src/prisma.service';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { compare, hash } from 'bcrypt';
 import { RegisterDto } from './dto/auth-register-dto';
 import { LoginDto } from './dto/auth-login-dto';
+import * as jwt from 'jsonwebtoken';
+import { AppSuccess } from 'utils/AppSuccess';
 
 @Injectable()
 export class AuthService {
+  private readonly jwtSecret = process.env.JWT_SECRET;
+
   constructor(private prisma: PrismaService) {}
 
   async signup(createAuthDto: RegisterDto) {
@@ -16,14 +24,15 @@ export class AuthService {
     const isPhoneExsist = await this.prisma.user.findUnique({
       where: { phone },
     });
-    if (isPhoneExsist) throw new Error('Phone number already exists');
-
+    console.log(isPhoneExsist);
+    if (isPhoneExsist)
+      throw new ConflictException('phone number is already in use');
     const hashedPassword = await hash(password, saltOrRounds);
 
     const newUser = await this.prisma.user.create({
       data: { ...createAuthDto, password: hashedPassword },
     });
-    return newUser;
+    return new AppSuccess(newUser, 'user created successfully', 201);
   }
   async login(createAuthDto: LoginDto) {
     const { phone, password } = createAuthDto;
@@ -35,8 +44,23 @@ export class AuthService {
     const isPasswordCorrect = await compare(password, user.password);
     if (!isPasswordCorrect)
       throw new NotFoundException('phone number or password is wrong');
-
-    return user;
+    const token = jwt.sign({ userId: user.id }, this.jwtSecret, {
+      expiresIn: '1h',
+    });
+    return {
+      data: user,
+      token,
+      message: 'login successfully',
+      statusCode: 201,
+    };
   }
-  logout(createAuthDto: User) {}
+  async logout() {}
+
+  verifyToken(token: string) {
+    try {
+      return jwt.verify(token, this.jwtSecret);
+    } catch (err) {
+      throw new UnauthorizedException('Invalid token');
+    }
+  }
 }

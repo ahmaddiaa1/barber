@@ -23,7 +23,11 @@ model User {
   phone       String   @unique
   complain    String?
   referalCode String?
+  points      Int      @default(0)
   role        Role     @default(USER)
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  Order       Order[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -33,4 +37,71 @@ enum Role {
   CASHIER
   ADMIN
   USER
+}
+
+model Branch {
+  id        String   @id @default(uuid())
+  name      String
+  location  String
+  phone     String
+  branchImg String
+  barber    User[]
+  Order     Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String
+  services  Service[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Service {
+  id         String   @id @default(uuid())
+  name       String
+  price      Int
+  duration   Int
+  categoryId String
+  orderId    String?
+  order      Order?   @relation(fields: [orderId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Product {
+  id         String   @id @default(uuid())
+  name       String
+  productImg String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Order {
+  id        String      @id @default(uuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  barberId  String
+  Services  Service[]
+  date      DateTime
+  time      Int
+  branchId  String
+  branch    Branch      @relation(fields: [branchId], references: [id])
+  note      String?
+  duration  Int
+  points    Int         @default(0)
+  promoCode String?
+  discount  Int         @default(0)
+  subTotal  Int
+  total     Int
+  status    OrderStatus @default(UPCOMING)
+}
+
+enum OrderStatus {
+  UPCOMING
+  PAST
+  CANCELLED
 }

@@ -55,6 +55,7 @@ model Category {
   id        String    @id @default(uuid())
   name      String
   services  Service[]
+  available Boolean   @default(true)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
@@ -66,6 +67,7 @@ model Service {
   duration   Int
   categoryId String
   orderId    String?
+  available  Boolean  @default(true)
   order      Order?   @relation(fields: [orderId], references: [id])
   category   Category @relation(fields: [categoryId], references: [id])
   createdAt  DateTime @default(now())
@@ -76,6 +78,7 @@ model Product {
   id         String   @id @default(uuid())
   name       String
   productImg String
+  available  Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }

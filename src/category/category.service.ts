@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Category } from '@prisma/client';
 import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Injectable()
 export class CategoryService {
@@ -31,7 +32,7 @@ export class CategoryService {
 
   public async updateCategory(
     id: string,
-    updateCategoryDto: CreateCategoryDto,
+    updateCategoryDto: UpdateCategoryDto,
   ): Promise<Category> {
     await this.findOneOrFail(id);
 
@@ -44,11 +45,15 @@ export class CategoryService {
     });
   }
 
-  public async deleteCategory(id: string): Promise<Category> {
+  public async softDeleteCategory(
+    id: string,
+    available: { available: boolean },
+  ): Promise<Category> {
     await this.findOneOrFail(id);
 
-    return this.prisma.category.delete({
+    return this.prisma.category.update({
       where: { id },
+      data: available,
     });
   }
 

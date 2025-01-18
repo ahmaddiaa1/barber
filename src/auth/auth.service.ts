@@ -23,10 +23,10 @@ export class AuthService {
     const { phone, password } = createAuthDto;
     const saltOrRounds = 10;
 
-    const isPhoneExsist = await this.prisma.user.findUnique({
+    const isPhoneExist = await this.prisma.user.findUnique({
       where: { phone },
     });
-    if (isPhoneExsist)
+    if (isPhoneExist)
       throw new ConflictException('phone number is already in use');
     const hashedPassword = await hash(password, saltOrRounds);
 
@@ -49,21 +49,20 @@ export class AuthService {
     const token = jwt.sign({ userId: user.id }, this.jwtSecret, {
       expiresIn: '1h',
     });
+    const { password: _, ...data } = user;
     return {
-      data: user,
+      data,
       token,
       message: 'login successfully',
       statusCode: 201,
     };
   }
 
-  async logout() {}
-
   verifyToken(token: string) {
     try {
       return jwt.verify(token, this.jwtSecret);
-    } catch (err) {
-      throw new UnauthorizedException('Invalid token');
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token', error.message);
     }
   }
 }

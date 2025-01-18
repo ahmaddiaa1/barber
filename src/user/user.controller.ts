@@ -6,10 +6,14 @@ import {
   Param,
   Delete,
   UseGuards,
+  UploadedFile,
+  UseInterceptors,
+  Put,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { User } from '@prisma/client';
 import { AuthGuard } from 'guard/auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { UserUpdateDto } from './dto/user-update-dto';
 
 @Controller('user')
 @UseGuards(AuthGuard)
@@ -26,9 +30,14 @@ export class UserController {
     return this.userService.findOneUser(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() user: User) {
-    return this.userService.updateUser(id, user);
+  @Put(':id')
+  @UseInterceptors(FileInterceptor('file'))
+  update(
+    @Param('id') id: string,
+    @Body() user: UserUpdateDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.userService.updateUser(id, user, file);
   }
 
   @Delete(':id')

@@ -89,8 +89,7 @@ model Order {
   user      User        @relation(fields: [userId], references: [id])
   barberId  String
   Services  Service[]
-  date      DateTime
-  time      Int
+  OrderDate OrderDate?
   branchId  String
   branch    Branch      @relation(fields: [branchId], references: [id])
   note      String?
@@ -101,6 +100,14 @@ model Order {
   subTotal  Int
   total     Int
   status    OrderStatus @default(UPCOMING)
+}
+
+model OrderDate {
+  id        String   @id @default(uuid())
+  date      DateTime
+  available Boolean  @default(true)
+  orderId   String   @unique
+  order     Order    @relation(fields: [orderId], references: [id])
 }
 
 enum OrderStatus {

@@ -2,7 +2,7 @@ import {
   Controller,
   Get,
   Body,
-  Patch,
+  Request,
   Param,
   Delete,
   UseGuards,
@@ -38,6 +38,12 @@ export class UserController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.userService.updateUser(id, user, file);
+  }
+
+  @Get('current/profile')
+  CurrentUser(@Request() req: any) {
+    const curUser = req.user;
+    return this.userService.CurrentUser(curUser.userId);
   }
 
   @Delete(':id')

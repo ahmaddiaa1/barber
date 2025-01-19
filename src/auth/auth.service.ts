@@ -61,14 +61,13 @@ export class AuthService {
   }
 
   async logout(token: string) {
-    this.invalidateToken(token);
-    console.log(this.blacklist);
+    await this.invalidateToken(token);
     return new AppSuccess(null, 'logout successfully', 200);
   }
 
-  async currentUser(user: User) {
-    return user;
-  }
+  // async currentUser(user: User) {
+  //   return user;
+  // }
 
   verifyToken(token: string) {
     try {

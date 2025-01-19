@@ -11,10 +11,12 @@ import { RegisterDto } from './dto/auth-register-dto';
 import { LoginDto } from './dto/auth-login-dto';
 import * as jwt from 'jsonwebtoken';
 import { AppSuccess } from 'utils/AppSuccess';
+import { User } from '@prisma/client';
 
 @Global()
 @Injectable()
 export class AuthService {
+  private readonly blacklist = new Set<string>();
   private readonly jwtSecret = process.env.JWT_SECRET;
 
   constructor(private prisma: PrismaService) {}
@@ -58,11 +60,29 @@ export class AuthService {
     };
   }
 
+  async logout(token: string) {
+    this.invalidateToken(token);
+    console.log(this.blacklist);
+    return new AppSuccess(null, 'logout successfully', 200);
+  }
+
+  async currentUser(user: User) {
+    return user;
+  }
+
   verifyToken(token: string) {
     try {
       return jwt.verify(token, this.jwtSecret);
     } catch (error) {
       throw new UnauthorizedException('Invalid token', error.message);
     }
+  }
+
+  async invalidateToken(token: string) {
+    this.blacklist.add(token);
+  }
+
+  isTokennBlacklisted(token: string) {
+    return this.blacklist.has(token);
   }
 }

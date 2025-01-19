@@ -15,13 +15,15 @@ export class AuthGuard implements CanActivate {
     const token =
       req.headers['authorization']?.split(' ')[1] ||
       req.headers['Authorization']?.split(' ')[1];
-    if (!token) {
-      throw new UnauthorizedException('No token provided');
-    }
+    if (!token) throw new UnauthorizedException('No token provided');
+
+    if (token && this.authService.isTokennBlacklisted(token))
+      throw new UnauthorizedException('Token is expires');
 
     try {
       const user = this.authService.verifyToken(token);
       req.user = user;
+      req.token = token;
       return true;
     } catch (error) {
       throw new UnauthorizedException('Invalid token');

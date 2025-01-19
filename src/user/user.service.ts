@@ -54,15 +54,7 @@ export class UserService {
     });
   }
 
-  public async CurrentUser(id: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
-    });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
+  public async CurrentUser(user: User) {
     return user;
   }
 

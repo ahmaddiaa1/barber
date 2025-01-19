@@ -5,12 +5,16 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly authService: AuthService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
     const token =
       req.headers['authorization']?.split(' ')[1] ||
@@ -21,7 +25,11 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('Token is expires');
 
     try {
-      const user = this.authService.verifyToken(token);
+      const payload = this.authService.verifyToken(token);
+      const id = payload.userId;
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+      });
       req.user = user;
       req.token = token;
       return true;

@@ -14,6 +14,8 @@ import { UserService } from './user.service';
 import { AuthGuard } from 'guard/auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UserUpdateDto } from './dto/user-update-dto';
+import { UserData } from 'decorators/user.decoretor';
+import { User } from '@prisma/client';
 
 @Controller('user')
 @UseGuards(AuthGuard)
@@ -41,9 +43,8 @@ export class UserController {
   }
 
   @Get('current/profile')
-  CurrentUser(@Request() req: any) {
-    const curUser = req.user;
-    return this.userService.CurrentUser(curUser.userId);
+  CurrentUser(@UserData('user') user: User) {
+    return this.userService.CurrentUser(user);
   }
 
   @Delete(':id')

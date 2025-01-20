@@ -24,6 +24,7 @@ export class AuthService {
   async signup(createAuthDto: RegisterDto) {
     const { phone, password } = createAuthDto;
     const saltOrRounds = 10;
+    let referalCode: string;
 
     const isPhoneExist = await this.prisma.user.findUnique({
       where: { phone },
@@ -32,8 +33,16 @@ export class AuthService {
       throw new ConflictException('phone number is already in use');
     const hashedPassword = await hash(password, saltOrRounds);
 
+    do {
+      referalCode = this.generateRandomCode(6);
+      const isreferalCodeExist = await this.prisma.user.findFirst({
+        where: { referalCode },
+      });
+      if (isreferalCodeExist) break;
+    } while (true);
+
     const newUser = await this.prisma.user.create({
-      data: { ...createAuthDto, password: hashedPassword },
+      data: { ...createAuthDto, password: hashedPassword, referalCode },
     });
     return new AppSuccess(newUser, 'user created successfully', 201);
   }
@@ -65,10 +74,6 @@ export class AuthService {
     return new AppSuccess(null, 'logout successfully', 200);
   }
 
-  // async currentUser(user: User) {
-  //   return user;
-  // }
-
   verifyToken(token: string) {
     try {
       return jwt.verify(token, this.jwtSecret);
@@ -83,5 +88,15 @@ export class AuthService {
 
   isTokennBlacklisted(token: string) {
     return this.blacklist.has(token);
+  }
+
+  private generateRandomCode(length: number): string {
+    const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
   }
 }

@@ -5,12 +5,13 @@ import {
   IsEnum,
   IsInt,
   Min,
-  Length,
   IsUUID,
 } from 'class-validator';
 import { OrderStatus, BookingStatus } from '@prisma/client'; // Import enums from Prisma
 
 export class CreateOrderDto {
+  userId: string;
+
   @IsString()
   date: Date;
 
@@ -19,7 +20,7 @@ export class CreateOrderDto {
 
   @IsArray()
   @IsString({ each: true })
-  services: string[]; // List of service IDs being booked
+  service: string[];
 
   @IsUUID()
   branchId: string;
@@ -37,23 +38,15 @@ export class CreateOrderDto {
   @Min(0)
   points?: number;
 
-  @IsOptional()
-  @IsString()
-  @Length(1, 20)
-  promoCode?: string;
+  // @IsOptional()
+  // @IsString()
+  // promoCode?: string;
 
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  discount?: number;
-
-  @IsInt()
-  @Min(1)
-  subTotal: number;
-
-  @IsInt()
-  @Min(1)
-  total: number;
+  // @IsInt()
+  // subTotal: number;
+  //
+  // @IsInt()
+  // total: number;
 
   @IsOptional()
   @IsEnum(OrderStatus)

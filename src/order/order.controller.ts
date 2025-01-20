@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UserData } from '../../decorators/user.decoretor';
@@ -19,9 +19,18 @@ export class OrderController {
     return this.orderService.getOrderById(id);
   }
 
+  @Get('/booked/slots')
+  async getBookedSlots(@Query('date') date: Date) {
+    console.log('date', date);
+    return this.orderService.getBookedSlots(date);
+  }
+
   @UseGuards(AuthGuard)
   @Post()
-  async createOrder(@Body() createOrderDto: any, @UserData('user') user: User) {
+  async createOrder(
+    @Body() createOrderDto: CreateOrderDto,
+    @UserData('user') user: User,
+  ) {
     return this.orderService.createOrder(createOrderDto, user.id);
   }
 }

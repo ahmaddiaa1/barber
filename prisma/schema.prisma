@@ -101,26 +101,42 @@ model Slot {
   slot  String[]
 }
 
+model PromoCode {
+  id        String    @id @default(uuid())
+  code      String
+  discount  Int
+  type      PromoType
+  expiredAt DateTime
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  order     Order[]
+}
+
+enum PromoType {
+  PERCENTAGE
+  AMOUNT
+}
+
 model Order {
-  id        String        @id @default(uuid())
-  userId    String
-  user      User          @relation(fields: [userId], references: [id])
-  date      DateTime
-  slot      String
-  branchId  String
-  branch    Branch        @relation(fields: [branchId], references: [id])
-  note      String?
-  duration  Int
-  points    Int           @default(0)
-  promoCode String?
-  discount  Int           @default(0)
-  subTotal  Int
-  total     Int
-  status    OrderStatus   @default(PENDING)
-  booking   BookingStatus @default(UPCOMING)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  service   Service[]     @relation("OrderToServices")
+  id          String        @id @default(uuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  date        DateTime
+  slot        String
+  branchId    String
+  branch      Branch        @relation(fields: [branchId], references: [id])
+  note        String?
+  duration    Int
+  points      Int           @default(0)
+  promoCode   PromoCode?    @relation(fields: [promoCodeId], references: [id])
+  promoCodeId String?
+  subTotal    Int
+  total       Int
+  status      OrderStatus   @default(PENDING)
+  booking     BookingStatus @default(UPCOMING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  service     Service[]     @relation("OrderToServices")
 }
 
 enum OrderStatus {

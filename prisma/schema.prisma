@@ -78,9 +78,8 @@ model Service {
   serviceImg String?
   duration   Int
   categoryId String
-  orderId    String?
   available  Boolean  @default(true)
-  order      Order?   @relation(fields: [orderId], references: [id])
+  order      Order[]  @relation("OrderToServices")
   category   Category @relation(fields: [categoryId], references: [id])
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -108,7 +107,6 @@ model Order {
   user      User          @relation(fields: [userId], references: [id])
   date      DateTime
   slot      String
-  Services  Service[]
   branchId  String
   branch    Branch        @relation(fields: [branchId], references: [id])
   note      String?
@@ -122,6 +120,7 @@ model Order {
   booking   BookingStatus @default(UPCOMING)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+  service   Service[]     @relation("OrderToServices")
 }
 
 enum OrderStatus {

@@ -5,6 +5,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { CategoryModule } from './category/category.module';
 import { ServiceModule } from './service/service.module';
 import { SupabaseModule } from './supabase/supabase.module';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { SupabaseModule } from './supabase/supabase.module';
     CategoryModule,
     ServiceModule,
     SupabaseModule,
+    OrderModule,
   ],
   controllers: [],
   providers: [],

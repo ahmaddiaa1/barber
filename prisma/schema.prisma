@@ -15,21 +15,31 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(uuid())
+  id          String     @id @default(uuid())
   firstName   String
   lastName    String
   password    String
-  avatar      String   @default("https://i.ibb.co/P50Hk9p/avatar.png")
-  phone       String   @unique
-  complain    String?
+  avatar      String     @default("https://i.ibb.co/P50Hk9p/avatar.png")
+  phone       String     @unique
+  complain    Complain[]
   referalCode String?
-  points      Int      @default(0)
-  role        Role     @default(USER)
+  points      Int        @default(0)
+  rate        Int        @default(0)
+  role        Role       @default(USER)
   branchId    String?
-  branch      Branch?  @relation(fields: [branchId], references: [id])
+  branch      Branch?    @relation(fields: [branchId], references: [id])
   Order       Order[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Complain {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  complain  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum Role {
@@ -45,6 +55,7 @@ model Branch {
   location  String
   phone     String
   branchImg String
+  rate      Int      @default(0)
   barber    User[]
   Order     Order[]
   createdAt DateTime @default(now())
@@ -64,6 +75,7 @@ model Service {
   id         String   @id @default(uuid())
   name       String
   price      Int
+  serviceImg String?
   duration   Int
   categoryId String
   orderId    String?
@@ -83,34 +95,44 @@ model Product {
   updatedAt  DateTime @updatedAt
 }
 
-model Order {
-  id        String      @id @default(uuid())
-  userId    String
-  user      User        @relation(fields: [userId], references: [id])
-  barberId  String
-  Services  Service[]
-  OrderDate OrderDate?
-  branchId  String
-  branch    Branch      @relation(fields: [branchId], references: [id])
-  note      String?
-  duration  Int
-  points    Int         @default(0)
-  promoCode String?
-  discount  Int         @default(0)
-  subTotal  Int
-  total     Int
-  status    OrderStatus @default(UPCOMING)
+model Slot {
+  id    String   @id @default(uuid())
+  start DateTime
+  end   DateTime
+  slot  String[]
 }
 
-model OrderDate {
-  id        String   @id @default(uuid())
+model Order {
+  id        String        @id @default(uuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
   date      DateTime
-  available Boolean  @default(true)
-  orderId   String   @unique
-  order     Order    @relation(fields: [orderId], references: [id])
+  slot      String
+  Services  Service[]
+  branchId  String
+  branch    Branch        @relation(fields: [branchId], references: [id])
+  note      String?
+  duration  Int
+  points    Int           @default(0)
+  promoCode String?
+  discount  Int           @default(0)
+  subTotal  Int
+  total     Int
+  status    OrderStatus   @default(PENDING)
+  booking   BookingStatus @default(UPCOMING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 }
 
 enum OrderStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  PAID
+  CANCELLED
+}
+
+enum BookingStatus {
   UPCOMING
   PAST
   CANCELLED

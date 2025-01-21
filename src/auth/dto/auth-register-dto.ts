@@ -1,4 +1,5 @@
 import { Role } from '@prisma/client';
+import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class RegisterDto {
@@ -12,6 +13,7 @@ export class RegisterDto {
 
   @IsNotEmpty()
   @IsOptional()
+  @Transform(({ value }) => value ?? null)
   @IsString()
   avatar: string;
 
@@ -24,10 +26,12 @@ export class RegisterDto {
   password: string;
 
   @IsOptional()
+  @Transform(({ value }) => value ?? null)
   @IsString()
   referCode: string;
 
   @IsOptional()
+  @Transform(({ value }) => value ?? null)
   @IsString()
   role: Role;
 }

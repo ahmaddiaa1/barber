@@ -1,4 +1,5 @@
 import { PromoType } from '@prisma/client';
+import { Transform } from 'class-transformer';
 import {
   IsEnum,
   IsNotEmpty,
@@ -9,6 +10,7 @@ import {
 
 export class CreatePromoCodeDto {
   @IsOptional()
+  @Transform(({ value }) => value ?? null)
   @IsString()
   code: string;
 

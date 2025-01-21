@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import {
   IsString,
   IsOptional,
@@ -19,9 +20,11 @@ export class CreateBranchDto {
 
   @IsString()
   @IsOptional()
+  @Transform(({ value }) => value ?? null)
   branchImg: string;
 
   @IsOptional()
+  @Transform(({ value }) => value ?? null)
   @IsInt()
   @Min(0)
   @Max(10)

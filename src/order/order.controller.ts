@@ -15,8 +15,8 @@ export class OrderController {
   }
 
   @Get('/slots')
-  async getSlots() {
-    return this.orderService.getSlots();
+  async getSlots(@Query('date') date: string) {
+    return this.orderService.getSlots(date);
   }
 
   @Get(':id')

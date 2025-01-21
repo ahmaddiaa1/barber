@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import {
   IsString,
   IsOptional,
@@ -26,6 +27,7 @@ export class CreateOrderDto {
   branchId: string;
 
   @IsOptional()
+  @Transform(({ value }) => value ?? null)
   @IsString()
   note?: string;
 
@@ -34,11 +36,13 @@ export class CreateOrderDto {
   duration: number; // Duration in minutes
 
   @IsOptional()
+  @Transform(({ value }) => value ?? null)
   @IsInt()
   @Min(0)
   points?: number;
 
   @IsOptional()
+  @Transform(({ value }) => value ?? null)
   @IsString()
   promoCodeId?: string;
 
@@ -49,10 +53,12 @@ export class CreateOrderDto {
   // total: number;
 
   @IsOptional()
+  @Transform(({ value }) => value ?? null)
   @IsEnum(OrderStatus)
   status?: OrderStatus;
 
   @IsOptional()
+  @Transform(({ value }) => value ?? null)
   @IsEnum(BookingStatus)
   booking?: BookingStatus;
 }

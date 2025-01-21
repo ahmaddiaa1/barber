@@ -42,8 +42,11 @@ export class OrderService {
       where: {
         date: new Date(dataWithoutTime),
         slot: createOrderDto.slot,
-        status: 'PENDING',
-        booking: 'UPCOMING',
+        OR: [
+          { status: 'PENDING' },
+          { status: 'IN_PROGRESS' },
+          { booking: 'UPCOMING' },
+        ],
       },
     });
 
@@ -53,18 +56,16 @@ export class OrderService {
       );
     }
 
-    const promoCode = createOrderDto.promoCodeId || null;
+    const promoCode = createOrderDto.promoCodeId;
 
-    const validPromoCode = promoCode
-      ? await this.prisma.promoCode.findFirst({
-          where: {
-            code: promoCode,
-            expiredAt: {
-              gte: new Date(),
-            },
-          },
-        })
-      : null;
+    const validPromoCode = await this.prisma.promoCode.findFirst({
+      where: {
+        code: promoCode,
+        expiredAt: {
+          gte: new Date(),
+        },
+      },
+    });
 
     if (promoCode && !validPromoCode) {
       throw new ConflictException(
@@ -94,9 +95,26 @@ export class OrderService {
       total = subTotal - validPromoCode.discount;
     }
 
+    // const slots = await this.getSlots(dataWithoutTime);
+    // console.log(slots);
+
+    // const slot = slots.filter((s) => s.slot === createOrderDto.slot);
+    // if (!slot.length) {
+    //   throw new ConflictException(
+    //     `Slot ${createOrderDto.slot} is not available`,
+    //   );
+    // }
+    // console.log(slot);
+    // if (!slot[0].available) {
+    //   throw new ConflictException(
+    //     `Slot ${createOrderDto.slot} is not available`,
+    //   );
+    // }
+
     return this.prisma.order.create({
       data: {
         ...createOrderDto,
+        slot: createOrderDto.slot,
         userId,
         date: new Date(dataWithoutTime),
         promoCodeId: validPromoCode?.id,
@@ -114,23 +132,35 @@ export class OrderService {
     });
   }
 
-  async getSlots() {
-    // const orders = await this.prisma.order.findMany({
-    //   where: {
-    //     date: date.toString().split('T')[0],
-    //   },
-    //   select: {
-    //     slot: true,
-    //   },
-    // });
+  async getSlots(date: string) {
+    const dateWithoutTime = date.toString().split('T')[0];
 
-    const slots = await this.prisma.slot.findMany({
+    const orders = await this.prisma.order.findMany({
+      where: {
+        date: new Date(dateWithoutTime),
+      },
       select: {
         slot: true,
       },
     });
 
-    return slots[0].slot;
+    const unavailableSlots = orders.map((order) => order.slot);
+
+    const allSlots = await this.prisma.slot.findFirst({
+      select: {
+        slot: true,
+      },
+    });
+
+    if (!allSlots) {
+      throw new Error('No slots found in the database.');
+    }
+
+    const slotsWithAvailability = allSlots.slot.map((slot) => ({
+      slot,
+      available: !unavailableSlots.includes(slot),
+    }));
+    return slotsWithAvailability;
   }
 
   async generateSlot(start: number, end: number) {

@@ -114,11 +114,25 @@ export class OrderService {
     });
   }
 
-  private async findOneOrFail(id: string) {
-    return this.prisma.order.findUnique({
-      where: { id },
+  async getSlots() {
+    // const orders = await this.prisma.order.findMany({
+    //   where: {
+    //     date: date.toString().split('T')[0],
+    //   },
+    //   select: {
+    //     slot: true,
+    //   },
+    // });
+
+    const slots = await this.prisma.slot.findMany({
+      select: {
+        slot: true,
+      },
     });
+
+    return slots.map((slot) => slot.slot);
   }
+
   async generateSlot(start: number, end: number) {
     const slotsArray = [];
 
@@ -149,5 +163,11 @@ export class OrderService {
     });
 
     return slotsArray;
+  }
+
+  private async findOneOrFail(id: string) {
+    return this.prisma.order.findUnique({
+      where: { id },
+    });
   }
 }

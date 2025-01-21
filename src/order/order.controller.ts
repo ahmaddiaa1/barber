@@ -4,7 +4,6 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UserData } from '../../decorators/user.decoretor';
 import { User } from '@prisma/client';
 import { AuthGuard } from '../../guard/auth.guard';
-import { start } from 'repl';
 
 @Controller('order')
 export class OrderController {
@@ -13,6 +12,11 @@ export class OrderController {
   @Get()
   async getAllOrders() {
     return this.orderService.getAllOrders();
+  }
+
+  @Get('/slots')
+  async getSlots() {
+    return this.orderService.getSlots();
   }
 
   @Get(':id')

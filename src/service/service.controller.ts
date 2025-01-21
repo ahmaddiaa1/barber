@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { ServiceService } from './service.service';
 import { Service } from '@prisma/client';
 import { CreateServiceDto } from './dto/create-service.dto';
@@ -14,7 +22,9 @@ export class ServiceController {
   }
 
   @Get(':id')
-  public async findServiceById(@Param('id') id: string): Promise<Service> {
+  public async findServiceById(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<Service> {
     return await this.serviceService.getServiceById(id);
   }
 
@@ -27,7 +37,7 @@ export class ServiceController {
 
   @Put(':id')
   public async updateService(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateServiceDto: UpdateServiceDto,
   ): Promise<Service> {
     return await this.serviceService.updateService(id, updateServiceDto);
@@ -35,7 +45,7 @@ export class ServiceController {
 
   @Put(':id/status')
   public async softDeleteService(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() available: { available: boolean },
   ): Promise<Service> {
     return await this.serviceService.softDeleteService(id, available);

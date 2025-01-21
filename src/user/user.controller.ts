@@ -9,6 +9,7 @@ import {
   UploadedFile,
   UseInterceptors,
   Put,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { AuthGuard } from 'guard/auth.guard';
@@ -35,7 +36,7 @@ export class UserController {
   @Put(':id')
   @UseInterceptors(FileInterceptor('file'))
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() user: UserUpdateDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
@@ -48,7 +49,7 @@ export class UserController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.userService.removeUser(id);
   }
 }

@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseUUIDPipe,
   Post,
   Put,
   UseGuards,
@@ -27,7 +28,9 @@ export class CategoryController {
   }
 
   @Get(':id')
-  public async findCategoryById(@Param('id') id: string): Promise<Category> {
+  public async findCategoryById(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<Category> {
     return await this.categoryService.findCategoryById(id);
   }
 
@@ -42,7 +45,7 @@ export class CategoryController {
   @Roles(['ADMIN'])
   @Put(':id')
   public async updateCategory(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
   ): Promise<Category> {
     return await this.categoryService.updateCategory(id, updateCategoryDto);
@@ -51,7 +54,7 @@ export class CategoryController {
   @Roles(['ADMIN'])
   @Put(':id/status')
   public async deleteCategory(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() available: { available: boolean },
   ): Promise<Category> {
     return await this.categoryService.softDeleteCategory(id, available);

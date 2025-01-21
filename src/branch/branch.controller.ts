@@ -3,9 +3,10 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
+  Put,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { BranchService } from './branch.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
@@ -26,17 +27,20 @@ export class BranchController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.branchService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBranchDto: UpdateBranchDto) {
-    return this.branchService.update(+id, updateBranchDto);
+  @Put(':id')
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateBranchDto: UpdateBranchDto,
+  ) {
+    return this.branchService.update(id, updateBranchDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.branchService.remove(+id);
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.branchService.remove(id);
   }
 }

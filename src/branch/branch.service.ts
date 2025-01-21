@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { AppSuccess } from 'utils/AppSuccess';
 
 @Injectable()
 export class BranchService {
@@ -15,26 +16,38 @@ export class BranchService {
         ...createBranchDto,
       },
     });
-    return newBranch;
+    return new AppSuccess(newBranch, 'Branch created successfully');
   }
 
-  findAll() {
-    const branches = this.prisma.branch.findMany();
-    return branches;
+  async findAll() {
+    const branches = await this.prisma.branch.findMany();
+    return new AppSuccess(branches, 'Branches found successfully');
   }
 
-  findOne(id: string) {
-    const branch = this.prisma.branch.findUnique({
+  async findOne(id: string) {
+    const branch = await this.prisma.branch.findUnique({
       where: { id },
     });
-    return branch;
+
+    if (!branch) throw new NotFoundException('Branch not found');
+
+    return new AppSuccess(branch, 'Branch found successfully');
   }
 
-  update(id: number, updateBranchDto: UpdateBranchDto) {
-    return `This action updates a #${id} branch`;
+  async update(id: string, updateBranchDto: UpdateBranchDto) {
+    const isBranchExist = await this.prisma.branch.findUnique({
+      where: { id },
+    });
+    if (!isBranchExist) throw new NotFoundException('Branch not found');
+
+    const updatedBranch = await this.prisma.branch.update({
+      where: { id },
+      data: updateBranchDto,
+    });
+    return new AppSuccess(updatedBranch, 'Branch updated successfully');
   }
 
-  remove(id: number) {
+  async remove(id: string) {
     return `This action removes a #${id} branch`;
   }
 }

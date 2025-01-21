@@ -130,7 +130,7 @@ export class OrderService {
       },
     });
 
-    return slots.map((slot) => slot.slot);
+    return slots[0].slot;
   }
 
   async generateSlot(start: number, end: number) {
@@ -154,7 +154,7 @@ export class OrderService {
       }
     }
 
-    this.prisma.slot.updateMany({
+    const slots = this.prisma.slot.updateMany({
       data: {
         start,
         end,
@@ -162,7 +162,7 @@ export class OrderService {
       },
     });
 
-    return slotsArray;
+    return slots;
   }
 
   private async findOneOrFail(id: string) {

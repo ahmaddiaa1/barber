@@ -3,9 +3,9 @@ export class AppSuccess {
   message?: string;
   statusCode?: number;
 
-  constructor(data: any, message: string, statusCode?: 201) {
+  constructor(data: any, message: string, statusCode?: number) {
     this.data = data;
     this.message = message;
-    this.statusCode = statusCode;
+    this.statusCode = statusCode || 201;
   }
 }

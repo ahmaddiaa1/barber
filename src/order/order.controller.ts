@@ -21,7 +21,6 @@ export class OrderController {
 
   @Get('/booked/slots')
   async getBookedSlots(@Query('date') date: Date) {
-    console.log('date', date);
     return this.orderService.getBookedSlots(date);
   }
 

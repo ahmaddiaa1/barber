@@ -38,9 +38,9 @@ export class CreateOrderDto {
   @Min(0)
   points?: number;
 
-  // @IsOptional()
-  // @IsString()
-  // promoCode?: string;
+  @IsOptional()
+  @IsString()
+  promoCodeId?: string;
 
   // @IsInt()
   // subTotal: number;

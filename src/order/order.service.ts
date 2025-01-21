@@ -1,7 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { AppSuccess } from '../../utils/AppSuccess';
 
 @Injectable()
 export class OrderService {
@@ -46,10 +45,27 @@ export class OrderService {
     });
 
     if (existingOrder) {
-      throw new AppSuccess(
-        null,
-        `The selected date (${createOrderDto.date}) and time slot (${createOrderDto.slot}) are already booked. Please choose another date or time slot.`,
-        400,
+      throw new ConflictException(
+        `Slot ${createOrderDto.slot} is already booked`,
+      );
+    }
+
+    const promoCode = createOrderDto.promoCodeId || null;
+
+    const validPromoCode = promoCode
+      ? await this.prisma.promoCode.findFirst({
+          where: {
+            code: promoCode,
+            expiredAt: {
+              gte: new Date(),
+            },
+          },
+        })
+      : null;
+
+    if (promoCode && !validPromoCode) {
+      throw new ConflictException(
+        `Promo code "${promoCode}" is invalid or expired.`,
       );
     }
 
@@ -67,14 +83,19 @@ export class OrderService {
 
     const subTotal = services.reduce((acc, service) => acc + service.price, 0);
 
-    const total = subTotal;
+    let total = subTotal;
 
-    console.log('services', services);
+    if (promoCode && validPromoCode?.type === 'PERCENTAGE') {
+      total = subTotal - (subTotal * validPromoCode.discount) / 100;
+    } else if (promoCode && validPromoCode?.type === 'AMOUNT') {
+      total = subTotal - validPromoCode.discount;
+    }
 
     return this.prisma.order.create({
       data: {
         ...createOrderDto,
         userId,
+        promoCodeId: validPromoCode?.id,
         date: new Date(createOrderDto.date),
         service: {
           connect: createOrderDto.service.map((serviceId) => ({

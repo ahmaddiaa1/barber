@@ -7,6 +7,7 @@ import { ServiceModule } from './service/service.module';
 import { SupabaseModule } from './supabase/supabase.module';
 import { OrderModule } from './order/order.module';
 import { BranchModule } from './branch/branch.module';
+import { PromoCodeModule } from './promo-code/promo-code.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { BranchModule } from './branch/branch.module';
     SupabaseModule,
     OrderModule,
     BranchModule,
+    PromoCodeModule,
   ],
   controllers: [],
   providers: [],

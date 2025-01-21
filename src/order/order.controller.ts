@@ -4,6 +4,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UserData } from '../../decorators/user.decoretor';
 import { User } from '@prisma/client';
 import { AuthGuard } from '../../guard/auth.guard';
+import { start } from 'repl';
 
 @Controller('order')
 export class OrderController {
@@ -31,5 +32,11 @@ export class OrderController {
     @UserData('user') user: User,
   ) {
     return this.orderService.createOrder(createOrderDto, user.id);
+  }
+
+  @Post('/generate-slot')
+  async generateSlot(@Body() body: { start: number; end: number }) {
+    const { start, end } = body;
+    return this.orderService.generateSlot(start, end);
   }
 }

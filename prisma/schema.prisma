@@ -96,8 +96,8 @@ model Product {
 
 model Slot {
   id    String   @id @default(uuid())
-  start DateTime
-  end   DateTime
+  start Int
+  end   Int
   slot  String[]
 }
 

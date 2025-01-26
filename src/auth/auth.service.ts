@@ -28,7 +28,7 @@ export class AuthService {
 
     do {
       referralCode = this.generateRandomCode(6);
-      const isReferralCodeExist = await this.prisma.cLient.findFirst({
+      const isReferralCodeExist = await this.prisma.client.findFirst({
         where: { referralCode },
       });
       if (isReferralCodeExist) break;

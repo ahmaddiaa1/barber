@@ -10,13 +10,14 @@ import {
   UseInterceptors,
   Put,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { AuthGuard } from 'guard/auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UserUpdateDto } from './dto/user-update-dto';
 import { UserData } from 'decorators/user.decoretor';
-import { User } from '@prisma/client';
+import { Role, User } from '@prisma/client';
 
 @Controller('user')
 @UseGuards(AuthGuard)
@@ -24,8 +25,8 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  findAll() {
-    return this.userService.findAllUser();
+  findAll(@Query('role') role: Role) {
+    return this.userService.findAllUser(role);
   }
 
   @Get(':id')

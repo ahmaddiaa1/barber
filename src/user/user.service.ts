@@ -1,7 +1,7 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { User } from '@prisma/client';
+import { Role, User } from '@prisma/client';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { UserUpdateDto } from './dto/user-update-dto';
 
@@ -12,8 +12,8 @@ export class UserService {
     private supabaseService: SupabaseService,
   ) {}
 
-  public async findAllUser(): Promise<User[]> {
-    return this.prisma.user.findMany();
+  public async findAllUser(role: Role): Promise<User[]> {
+    return this.prisma.user.findMany({ where: { role } });
   }
 
   public async findOneUser(id: string): Promise<User> {
@@ -32,7 +32,7 @@ export class UserService {
     id: string,
     user: UserUpdateDto,
     file: Express.Multer.File,
-  ) {
+  ): Promise<User> {
     const userExists = await this.prisma.user.findUnique({
       where: { id },
     });
@@ -54,11 +54,11 @@ export class UserService {
     });
   }
 
-  public async CurrentUser(user: User) {
+  public async CurrentUser(user: User): Promise<User> {
     return user;
   }
 
-  public async removeUser(id: string) {
+  public async removeUser(id: string): Promise<User> {
     return this.prisma.user.delete({
       where: { id },
     });

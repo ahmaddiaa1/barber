@@ -20,10 +20,18 @@ export class AuthService {
 
   constructor(private prisma: PrismaService) {}
 
-  async signup(createAuthDto: RegisterDto) {
-    const { phone, password } = createAuthDto;
+  async signup(createAuthDto: RegisterDto, branchId: string) {
+    const { phone, password, role = 'USER' } = createAuthDto;
     const saltOrRounds = 10;
     let referralCode: string;
+
+    do {
+      referralCode = this.generateRandomCode(6);
+      const isReferralCodeExist = await this.prisma.cLient.findFirst({
+        where: { referralCode },
+      });
+      if (isReferralCodeExist) break;
+    } while (true);
 
     const isPhoneExist = await this.prisma.user.findUnique({
       where: { phone },
@@ -32,17 +40,64 @@ export class AuthService {
       throw new ConflictException('phone number is already in use');
     const hashedPassword = await hash(password, saltOrRounds);
 
-    do {
-      referralCode = this.generateRandomCode(6);
-      const isReferralCodeExist = await this.prisma.user.findFirst({
-        where: { referralCode },
-      });
-      if (isReferralCodeExist) break;
-    } while (true);
-
     const newUser = await this.prisma.user.create({
-      data: { ...createAuthDto, password: hashedPassword, referralCode },
+      data: { ...createAuthDto, password: hashedPassword },
     });
+
+    if (role === 'ADMIN') {
+      await this.prisma.user.update({
+        where: {
+          id: newUser.id,
+        },
+        data: {
+          role: 'ADMIN',
+          admin: { create: {} },
+        },
+      });
+    } else if (role === 'USER') {
+      await this.prisma.user.update({
+        where: {
+          id: newUser.id,
+        },
+        data: {
+          role: 'BARBER',
+          client: {
+            create: {
+              referralCode,
+            },
+          },
+        },
+      });
+    } else if (role === 'BARBER') {
+      await this.prisma.user.update({
+        where: {
+          id: newUser.id,
+        },
+        data: {
+          role: 'BARBER',
+          barber: {
+            create: {
+              branchId,
+            },
+          },
+        },
+      });
+    } else if (role === 'CASHIER') {
+      await this.prisma.user.update({
+        where: {
+          id: newUser.id,
+        },
+        data: {
+          role: 'CASHIER',
+          cashier: {
+            create: {
+              branchId,
+            },
+          },
+        },
+      });
+    }
+
     return new AppSuccess(newUser, 'user created successfully', 201);
   }
 
@@ -97,5 +152,11 @@ export class AuthService {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return result;
+  }
+  private async createUser(id: string, data: any) {
+    await this.prisma.user.update({
+      where: { id },
+      data,
+    });
   }
 }

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Param } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/auth-login-dto';
 import { RegisterDto } from './dto/auth-register-dto';
@@ -10,8 +10,11 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('/signup')
-  signup(@Body() createAuthDto: RegisterDto) {
-    return this.authService.signup(createAuthDto);
+  signup(
+    @Body() createAuthDto: RegisterDto,
+    @Param('branchId') branchId: string,
+  ) {
+    return this.authService.signup(createAuthDto, branchId);
   }
 
   @Post('/login')

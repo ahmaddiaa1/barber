@@ -28,13 +28,5 @@
     "SUPABASE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52ZHh3a2t5cHpqaHZpY2dkYnhzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNjc5MTYzOSwiZXhwIjoyMDUyMzY3NjM5fQ.dWtNjpf7EjHSkF5AOWNeVpBcVlzU0lA3dHle7cYUKu8",
     "PORT": "3000",
     "NODE_ENV": "production"
-  },
-  "build": {
-    "env": {
-      "NODE_ENV": "production"
-    },
-    "commands": {
-      "build": "npm run prisma-generate && npm run build"
-    }
   }
 }

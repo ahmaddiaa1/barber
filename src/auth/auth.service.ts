@@ -124,23 +124,23 @@ export class AuthService {
   async invalidateToken(token: string) {
     const isToken = await this.prisma.token.findUnique({ where: { token } });
     if (!isToken) throw new UnauthorizedException('User already logged out');
-    return await this.prisma.token.delete({
+    return this.prisma.token.delete({
       where: { token },
     });
   }
 
-  async isTokenBlacklisted(token: string) {
-    const tokens = await this.prisma.token.findUnique({
-      where: { token },
-    });
-    return tokens ? false : true;
-  }
+  // async isTokenBlacklisted(token: string) {
+  //   const tokens = await this.prisma.token.findUnique({
+  //     where: { token },
+  //   });
+  //   return !tokens;
+  // }
 
   async loginToken(token: string) {
     const decoded = jwt.decode(token);
     console.log(decoded);
     if (typeof decoded === 'object' && decoded !== null && 'exp' in decoded) {
-      return await this.prisma.token.create({
+      return this.prisma.token.create({
         data: { token, expiredAt: new Date(decoded.exp * 1000) },
       });
     }
@@ -176,12 +176,10 @@ export class AuthService {
         data: { ...rest, role, password: hashedPassword },
       });
 
-      const newUser = await prisma.user.update({
+      return await prisma.user.update({
         where: { id: user.id },
         data,
       });
-
-      return newUser;
     });
   }
 }

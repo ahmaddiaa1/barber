@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Body,
-  Request,
   Param,
   Delete,
   UseGuards,
@@ -30,7 +29,7 @@ export class UserController {
   }
 
   @Get(':id')
-  findOne(@Param() id: string) {
+  findOne(@Param('id') id: string) {
     return this.userService.findOneUser(id);
   }
 

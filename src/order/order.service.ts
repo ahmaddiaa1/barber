@@ -11,7 +11,17 @@ export class OrderService {
   }
 
   async getOrderById(id: string) {
-    return this.findOneOrFail(id);
+    return this.prisma.order.findUnique({
+      where: { id },
+      include: {
+        service: true,
+        Barber: {
+          include: {
+            user: true
+          }
+        },
+      },
+    });
   }
 
   async getBookedSlots(date: Date) {
@@ -96,23 +106,13 @@ export class OrderService {
       total = subTotal - validPromoCode.discount;
     }
 
-    // const slots = await this.getSlots(dataWithoutTime);
-    // console.log(slots);
+    const slots = await this.getSlots(dataWithoutTime, createOrderDto.barberId);
 
-    // const slot = slots.filter((s) => s.slot === createOrderDto.slot);
-    // if (!slot.length) {
-    //   throw new ConflictException(
-    //     `Slot ${createOrderDto.slot} is not available`,
-    //   );
-    // }
-    // console.log(slot);
-    // if (!slot[0].available) {
-    //   throw new ConflictException(
-    //     `Slot ${createOrderDto.slot} is not available`,
-    //   );
-    // }
-
-    console.log('total', createOrderDto.barberId);
+    if (!slots.find((slot) => slot.slot === createOrderDto.slot)) {
+      throw new ConflictException(
+        `Slot ${createOrderDto.slot} is not available for booking.`,
+      );
+    }
 
     return this.prisma.order.create({
       data: {
@@ -148,6 +148,8 @@ export class OrderService {
         slot: true,
       },
     });
+
+    console.log("orders", orders);
 
     const unavailableSlots = orders.map((order) => order.slot);
 
@@ -212,6 +214,10 @@ export class OrderService {
   private async findOneOrFail(id: string) {
     return this.prisma.order.findUnique({
       where: { id },
+      include: {
+        service: true,
+        Barber: true,
+      },
     });
   }
 }

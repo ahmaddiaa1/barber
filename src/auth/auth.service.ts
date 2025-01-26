@@ -11,7 +11,6 @@ import { RegisterDto } from './dto/auth-register-dto';
 import { LoginDto } from './dto/auth-login-dto';
 import * as jwt from 'jsonwebtoken';
 import { AppSuccess } from 'utils/AppSuccess';
-import { User } from '@prisma/client';
 
 @Global()
 @Injectable()
@@ -24,7 +23,7 @@ export class AuthService {
   async signup(createAuthDto: RegisterDto) {
     const { phone, password } = createAuthDto;
     const saltOrRounds = 10;
-    let referalCode: string;
+    let referralCode: string;
 
     const isPhoneExist = await this.prisma.user.findUnique({
       where: { phone },
@@ -34,15 +33,15 @@ export class AuthService {
     const hashedPassword = await hash(password, saltOrRounds);
 
     do {
-      referalCode = this.generateRandomCode(6);
-      const isreferalCodeExist = await this.prisma.user.findFirst({
-        where: { referalCode },
+      referralCode = this.generateRandomCode(6);
+      const isReferralCodeExist = await this.prisma.user.findFirst({
+        where: { referralCode },
       });
-      if (isreferalCodeExist) break;
+      if (isReferralCodeExist) break;
     } while (true);
 
     const newUser = await this.prisma.user.create({
-      data: { ...createAuthDto, password: hashedPassword, referalCode },
+      data: { ...createAuthDto, password: hashedPassword, referralCode },
     });
     return new AppSuccess(newUser, 'user created successfully', 201);
   }
@@ -86,7 +85,7 @@ export class AuthService {
     this.blacklist.add(token);
   }
 
-  isTokennBlacklisted(token: string) {
+  isTokenBlacklisted(token: string) {
     return this.blacklist.has(token);
   }
 

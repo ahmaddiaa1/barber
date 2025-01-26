@@ -22,7 +22,7 @@ export class AuthGuard implements CanActivate {
       req.headers['Authorization']?.split(' ')[1];
     if (!token) throw new UnauthorizedException('No token provided');
 
-    if (token && this.authService.isTokennBlacklisted(token))
+    if (token && this.authService.isTokenBlacklisted(token))
       throw new UnauthorizedException('Token is expires');
 
     try {

@@ -15,28 +15,46 @@ datasource db {
 }
 
 model User {
-  id          String     @id @default(uuid())
-  firstName   String
-  lastName    String
-  password    String
-  avatar      String     @default("https://i.ibb.co/P50Hk9p/avatar.png")
-  phone       String     @unique
-  complain    Complain[]
-  referalCode String?
-  points      Int        @default(0)
-  rate        Int        @default(0)
-  role        Role       @default(USER)
-  branchId    String?
-  branch      Branch?    @relation(fields: [branchId], references: [id])
-  Order       Order[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String
+  password  String
+  avatar    String   @default("https://i.ibb.co/P50Hk9p/avatar.png")
+  phone     String   @unique
+  role      Role     @default(USER)
+  Order     Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  barber Barber?
+  client CLient?
+
+  @@map("users")
+}
+
+model CLient {
+  id           String     @id @default(uuid())
+  userId       String     @unique
+  user         User       @relation(fields: [userId], references: [id])
+  complain     Complain[]
+  referralCode String?
+  points       Int        @default(0)
+}
+
+model Barber {
+  id       String  @id @default(uuid())
+  userId   String  @unique
+  user     User    @relation(fields: [userId], references: [id])
+  rate     Int     @default(0)
+  order    Order[]
+  branchId String
+  branch   Branch  @relation(fields: [branchId], references: [id])
 }
 
 model Complain {
   id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  client    CLient   @relation(fields: [clientId], references: [id])
+  clientId  String
   complain  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -56,10 +74,10 @@ model Branch {
   phone     String
   branchImg String
   rate      Int      @default(0)
-  barber    User[]
   Order     Order[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  barber    Barber[]
 }
 
 model Category {
@@ -77,6 +95,8 @@ model Service {
   price      Int
   serviceImg String?
   duration   Int
+  points     Int
+  gainPoints Int
   categoryId String
   available  Boolean  @default(true)
   order      Order[]  @relation("OrderToServices")
@@ -121,22 +141,24 @@ model Order {
   id          String        @id @default(uuid())
   userId      String
   user        User          @relation(fields: [userId], references: [id])
+  barberId    String
+  Barber      Barber        @relation(fields: [barberId], references: [id])
   date        DateTime
   slot        String
   branchId    String
   branch      Branch        @relation(fields: [branchId], references: [id])
   note        String?
-  duration    Int
   points      Int           @default(0)
   promoCode   PromoCode?    @relation(fields: [promoCodeId], references: [id])
   promoCodeId String?
-  subTotal    Int
-  total       Int
   status      OrderStatus   @default(PENDING)
   booking     BookingStatus @default(UPCOMING)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   service     Service[]     @relation("OrderToServices")
+
+  subTotal Int @ignore
+  total    Int @ignore
 }
 
 enum OrderStatus {

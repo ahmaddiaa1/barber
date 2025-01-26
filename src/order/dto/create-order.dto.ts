@@ -7,6 +7,7 @@ import {
   IsInt,
   Min,
   IsUUID,
+  IsNotEmpty,
 } from 'class-validator';
 import { OrderStatus, BookingStatus } from '@prisma/client'; // Import enums from Prisma
 
@@ -18,6 +19,10 @@ export class CreateOrderDto {
 
   @IsString()
   slot: string;
+
+  @IsString()
+  @IsNotEmpty()
+  barberId: string;
 
   @IsArray()
   @IsString({ each: true })
@@ -46,11 +51,9 @@ export class CreateOrderDto {
   @IsString()
   promoCodeId?: string;
 
-  // @IsInt()
-  // subTotal: number;
+  // subTotal?: number;
   //
-  // @IsInt()
-  // total: number;
+  // total?: number;
 
   @IsOptional()
   @Transform(({ value }) => value ?? null)

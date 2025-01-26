@@ -40,6 +40,7 @@ export class OrderService {
 
     const existingOrder = await this.prisma.order.findFirst({
       where: {
+        barberId: createOrderDto.barberId,
         date: new Date(dataWithoutTime),
         slot: createOrderDto.slot,
         OR: [
@@ -132,12 +133,13 @@ export class OrderService {
     });
   }
 
-  async getSlots(date: string) {
+  async getSlots(date: string, barberId: string) {
     const dateWithoutTime = date.toString().split('T')[0];
 
     const orders = await this.prisma.order.findMany({
       where: {
         date: new Date(dateWithoutTime),
+        barberId,
       },
       select: {
         slot: true,
@@ -156,11 +158,10 @@ export class OrderService {
       throw new Error('No slots found in the database.');
     }
 
-    const slotsWithAvailability = allSlots.slot.map((slot) => ({
+    return allSlots.slot.map((slot) => ({
       slot,
       available: !unavailableSlots.includes(slot),
     }));
-    return slotsWithAvailability;
   }
 
   async generateSlot(start: number, end: number) {
@@ -184,15 +185,25 @@ export class OrderService {
       }
     }
 
-    const slots = this.prisma.slot.updateMany({
+    const existingSlots = await this.prisma.slot.findMany();
+
+    if (existingSlots.length) {
+      return this.prisma.slot.updateMany({
+        data: {
+          start,
+          end,
+          slot: slotsArray,
+        },
+      });
+    }
+
+    return this.prisma.slot.create({
       data: {
         start,
         end,
         slot: slotsArray,
       },
     });
-
-    return slots;
   }
 
   private async findOneOrFail(id: string) {

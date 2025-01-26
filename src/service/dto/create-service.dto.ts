@@ -13,6 +13,12 @@ export class CreateServiceDto {
   @IsNotEmpty()
   duration: number;
 
+  @IsNumber()
+  points: number;
+
+  @IsNumber()
+  gainPoints: number;
+
   @IsUUID()
   @IsNotEmpty()
   categoryId: string;

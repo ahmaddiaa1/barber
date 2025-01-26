@@ -10,7 +10,7 @@ import { compare, hash } from 'bcrypt';
 import { RegisterDto } from './dto/auth-register-dto';
 import { LoginDto } from './dto/auth-login-dto';
 import * as jwt from 'jsonwebtoken';
-import { AppSuccess } from 'utils/AppSuccess';
+import { AppSuccess } from 'src/utils/AppSuccess';
 import { Role, User } from '@prisma/client';
 
 @Global()

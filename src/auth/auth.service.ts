@@ -10,13 +10,12 @@ import { compare, hash } from 'bcrypt';
 import { RegisterDto } from './dto/auth-register-dto';
 import { LoginDto } from './dto/auth-login-dto';
 import * as jwt from 'jsonwebtoken';
-import { AppSuccess } from 'src/utils/AppSuccess';
+import { AppSuccess } from '../utils/AppSuccess';
 import { Role, User } from '@prisma/client';
 
 @Global()
 @Injectable()
 export class AuthService {
-  private readonly blacklist = new Set<string>();
   private readonly jwtSecret = process.env.JWT_SECRET;
 
   constructor(private prisma: PrismaService) {}

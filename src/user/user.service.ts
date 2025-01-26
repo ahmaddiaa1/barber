@@ -38,13 +38,28 @@ export class UserService {
   }
 
   public async findOneUser(id: string): Promise<User> {
-    const user = await this.prisma.user.findUnique({
+    const userWithRole = await this.prisma.user.findUnique({
       where: { id },
+      include: {
+        admin: true,
+        barber: true,
+        cashier: true,
+        client: true,
+      },
     });
-
-    if (!user) {
+    if (!userWithRole) {
       throw new NotFoundException('User not found');
     }
+    const role = userWithRole.role;
+
+    const { admin, barber, cashier, client, ...rest } = userWithRole;
+
+    const user = {
+      ...rest,
+      [Role[role === 'USER' ? 'client' : role].toLocaleLowerCase()]: {
+        ...(admin || barber || cashier || client),
+      },
+    };
 
     return user;
   }

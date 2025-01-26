@@ -20,7 +20,7 @@ export class CreateOrderDto {
   @IsString()
   slot: string;
 
-  @IsString()
+  @IsUUID()
   @IsNotEmpty()
   barberId: string;
 
@@ -35,10 +35,6 @@ export class CreateOrderDto {
   @Transform(({ value }) => value ?? null)
   @IsString()
   note?: string;
-
-  @IsInt()
-  @Min(1)
-  duration: number; // Duration in minutes
 
   @IsOptional()
   @Transform(({ value }) => value ?? null)

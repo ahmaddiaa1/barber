@@ -112,6 +112,8 @@ export class OrderService {
     //   );
     // }
 
+    console.log('total', createOrderDto.barberId);
+
     return this.prisma.order.create({
       data: {
         ...createOrderDto,
@@ -124,6 +126,7 @@ export class OrderService {
             id: serviceId,
           })),
         },
+        barberId: createOrderDto.barberId,
         subTotal,
         total,
       },

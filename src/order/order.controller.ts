@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UserData } from '../../decorators/user.decoretor';
@@ -18,9 +26,8 @@ export class OrderController {
   async getSlots(@Query('') query: { date: string; barberId: string }) {
     return this.orderService.getSlots(query.date, query.barberId);
   }
-
   @Get(':id')
-  async getOrderById(id: string) {
+  async getOrderById(@Param('id') id: string) {
     return this.orderService.getOrderById(id);
   }
 

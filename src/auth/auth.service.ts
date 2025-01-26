@@ -171,15 +171,19 @@ export class AuthService {
       if (!isBranchExist) throw new NotFoundException('Branch not found');
     }
 
-    return this.prisma.$transaction(async (prisma) => {
-      const user = await prisma.user.create({
-        data: { ...rest, role, password: hashedPassword },
-      });
+    try {
+      return this.prisma.$transaction(async (prisma) => {
+        const user = await prisma.user.create({
+          data: { ...rest, role, password: hashedPassword },
+        });
 
-      return await prisma.user.update({
-        where: { id: user.id },
-        data,
+        return prisma.user.update({
+          where: { id: user.id },
+          data,
+        });
       });
-    });
+    } catch (error) {
+      console.log(error.message);
+    }
   }
 }

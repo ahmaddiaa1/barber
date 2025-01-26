@@ -24,6 +24,8 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('Unautorized - No token provider');
     const result = await this.prisma.token.findUnique({ where: { token } });
 
+    console.log('token', token);
+
     if (!result)
       throw new UnauthorizedException('Unautorized - No token provider');
 

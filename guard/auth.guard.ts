@@ -20,10 +20,12 @@ export class AuthGuard implements CanActivate {
     const token =
       req.headers['authorization']?.split(' ')[1] ||
       req.headers['Authorization']?.split(' ')[1];
-    if (!token) throw new UnauthorizedException('No token provided');
+    if (!token)
+      throw new UnauthorizedException('Unautorized - No token provider');
 
-    if (token && !this.authService.isTokenBlacklisted(token))
-      throw new UnauthorizedException('Token is expires');
+    const result = await this.prisma.token.findUnique({ where: { token } });
+    if (!result)
+      throw new UnauthorizedException('Unautorized - No token provider');
 
     try {
       const payload = this.authService.verifyToken(token) as JwtPayload;

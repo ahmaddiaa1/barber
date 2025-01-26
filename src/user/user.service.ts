@@ -13,7 +13,28 @@ export class UserService {
   ) {}
 
   public async findAllUser(role: Role): Promise<User[]> {
-    return this.prisma.user.findMany({ where: { role } });
+    const include =
+      role === 'ADMIN'.toLocaleLowerCase()
+        ? { admin: true }
+        : role === 'BARBER'.toLocaleLowerCase()
+          ? { barber: true }
+          : role === 'CASHIER'.toLocaleLowerCase()
+            ? { cashier: true }
+            : role === 'USER'.toLocaleLowerCase()
+              ? { client: true }
+              : undefined;
+
+    const where = role
+      ? {
+          role: {
+            equals: Role[role.toUpperCase()], // Ensure `role` is uppercase
+          },
+        }
+      : {};
+    return this.prisma.user.findMany({
+      where,
+      include,
+    });
   }
 
   public async findOneUser(id: string): Promise<User> {

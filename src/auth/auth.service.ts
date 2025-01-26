@@ -11,6 +11,7 @@ import { RegisterDto } from './dto/auth-register-dto';
 import { LoginDto } from './dto/auth-login-dto';
 import * as jwt from 'jsonwebtoken';
 import { AppSuccess } from 'utils/AppSuccess';
+import { Role, User } from '@prisma/client';
 
 @Global()
 @Injectable()
@@ -20,67 +21,63 @@ export class AuthService {
 
   constructor(private prisma: PrismaService) {}
 
-  async signup(createAuthDto: RegisterDto, branchId: string) {
-    const { phone, password, role = 'USER' } = createAuthDto;
-
+  async signup(createAuthDto: RegisterDto) {
+    const { phone, password, role = 'user', branchId } = createAuthDto;
+    let user: User;
     const saltOrRounds = 10;
-    let referralCode: string;
-
-    do {
-      referralCode = this.generateRandomCode(6);
-      const isReferralCodeExist = await this.prisma.client.findFirst({
-        where: { referralCode },
-      });
-      if (isReferralCodeExist) break;
-    } while (true);
+    const roles = role.toUpperCase() as Role;
 
     const isPhoneExist = await this.prisma.user.findUnique({
       where: { phone },
     });
+
+    if (!Role[roles.toUpperCase()])
+      throw new NotFoundException('Role not found');
 
     if (isPhoneExist)
       throw new ConflictException('phone number is already in use');
 
     const hashedPassword = await hash(password, saltOrRounds);
 
-    const newUser = await this.prisma.user.create({
-      data: { ...createAuthDto, password: hashedPassword },
-    });
-
-    if (role === 'ADMIN') {
-      await this.createUser(newUser.id, {
+    if (roles === Role.ADMIN) {
+      user = await this.createUser(createAuthDto, hashedPassword, {
         role: 'ADMIN',
         admin: { create: {} },
       });
-    } else if (role === 'USER') {
-      await this.createUser(newUser.id, {
+    } else if (roles === Role.USER) {
+      let referralCode: string;
+
+      do {
+        referralCode = this.generateRandomCode(6);
+        const isReferralCodeExist = await this.prisma.client.findFirst({
+          where: { referralCode },
+        });
+        if (!isReferralCodeExist) break;
+      } while (true);
+      user = await this.createUser(createAuthDto, hashedPassword, {
         client: {
           create: {
             referralCode,
           },
         },
       });
-    } else if (role === 'BARBER') {
-      await this.createUser(newUser.id, {
+    } else if (roles === Role.BARBER) {
+      user = await this.createUser(createAuthDto, hashedPassword, {
         role: 'BARBER',
         barber: {
-          create: {
-            branchId,
-          },
+          create: { branchId },
         },
       });
-    } else if (role === 'CASHIER') {
-      await this.createUser(newUser.id, {
+    } else if (roles === Role.CASHIER) {
+      user = await this.createUser(createAuthDto, hashedPassword, {
         role: 'CASHIER',
         cashier: {
-          create: {
-            branchId,
-          },
+          create: { branchId },
         },
       });
     }
 
-    return new AppSuccess(newUser, 'user created successfully', 201);
+    return new AppSuccess(user, 'user created successfully', 201);
   }
 
   async login(createAuthDto: LoginDto) {
@@ -126,15 +123,29 @@ export class AuthService {
   }
 
   async invalidateToken(token: string) {
-    this.blacklist.delete(token);
+    const isToken = await this.prisma.token.findUnique({ where: { token } });
+    if (!isToken) throw new UnauthorizedException('User already logged out');
+    return await this.prisma.token.delete({
+      where: { token },
+    });
   }
 
   async isTokenBlacklisted(token: string) {
-    return this.blacklist.has(token);
+    const tokens = await this.prisma.token.findUnique({
+      where: { token },
+    });
+    return tokens ? false : true;
   }
 
   async loginToken(token: string) {
-    this.blacklist.add(token);
+    const decoded = jwt.decode(token);
+    console.log(decoded);
+    if (typeof decoded === 'object' && decoded !== null && 'exp' in decoded) {
+      return await this.prisma.token.create({
+        data: { token, expiredAt: new Date(decoded.exp * 1000) },
+      });
+    }
+    throw new Error('Invalid token');
   }
 
   private generateRandomCode(length: number): string {
@@ -146,10 +157,32 @@ export class AuthService {
     }
     return result;
   }
-  private async createUser(id: string, data: any) {
-    await this.prisma.user.update({
-      where: { id },
-      data,
+
+  private async createUser(
+    createAuthDto: RegisterDto,
+    hashedPassword: string,
+    data: any,
+  ) {
+    const { branchId, role: roles, ...rest } = createAuthDto;
+    const role = roles.toUpperCase() as Role;
+    if (branchId) {
+      const isBranchExist = await this.prisma.branch.findUnique({
+        where: { id: branchId },
+      });
+      if (!isBranchExist) throw new NotFoundException('Branch not found');
+    }
+
+    return this.prisma.$transaction(async (prisma) => {
+      const user = await prisma.user.create({
+        data: { ...rest, role, password: hashedPassword },
+      });
+
+      const newUser = await prisma.user.update({
+        where: { id: user.id },
+        data,
+      });
+
+      return newUser;
     });
   }
 }

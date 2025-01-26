@@ -8,6 +8,8 @@ import { SupabaseModule } from './supabase/supabase.module';
 import { OrderModule } from './order/order.module';
 import { BranchModule } from './branch/branch.module';
 import { PromoCodeModule } from './promo-code/promo-code.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TokenService } from './token.service';
 
 @Module({
   imports: [
@@ -20,8 +22,9 @@ import { PromoCodeModule } from './promo-code/promo-code.module';
     OrderModule,
     BranchModule,
     PromoCodeModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [],
-  providers: [],
+  providers: [TokenService],
 })
 export class AppModule {}

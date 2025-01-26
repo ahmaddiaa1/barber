@@ -10,11 +10,8 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('/signup')
-  signup(
-    @Body() createAuthDto: RegisterDto,
-    @Param('branchId') branchId: string,
-  ) {
-    return this.authService.signup(createAuthDto, branchId);
+  signup(@Body() createAuthDto: RegisterDto) {
+    return this.authService.signup(createAuthDto);
   }
 
   @Post('/login')

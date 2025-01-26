@@ -73,6 +73,12 @@ model Admin {
   user   User   @relation(fields: [userId], references: [id])
 }
 
+model Token {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiredAt DateTime
+}
+
 model Complain {
   id        String   @id @default(uuid())
   clientId  String

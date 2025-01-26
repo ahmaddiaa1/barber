@@ -1,6 +1,13 @@
 import { Role } from '@prisma/client';
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsPhoneNumber,
+  IsString,
+  Length,
+  ValidateIf,
+} from 'class-validator';
 
 export class RegisterDto {
   @IsNotEmpty()
@@ -19,6 +26,7 @@ export class RegisterDto {
 
   @IsNotEmpty()
   @IsString()
+  @Length(10, 16)
   phone: string;
 
   @IsNotEmpty()
@@ -34,4 +42,14 @@ export class RegisterDto {
   @Transform(({ value }) => value ?? null)
   @IsString()
   role: Role;
+
+  @ValidateIf(
+    (object) =>
+      object.role.toUpperCase() === 'CASHIER' ||
+      object.role.toUpperCase() === 'BARBER',
+  )
+  @Transform(({ value }) => value ?? null)
+  @IsNotEmpty()
+  @IsString()
+  branchId: string;
 }

@@ -22,6 +22,7 @@ export class AuthService {
 
   async signup(createAuthDto: RegisterDto, branchId: string) {
     const { phone, password, role = 'USER' } = createAuthDto;
+
     const saltOrRounds = 10;
     let referralCode: string;
 
@@ -36,8 +37,10 @@ export class AuthService {
     const isPhoneExist = await this.prisma.user.findUnique({
       where: { phone },
     });
+
     if (isPhoneExist)
       throw new ConflictException('phone number is already in use');
+
     const hashedPassword = await hash(password, saltOrRounds);
 
     const newUser = await this.prisma.user.create({
@@ -45,54 +48,33 @@ export class AuthService {
     });
 
     if (role === 'ADMIN') {
-      await this.prisma.user.update({
-        where: {
-          id: newUser.id,
-        },
-        data: {
-          role: 'ADMIN',
-          admin: { create: {} },
-        },
+      await this.createUser(newUser.id, {
+        role: 'ADMIN',
+        admin: { create: {} },
       });
     } else if (role === 'USER') {
-      await this.prisma.user.update({
-        where: {
-          id: newUser.id,
-        },
-        data: {
-          role: 'BARBER',
-          client: {
-            create: {
-              referralCode,
-            },
+      await this.createUser(newUser.id, {
+        client: {
+          create: {
+            referralCode,
           },
         },
       });
     } else if (role === 'BARBER') {
-      await this.prisma.user.update({
-        where: {
-          id: newUser.id,
-        },
-        data: {
-          role: 'BARBER',
-          barber: {
-            create: {
-              branchId,
-            },
+      await this.createUser(newUser.id, {
+        role: 'BARBER',
+        barber: {
+          create: {
+            branchId,
           },
         },
       });
     } else if (role === 'CASHIER') {
-      await this.prisma.user.update({
-        where: {
-          id: newUser.id,
-        },
-        data: {
-          role: 'CASHIER',
-          cashier: {
-            create: {
-              branchId,
-            },
+      await this.createUser(newUser.id, {
+        role: 'CASHIER',
+        cashier: {
+          create: {
+            branchId,
           },
         },
       });
@@ -107,13 +89,20 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { phone },
     });
-    if (!user) throw new NotFoundException('phone number or password is wrong');
+
+    if (!user) throw new NotFoundException('Invalid Phone number or password');
+
     const isPasswordCorrect = await compare(password, user.password);
+
     if (!isPasswordCorrect)
-      throw new NotFoundException('phone number or password is wrong');
+      throw new NotFoundException('Invalid Phone number or password');
+
     const token = jwt.sign({ userId: user.id }, this.jwtSecret, {
       expiresIn: '1h',
     });
+
+    await this.loginToken(token);
+
     const { password: _, ...data } = user;
     return {
       data,
@@ -137,11 +126,15 @@ export class AuthService {
   }
 
   async invalidateToken(token: string) {
-    this.blacklist.add(token);
+    this.blacklist.delete(token);
   }
 
-  isTokenBlacklisted(token: string) {
+  async isTokenBlacklisted(token: string) {
     return this.blacklist.has(token);
+  }
+
+  async loginToken(token: string) {
+    this.blacklist.add(token);
   }
 
   private generateRandomCode(length: number): string {

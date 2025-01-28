@@ -19,12 +19,6 @@ export class AuthController {
     return this.authService.login(createAuthDto);
   }
 
-  // @Get('/current/profiles')
-  // @UseGuards(AuthGuard)
-  // currentUser(@UserData('user') user: User) {
-  //   return this.authService.currentUser(user);
-  // }
-
   @Post('/logout')
   @UseGuards(AuthGuard)
   logout(@UserData('token') token: string) {

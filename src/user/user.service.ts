@@ -27,14 +27,15 @@ export class UserService {
     const where = role
       ? {
           role: {
-            equals: Role[role.toUpperCase()], // Ensure `role` is uppercase
+            equals: Role[role.toUpperCase()],
           },
         }
       : {};
-    return this.prisma.user.findMany({
+    const users = this.prisma.user.findMany({
       where,
       include,
     });
+    return users;
   }
 
   public async findOneUser(id: string) {
@@ -110,14 +111,13 @@ export class UserService {
 
     const user = {
       ...rest,
-      [Role[role === 'USER' ? 'client' : role].toLowerCase()]: {
+      [(Role[role] === 'USER' ? 'client' : role).toLowerCase()]: {
         ...(admin || barber || cashier || client),
       },
     };
     console.log(user);
     return user;
   }
-
   public async removeUser(id: string) {
     return this.prisma.user.delete({
       where: { id },

@@ -12,7 +12,7 @@ export class UserService {
     private supabaseService: SupabaseService,
   ) {}
 
-  public async findAllUser(role: Role): Promise<User[]> {
+  public async findAllUser(role: Role) {
     const include =
       role === 'ADMIN'.toLocaleLowerCase()
         ? { admin: true }
@@ -37,14 +37,29 @@ export class UserService {
     });
   }
 
-  public async findOneUser(id: string): Promise<User> {
-    const user = await this.prisma.user.findUnique({
+  public async findOneUser(id: string) {
+    const userWithRole = await this.prisma.user.findUnique({
       where: { id },
+      include: {
+        admin: true,
+        barber: true,
+        cashier: true,
+        client: true,
+      },
     });
-
-    if (!user) {
+    if (!userWithRole) {
       throw new NotFoundException('User not found');
     }
+    const role = userWithRole.role;
+
+    const { admin, barber, cashier, client, ...rest } = userWithRole;
+
+    const user = {
+      ...rest,
+      [Role[role === 'USER' ? 'client' : role].toLocaleLowerCase()]: {
+        ...(admin || barber || cashier || client),
+      },
+    };
 
     return user;
   }
@@ -53,7 +68,7 @@ export class UserService {
     id: string,
     user: UserUpdateDto,
     file: Express.Multer.File,
-  ): Promise<User> {
+  ) {
     const userExists = await this.prisma.user.findUnique({
       where: { id },
     });
@@ -75,11 +90,35 @@ export class UserService {
     });
   }
 
-  public async CurrentUser(user: User): Promise<User> {
+  public async CurrentUser(data: User) {
+    const userWithRole = await this.prisma.user.findUnique({
+      where: { id: data.id },
+      include: {
+        admin: true,
+        barber: true,
+        cashier: true,
+        client: true,
+      },
+    });
+
+    if (!userWithRole) {
+      throw new NotFoundException('User not found');
+    }
+
+    const role = data.role;
+    const { admin, barber, cashier, client, password, ...rest } = userWithRole;
+
+    const user = {
+      ...rest,
+      [Role[role === 'USER' ? 'client' : role].toLowerCase()]: {
+        ...(admin || barber || cashier || client),
+      },
+    };
+
     return user;
   }
 
-  public async removeUser(id: string): Promise<User> {
+  public async removeUser(id: string) {
     return this.prisma.user.delete({
       where: { id },
     });

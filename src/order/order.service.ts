@@ -61,6 +61,8 @@ export class OrderService {
       },
     });
 
+    
+
     if (existingOrder) {
       throw new ConflictException(
         `Slot ${createOrderDto.slot} is already booked`,

@@ -12,30 +12,42 @@ export class UserService {
     private supabaseService: SupabaseService,
   ) {}
 
-  public async findAllUser(role: Role) {
-    const include =
-      role === 'ADMIN'.toLocaleLowerCase()
-        ? { admin: true }
-        : role === 'BARBER'.toLocaleLowerCase()
-          ? { barber: true }
-          : role === 'CASHIER'.toLocaleLowerCase()
-            ? { cashier: true }
-            : role === 'USER'.toLocaleLowerCase()
-              ? { client: true }
-              : undefined;
+  public async findAllUser(role: string) {
+    try {
+      const normalizedRole = role?.toUpperCase();
+      const include =
+        normalizedRole === 'ADMIN'
+          ? { admin: true }
+          : normalizedRole === 'BARBER'
+            ? { barber: true }
+            : normalizedRole === 'CASHIER'
+              ? { cashier: true }
+              : normalizedRole === 'USER'
+                ? { client: true }
+                : undefined;
 
-    const where = role
-      ? {
-          role: {
-            equals: Role[role.toUpperCase()],
-          },
-        }
-      : {};
-    const users = this.prisma.user.findMany({
-      where,
-      include,
-    });
-    return users;
+      if (!include) {
+        throw new Error(`Invalid role provided: ${role}`);
+      }
+
+      const where = role
+        ? {
+            role: {
+              equals: Role[normalizedRole],
+            },
+          }
+        : {};
+
+      const users = await this.prisma.user.findMany({
+        where,
+        include,
+      });
+
+      return users;
+    } catch (error) {
+      console.error('Error fetching users:', error.message);
+      throw error;
+    }
   }
 
   public async findOneUser(id: string) {

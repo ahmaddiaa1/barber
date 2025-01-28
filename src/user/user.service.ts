@@ -24,7 +24,12 @@ export class UserService {
               ? { cashier: true }
               : normalizedRole === 'USER'
                 ? { client: true }
-                : undefined;
+                : {
+                    client: true,
+                    admin: true,
+                    barber: true,
+                    cashier: true,
+                  };
 
       if (!include) {
         throw new Error(`Invalid role provided: ${role}`);
@@ -42,8 +47,13 @@ export class UserService {
         where,
         include,
       });
+      const cleanedUsers = users.map((user) => {
+        return Object.fromEntries(
+          Object.entries(user).filter(([_, value]) => value !== null),
+        );
+      });
 
-      return users;
+      return cleanedUsers;
     } catch (error) {
       console.error('Error fetching users:', error.message);
       throw error;

@@ -114,7 +114,7 @@ export class UserService {
         ...(admin || barber || cashier || client),
       },
     };
-
+    console.log(user);
     return user;
   }
 

@@ -69,7 +69,6 @@ export class UserService {
             barber: this.barberAndCashier,
             cashier: this.barberAndCashier,
           };
-      console.log('we');
       const users = await this.prisma.user.findMany({
         where: { role: Role[role.toUpperCase()] ?? { not: Role.USER } },
         skip: (page - 1) * pageSize,
@@ -80,7 +79,6 @@ export class UserService {
       return users.map(({ admin, barber, cashier, ...user }) => {
         return {
           ...user,
-          ...(admin && { admin }),
           ...(barber && { barber }),
           ...(cashier && { cashier }),
         };

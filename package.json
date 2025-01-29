@@ -29,6 +29,7 @@
     "@nestjs/schedule": "^5.0.1",
     "@prisma/client": "^6.2.1",
     "@supabase/supabase-js": "^2.47.16",
+    "@vonage/server-sdk": "^3.19.4",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "dotenv": "^16.4.7",

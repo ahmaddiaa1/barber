@@ -26,51 +26,46 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  role    Role     @default(USER)
-  Order   Order[]
+  role Role @default(USER)
+
   barber  Barber?
   client  Client?
   cashier Cashier?
   admin   Admin?
+
+  UserOrders    Order[] @relation("UserOrders")
+  CashierOrders Order[] @relation("CashierOrders")
+  BarberOrders  Order[] @relation("BarberOrders")
 
   @@map("users")
 }
 
 model Client {
   id           String     @id @default(uuid())
-  userId       String     @unique
   referralCode String?    @unique
   points       Int        @default(0)
-  user         User       @relation(fields: [userId], references: [id])
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  user         User       @relation(fields: [id], references: [id])
   complain     Complain[]
 }
 
 model Cashier {
-  id       String  @id @default(uuid())
-  userId   String  @unique
+  id       String @id
   branchId String
-  user     User    @relation(fields: [userId], references: [id])
-  branch   Branch  @relation(fields: [branchId], references: [id])
-  order    Order[]
+  user     User   @relation(fields: [id], references: [id])
+  branch   Branch @relation(fields: [branchId], references: [id])
 }
 
 model Barber {
-  id       String @id @default(uuid())
-  userId   String @unique
+  id       String @id
   branchId String
   rate     Int    @default(0)
-  user     User   @relation(fields: [userId], references: [id])
+  user     User   @relation(fields: [id], references: [id])
   branch   Branch @relation(fields: [branchId], references: [id])
-
-  order Order[]
 }
 
 model Admin {
-  id     String @id @default(uuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
+  id   String @id
+  user User   @relation(fields: [id], references: [id])
 }
 
 model Token {
@@ -81,9 +76,9 @@ model Token {
 
 model Complain {
   id        String   @id @default(uuid())
-  clientId  String
-  complain  String
-  client    Client   @relation(fields: [clientId], references: [id])
+  userId    String
+  message   String
+  client    Client   @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -156,27 +151,29 @@ model PromoCode {
 
 model Order {
   id          String        @id @default(uuid())
-  userId      String
-  barberId    String
   branchId    String
   promoCodeId String?
-  cashierId   String?
   date        DateTime
   slot        String
   note        String?
   booking     BookingStatus @default(UPCOMING)
   status      OrderStatus   @default(PENDING)
   points      Int           @default(0)
-  user        User          @relation(fields: [userId], references: [id])
-  Barber      Barber        @relation(fields: [barberId], references: [id])
   branch      Branch        @relation(fields: [branchId], references: [id])
   promoCode   PromoCode?    @relation(fields: [promoCodeId], references: [id])
-  Cashier     Cashier?      @relation(fields: [cashierId], references: [id])
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   service     Service[]     @relation("OrderToServices")
   subTotal    Int
   total       Int
+
+  client  User  @relation("UserOrders", fields: [userId], references: [id])
+  barber  User  @relation("BarberOrders", fields: [barberId], references: [id])
+  Cashier User? @relation("CashierOrders", fields: [cashierId], references: [id])
+
+  userId    String
+  barberId  String
+  cashierId String?
 }
 
 enum OrderStatus {

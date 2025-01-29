@@ -30,7 +30,7 @@ export class AuthService {
       where: { phone },
     });
 
-    if (!Role[roles.toUpperCase()])
+    if (!Role[roles?.toUpperCase()])
       throw new NotFoundException('Role not found');
 
     if (isPhoneExist)
@@ -162,7 +162,7 @@ export class AuthService {
     hashedPassword: string,
     data: any,
   ) {
-    const { branchId, role: roles, ...rest } = createAuthDto;
+    const { branchId, role: roles = 'user', ...rest } = createAuthDto;
     const role = roles.toUpperCase() as Role;
     if (branchId) {
       const isBranchExist = await this.prisma.branch.findUnique({

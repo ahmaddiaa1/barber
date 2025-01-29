@@ -45,8 +45,8 @@ export class RegisterDto {
 
   @ValidateIf(
     (object) =>
-      object.role.toUpperCase() === 'CASHIER' ||
-      object.role.toUpperCase() === 'BARBER',
+      object?.role?.toUpperCase() === 'CASHIER' ||
+      object?.role?.toUpperCase() === 'BARBER',
   )
   @Transform(({ value }) => value ?? null)
   @IsNotEmpty()

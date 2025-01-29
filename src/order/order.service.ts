@@ -15,10 +15,10 @@ export class OrderService {
       where: { id },
       include: {
         service: true,
-        Barber: {
+        barber: {
           include: {
-            user: true
-          }
+            barber: true,
+          },
         },
       },
     });
@@ -60,8 +60,6 @@ export class OrderService {
         ],
       },
     });
-
-    
 
     if (existingOrder) {
       throw new ConflictException(
@@ -151,7 +149,7 @@ export class OrderService {
       },
     });
 
-    console.log("orders", orders);
+    console.log('orders', orders);
 
     const unavailableSlots = orders.map((order) => order.slot);
 
@@ -218,7 +216,7 @@ export class OrderService {
       where: { id },
       include: {
         service: true,
-        Barber: true,
+        barber: { include: { barber: true } },
       },
     });
   }

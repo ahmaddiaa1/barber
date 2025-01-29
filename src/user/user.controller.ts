@@ -15,7 +15,7 @@ import { UserService } from './user.service';
 import { AuthGuard } from 'guard/auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UserUpdateDto } from './dto/user-update-dto';
-import { UserData } from 'decorators/user.decoretor';
+import { UserData } from 'decorators/user.decorator';
 import { Role, User } from '@prisma/client';
 
 @Controller('user')
@@ -24,8 +24,13 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  findAll(@Query('role') role: Role) {
-    return this.userService.findAllUser(role);
+  findAll(@Query() {role, page, pageSize}: {role?: Role; page: number; pageSize: number}) {
+    return this.userService.findAllUser(page, pageSize, role);
+  }
+
+  @Get('clients')
+  findAllClients(@Query() { page, pageSize, phone }: { page: number; pageSize: number; phone?: string }) {
+    return this.userService.findAllClients(page, pageSize, phone);
   }
 
   @Get(':id')

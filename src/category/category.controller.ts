@@ -13,7 +13,7 @@ import { Category } from '@prisma/client';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { AuthGuard } from 'guard/auth.guard';
 import { RolesGuard } from '../../guard/role.guard';
-import { Roles } from '../../decorators/roles.decoretor';
+import { Roles } from '../../decorators/roles.decorator';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Controller('category')

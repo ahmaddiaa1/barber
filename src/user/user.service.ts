@@ -12,53 +12,118 @@ export class UserService {
     private supabaseService: SupabaseService,
   ) {}
 
-  public async findAllUser(role: string) {
+
+  public async findAllClients(page: number = 1, pageSize: number = 10, phone?: string) {
     try {
-      const normalizedRole = role?.toUpperCase();
-      const include =
-        normalizedRole === 'ADMIN'
-          ? { admin: true }
-          : normalizedRole === 'BARBER'
-            ? { barber: true }
-            : normalizedRole === 'CASHIER'
-              ? { cashier: true }
-              : normalizedRole === 'USER'
-                ? { client: true }
-                : {
-                    client: true,
-                    admin: true,
-                    barber: true,
-                    cashier: true,
-                  };
+      const clients = await this.prisma.user.findMany({
+        where: {
+          role: Role.USER,
+          phone: phone ? phone : undefined, 
+        },
+        include: {
+          client: true,
+        },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      });
+      return clients;
+    } catch (error) {
+      console.error('Error fetching clients:', error.message);
+      throw error;
+    }
+  }
 
-      if (!include) {
-        throw new Error(`Invalid role provided: ${role}`);
-      }
-
-      const where = role
-        ? {
-            role: {
-              equals: Role[normalizedRole],
-            },
-          }
-        : {};
+  public async findAllUser(page: number = 1, pageSize: number = 10, role?: Role) {
+    try {
+      const include = role
+      ? role === Role.ADMIN
+        ? { admin: true }
+        : role === Role.BARBER
+        ? { barber: true }
+        : role === Role.CASHIER
+        ? { cashier: true }
+        : {}
+      : {
+        admin: true,
+        barber: true,
+        cashier: true,
+      };
 
       const users = await this.prisma.user.findMany({
-        where,
-        include,
-      });
-      const cleanedUsers = users.map((user) => {
-        return Object.fromEntries(
-          Object.entries(user).filter(([_, value]) => value !== null),
-        );
+      where: {
+        role: role ? role : { not: Role.USER },
+      },
+      skip: (page - 1) * pageSize, 
+      take: pageSize,
+      include,
       });
 
+      // -> to avoid returning all roles in one object
+      const cleanedUsers = users.map((user) => {
+        return Object.fromEntries(
+          Object.entries(user).filter(([key, value]) => {
+            if (key === 'admin' || key === 'barber' || key === 'cashier') {
+              return value !== null;
+            }
+            return true;
+          }),
+        );
+      });
+     
       return cleanedUsers;
     } catch (error) {
       console.error('Error fetching users:', error.message);
       throw error;
     }
   }
+
+  // public async findAllUser(role: string) {
+  //   try {
+  //     const normalizedRole = role?.toUpperCase();
+  //     const include =
+  //       normalizedRole === 'ADMIN'
+  //         ? { admin: true }
+  //         : normalizedRole === 'BARBER'
+  //           ? { barber: true }
+  //           : normalizedRole === 'CASHIER'
+  //             ? { cashier: true }
+  //             // : normalizedRole === 'USER'
+  //             //   ? { client: true }
+  //               : {
+  //                   // client: true,
+  //                   admin: true,
+  //                   barber: true,
+  //                   cashier: true,
+  //                 };
+
+  //     if (!include) {
+  //       throw new Error(`Invalid role provided: ${role}`);
+  //     }
+
+  //     const where = role
+  //       ? {
+  //           role: {
+  //             equals: Role[normalizedRole],
+  //           },
+  //         }
+  //       : {};
+
+  //     const users = await this.prisma.user.findMany({
+  //       where,
+  //       include,
+  //     });
+  //     const cleanedUsers = users.map((user) => {
+  //       return Object.fromEntries(
+  //         Object.entries(user).filter(([_, value]) => value !== null),
+  //       );
+  //     });
+
+  //     return cleanedUsers;
+  //   } catch (error) {
+  //     console.error('Error fetching users:', error.message);
+  //     throw error;
+  //   }
+  // }
 
   public async findOneUser(id: string) {
     const userWithRole = await this.prisma.user.findUnique({

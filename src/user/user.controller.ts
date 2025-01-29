@@ -15,7 +15,7 @@ import { UserService } from './user.service';
 import { AuthGuard } from 'guard/auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UserUpdateDto } from './dto/user-update-dto';
-import { UserData } from 'decorators/user.decoretor';
+import { UserData } from 'decorators/user.decorator';
 import { Role, User } from '@prisma/client';
 
 @Controller('user')

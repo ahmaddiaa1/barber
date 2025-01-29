@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { UserData } from '../../decorators/user.decoretor';
+import { UserData } from '../../decorators/user.decorator';
 import { User } from '@prisma/client';
 import { AuthGuard } from '../../guard/auth.guard';
 

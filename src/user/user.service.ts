@@ -54,11 +54,10 @@ export class UserService {
       console.error('Error fetching clients:', error.message);
       throw error;
     }
-  };
+  }
 
   public async findAllUser(page = 1, pageSize = 10, role?: string) {
-
-    if(role && !Role[role.toUpperCase()]) {
+    if (role && !Role[role.toUpperCase()]) {
       throw new NotFoundException('Role not found');
     }
 
@@ -70,10 +69,10 @@ export class UserService {
             barber: this.barberAndCashier,
             cashier: this.barberAndCashier,
           };
-
+      console.log('we');
       const users = await this.prisma.user.findMany({
         where: { role: Role[role.toUpperCase()] ?? { not: Role.USER } },
-        skip: (page - 1) * pageSize, 
+        skip: (page - 1) * pageSize,
         take: pageSize,
         select: { ...this.user, ...include },
       });
@@ -90,7 +89,7 @@ export class UserService {
       console.error('Error fetching users:', error.message);
       throw error;
     }
-  };
+  }
 
   public async findOneUser(id: string) {
     const user = await this.prisma.user.findUnique({
@@ -113,7 +112,7 @@ export class UserService {
         : user.role.toLowerCase();
 
     return { ...rest, [userRole]: admin || barber || cashier || client };
-  };
+  }
 
   public async updateUser(
     id: string,
@@ -131,7 +130,7 @@ export class UserService {
       where: { id },
       data: { ...userData, ...(avatarUrl && { avatar: avatarUrl }) },
     });
-  };
+  }
 
   public async CurrentUser(user: User) {
     const userWithRole = await this.prisma.user.findUnique({
@@ -152,9 +151,9 @@ export class UserService {
       user.role === Role.USER ? 'client' : user.role.toLowerCase();
 
     return { ...rest, [userRole]: admin || barber || cashier || client };
-  };
+  }
 
   public async removeUser(id: string) {
     return this.prisma.user.delete({ where: { id } });
-  };
+  }
 }

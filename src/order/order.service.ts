@@ -108,7 +108,7 @@ export class OrderService {
 
     const slots = await this.getSlots(dataWithoutTime, createOrderDto.barberId);
 
-    if (!slots.find((slot) => slot.slot === createOrderDto.slot)) {
+    if (!slots.find((slot) => slot === createOrderDto.slot)) {
       throw new ConflictException(
         `Slot ${createOrderDto.slot} is not available for booking.`,
       );
@@ -146,10 +146,9 @@ export class OrderService {
       },
       select: {
         slot: true,
+        service: { select: { duration: true } },
       },
     });
-
-    console.log('orders', orders);
 
     const unavailableSlots = orders.map((order) => order.slot);
 
@@ -160,13 +159,10 @@ export class OrderService {
     });
 
     if (!allSlots) {
-      throw new Error('No slots found in the database.');
+      throw new ConflictException('No slots found in the database.');
     }
 
-    return allSlots.slot.map((slot) => ({
-      slot,
-      available: !unavailableSlots.includes(slot),
-    }));
+    return allSlots.slot.filter((slot) => !unavailableSlots.includes(slot));
   }
 
   async generateSlot(start: number, end: number) {
@@ -189,10 +185,8 @@ export class OrderService {
         );
       }
     }
-
     const existingSlots = await this.prisma.slot.findMany();
-
-    if (existingSlots.length) {
+    if (existingSlots) {
       return this.prisma.slot.updateMany({
         data: {
           start,

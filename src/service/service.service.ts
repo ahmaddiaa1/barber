@@ -39,7 +39,7 @@ export class ServiceService {
       : undefined;
 
     return this.prisma.service.create({
-      data: { ...createServiceDto, ...(serviceImg && { avatar: serviceImg }) },
+      data: { ...createServiceDto, ...(serviceImg && { serviceImg }) },
     });
   }
 
@@ -54,7 +54,7 @@ export class ServiceService {
       : undefined;
     return this.prisma.service.update({
       where: { id },
-      data: { ...updateServiceDto, ...(serviceImg && { avatar: serviceImg }) },
+      data: { ...updateServiceDto, ...(serviceImg && { serviceImg }) },
     });
   }
 

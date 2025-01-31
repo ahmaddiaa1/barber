@@ -27,7 +27,6 @@ export class UserService {
       id: false,
       referralCode: true,
       points: true,
-      complain: true,
     },
   };
 

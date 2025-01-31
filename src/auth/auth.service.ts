@@ -30,11 +30,13 @@ export class AuthService {
       where: { phone },
     });
 
-    if (!Role[roles?.toUpperCase()])
+    if (!Role[roles?.toUpperCase()]) {
       throw new NotFoundException('Role not found');
+    }
 
-    if (isPhoneExist)
+    if (isPhoneExist) {
       throw new ConflictException('phone number is already in use');
+    }
 
     const hashedPassword = await hash(password, saltOrRounds);
 

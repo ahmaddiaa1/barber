@@ -12,12 +12,9 @@ export class SupabaseService {
     );
   }
 
-  async uploadAvatar(
-    file: Express.Multer.File,
-    userId: string,
-  ): Promise<string> {
+  async uploadAvatar(file: Express.Multer.File, id: string): Promise<string> {
     const { buffer, originalname } = file;
-    const filePath = `avatars/${Date.now()}-${userId}-${originalname}`;
+    const filePath = `avatars/${Date.now()}-${id}-${originalname}`;
 
     const { data, error } = await this.supabase.storage
       .from('avatars')

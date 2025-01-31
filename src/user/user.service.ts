@@ -40,7 +40,7 @@ export class UserService {
 
   public async findAllClients(page = 1, pageSize = 10, phone?: string) {
     try {
-      return await this.prisma.user.findMany({
+      const users = await this.prisma.user.findMany({
         where: {
           role: Role.USER,
           ...(phone && { phone }),
@@ -52,6 +52,8 @@ export class UserService {
         skip: (page - 1) * pageSize,
         take: pageSize,
       });
+
+      return new AppSuccess(users, 'Clients fetched successfully', 200);
     } catch (error) {
       console.error('Error fetching clients:', error.message);
       throw error;
@@ -78,13 +80,15 @@ export class UserService {
         select: { ...this.user, ...include },
       });
 
-      return users.map(({ admin, barber, cashier, ...user }) => {
+      const fetchUsers = users.map(({ admin, barber, cashier, ...user }) => {
         return {
           ...user,
           ...(barber && { barber }),
           ...(cashier && { cashier }),
         };
       });
+
+      return new AppSuccess(fetchUsers, 'Users fetched successfully', 200);
     } catch (error) {
       console.error('Error fetching users:', error.message);
       throw error;
@@ -111,7 +115,14 @@ export class UserService {
         ? 'client'
         : user.role.toLowerCase();
 
-    return { ...rest, [userRole]: admin || barber || cashier || client };
+    return new AppSuccess(
+      {
+        ...rest,
+        [userRole]: admin || barber || cashier || client,
+      },
+      'User fetched successfully',
+      200,
+    );
   }
 
   public async updateUser(
@@ -126,10 +137,12 @@ export class UserService {
       ? await this.supabaseService.uploadAvatar(file, id)
       : undefined;
 
-    return this.prisma.user.update({
+    const updateUser = this.prisma.user.update({
       where: { id },
       data: { ...userData, ...(avatarUrl && { avatar: avatarUrl }) },
     });
+
+    return new AppSuccess(updateUser, 'User updated successfully', 200);
   }
 
   public async CurrentUser(user: User) {

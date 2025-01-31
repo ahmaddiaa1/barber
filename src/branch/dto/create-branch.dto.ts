@@ -5,7 +5,8 @@ import {
   IsInt,
   Min,
   Max,
-  IsPhoneNumber,
+  IsNotEmpty,
+  Length,
 } from 'class-validator';
 
 export class CreateBranchDto {
@@ -15,7 +16,9 @@ export class CreateBranchDto {
   @IsString()
   location: string;
 
-  @IsPhoneNumber()
+  @IsNotEmpty()
+  @IsString()
+  @Length(10, 16)
   phone: string;
 
   @IsString()

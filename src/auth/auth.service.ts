@@ -30,11 +30,13 @@ export class AuthService {
       where: { phone },
     });
 
-    if (!Role[roles?.toUpperCase()])
+    if (!Role[roles?.toUpperCase()]) {
       throw new NotFoundException('Role not found');
+    }
 
-    if (isPhoneExist)
+    if (isPhoneExist) {
       throw new ConflictException('phone number is already in use');
+    }
 
     const hashedPassword = await hash(password, saltOrRounds);
 
@@ -53,6 +55,7 @@ export class AuthService {
         });
         if (!isReferralCodeExist) break;
       } while (true);
+
       user = await this.createUser(createAuthDto, hashedPassword, {
         client: {
           create: {
@@ -76,11 +79,7 @@ export class AuthService {
       });
     }
 
-    const token = jwt.sign({ userId: user.id }, this.jwtSecret, {
-      expiresIn: '6h',
-    });
-
-    await this.loginToken(token);
+    const token = await this.generateToken(user.id);
 
     const { password: _, ...data } = user;
 
@@ -89,7 +88,7 @@ export class AuthService {
       token,
       message: 'login successfully',
       statusCode: 201,
-    }
+    };
   }
 
   async login(createAuthDto: LoginDto) {
@@ -106,11 +105,7 @@ export class AuthService {
     if (!isPasswordCorrect)
       throw new NotFoundException('Invalid Phone number or password');
 
-    const token = jwt.sign({ userId: user.id }, this.jwtSecret, {
-      expiresIn: '6h',
-    });
-
-    await this.loginToken(token);
+    const token = await this.generateToken(user.id);
 
     const { password: _, ...data } = user;
     return {
@@ -141,13 +136,6 @@ export class AuthService {
       where: { token },
     });
   }
-
-  // async isTokenBlacklisted(token: string) {
-  //   const tokens = await this.prisma.token.findUnique({
-  //     where: { token },
-  //   });
-  //   return !tokens;
-  // }
 
   async loginToken(token: string) {
     const decoded = jwt.decode(token);
@@ -198,5 +186,11 @@ export class AuthService {
     } catch (error) {
       console.log(error.message);
     }
+  }
+
+  private async generateToken(userId: string) {
+    const token = jwt.sign({ userId }, this.jwtSecret, { expiresIn: '6h' });
+    await this.loginToken(token);
+    return token;
   }
 }

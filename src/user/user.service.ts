@@ -15,9 +15,11 @@ export class UserService {
     id: true,
     firstName: true,
     lastName: true,
+    avatar: true,
     phone: true,
     role: true,
     createdAt: true,
+    updatedAt: true,
   };
 
   private client = {
@@ -64,7 +66,7 @@ export class UserService {
 
     try {
       const include = role
-        ? { [role.toLowerCase()]: true }
+        ? { [role?.toLowerCase()]: true }
         : {
             admin: false,
             barber: this.barberAndCashier,
@@ -72,7 +74,7 @@ export class UserService {
           };
 
       const users = await this.prisma.user.findMany({
-        where: { role: Role[role.toUpperCase()] ?? { not: Role.USER } },
+        where: { role: Role[role?.toUpperCase()] ?? { not: Role.USER } },
         skip: (page - 1) * pageSize, 
         take: pageSize,
         select: { ...this.user, ...include },

@@ -76,7 +76,20 @@ export class AuthService {
       });
     }
 
-    return new AppSuccess(user, 'user created successfully', 201);
+    const token = jwt.sign({ userId: user.id }, this.jwtSecret, {
+      expiresIn: '6h',
+    });
+
+    await this.loginToken(token);
+
+    const { password: _, ...data } = user;
+
+    return {
+      data,
+      token,
+      message: 'login successfully',
+      statusCode: 201,
+    }
   }
 
   async login(createAuthDto: LoginDto) {
@@ -94,7 +107,7 @@ export class AuthService {
       throw new NotFoundException('Invalid Phone number or password');
 
     const token = jwt.sign({ userId: user.id }, this.jwtSecret, {
-      expiresIn: '1h',
+      expiresIn: '6h',
     });
 
     await this.loginToken(token);

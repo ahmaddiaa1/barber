@@ -10,6 +10,7 @@ import { BranchModule } from './branch/branch.module';
 import { PromoCodeModule } from './promo-code/promo-code.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TokenService } from './token.service';
+import { ComplainModule } from './complain/complain.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TokenService } from './token.service';
     BranchModule,
     PromoCodeModule,
     ScheduleModule.forRoot(),
+    ComplainModule,
   ],
   controllers: [],
   providers: [TokenService],

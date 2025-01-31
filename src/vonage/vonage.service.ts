@@ -14,6 +14,8 @@ export class VonageService {
       apiSecret,
     } as any);
   }
+  
+  // 4d6e854f-8e2e-40be-l3a3-bbc67b308d1b
 
   async sendSMS(to: string, from: string, text: string) {
     return new Promise((resolve, reject) => {

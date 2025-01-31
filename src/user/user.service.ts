@@ -3,6 +3,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Role, User } from '@prisma/client';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { UserUpdateDto } from './dto/user-update-dto';
+import { AppSuccess } from 'src/utils/AppSuccess';
 
 @Injectable()
 export class UserService {
@@ -72,7 +73,7 @@ export class UserService {
           };
       const users = await this.prisma.user.findMany({
         where: { role: Role[role?.toUpperCase()] ?? { not: Role.USER } },
-        skip: (page - 1) * pageSize, 
+        skip: (page - 1) * pageSize,
         take: pageSize,
         select: { ...this.user, ...include },
       });
@@ -149,7 +150,14 @@ export class UserService {
     const userRole =
       user.role === Role.USER ? 'client' : user.role.toLowerCase();
 
-    return { ...rest, [userRole]: admin || barber || cashier || client };
+    return new AppSuccess(
+      {
+        ...rest,
+        [userRole]: admin || barber || cashier || client,
+      },
+      'User updated successfully',
+      200,
+    );
   }
 
   public async removeUser(id: string) {

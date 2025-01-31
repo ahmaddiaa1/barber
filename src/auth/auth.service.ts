@@ -108,6 +108,7 @@ export class AuthService {
     const token = await this.generateToken(user.id);
 
     const { password: _, ...data } = user;
+
     return {
       data,
       token,
@@ -139,7 +140,6 @@ export class AuthService {
 
   async loginToken(token: string) {
     const decoded = jwt.decode(token);
-    console.log(decoded);
     if (typeof decoded === 'object' && decoded !== null && 'exp' in decoded) {
       return this.prisma.token.create({
         data: { token, expiredAt: new Date(decoded.exp * 1000) },

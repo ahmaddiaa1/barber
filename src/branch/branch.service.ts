@@ -21,16 +21,16 @@ export class BranchService {
 
   async findAll() {
     const branches = await this.prisma.branch.findMany();
-    return new AppSuccess(branches, 'Branches found successfully');
+    return new AppSuccess({ branches }, 'Branches found successfully');
   }
 
   async findOne(id: string) {
     const branch = await this.prisma.branch.findUnique({
       where: { id },
-      include: { 
+      include: {
         barber: true,
         Cashier: true,
-       },
+      },
     });
 
     if (!branch) throw new NotFoundException('Branch not found');

@@ -20,7 +20,22 @@ export class BranchService {
   }
 
   async findAll() {
-    const branches = await this.prisma.branch.findMany();
+    const branches = await this.prisma.branch.findMany({
+      include: {
+        barber: {
+          include: {
+            user: {
+              select: {
+                id: false,
+                firstName: true,
+                lastName: true,
+                phone: true,
+              },
+            },
+          },
+        },
+      },
+    });
     return new AppSuccess({ branches }, 'Branches found successfully');
   }
 

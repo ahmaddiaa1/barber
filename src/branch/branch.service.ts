@@ -20,10 +20,18 @@ export class BranchService {
   }
 
   async findAll() {
-    const branches = await this.prisma.branch.findMany({
+    const branches = await this.prisma.branch.findMany({});
+    return new AppSuccess({ branches }, 'Branches found successfully');
+  }
+
+  async findOne(id: string) {
+    const branch = await this.prisma.branch.findUnique({
+      where: { id },
       include: {
         barber: {
-          include: {
+          select: {
+            id: true,
+            rate: true,
             user: {
               select: {
                 id: false,
@@ -34,16 +42,6 @@ export class BranchService {
             },
           },
         },
-      },
-    });
-    return new AppSuccess({ branches }, 'Branches found successfully');
-  }
-
-  async findOne(id: string) {
-    const branch = await this.prisma.branch.findUnique({
-      where: { id },
-      include: {
-        barber: true,
         Cashier: true,
       },
     });

@@ -20,7 +20,7 @@ export class ServiceController {
   constructor(private readonly serviceService: ServiceService) {}
 
   @Get()
-  public async findAllService(): Promise<Service[]> {
+  public async findAllService() {
     return await this.serviceService.getAllService();
   }
 

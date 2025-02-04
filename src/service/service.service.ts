@@ -4,6 +4,7 @@ import { Service } from '@prisma/client';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { SupabaseService } from 'src/supabase/supabase.service';
+import { AppSuccess } from 'src/utils/AppSuccess';
 
 @Injectable()
 export class ServiceService {
@@ -12,18 +13,22 @@ export class ServiceService {
     private readonly prisma: PrismaService,
   ) {}
 
-  public async getAllService(): Promise<Service[]> {
-    return this.prisma.service.findMany();
+  public async getAllService(): Promise<AppSuccess> {
+    const services = await this.prisma.service.findMany();
+
+    return new AppSuccess(services, 'Services found successfully');
   }
 
-  public async getServiceById(id: string): Promise<Service> {
-    return await this.findOneOrFail(id);
+  public async getServiceById(id: string): Promise<AppSuccess> {
+    const service = await this.findOneOrFail(id);
+
+    return new AppSuccess(service, 'Service found successfully');
   }
 
   public async createService(
     createServiceDto: CreateServiceDto,
     file: Express.Multer.File,
-  ): Promise<Service> {
+  ): Promise<AppSuccess> {
     const generateRandomCode = () => {
       const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       let code = '';
@@ -38,9 +43,11 @@ export class ServiceService {
       ? await this.supabaseService.uploadAvatar(file, generateRandomCode())
       : undefined;
 
-    return this.prisma.service.create({
+    const service = this.prisma.service.create({
       data: { ...createServiceDto, ...(serviceImg && { serviceImg }) },
     });
+
+    return new AppSuccess(service, 'Service created successfully');
   }
 
   public async updateService(
@@ -52,10 +59,12 @@ export class ServiceService {
     const serviceImg = file
       ? await this.supabaseService.uploadAvatar(file, id)
       : undefined;
-    return this.prisma.service.update({
+    const service = this.prisma.service.update({
       where: { id },
       data: { ...updateServiceDto, ...(serviceImg && { serviceImg }) },
     });
+
+    return new AppSuccess(service, 'Service updated successfully');
   }
 
   public async softDeleteService(
@@ -63,11 +72,12 @@ export class ServiceService {
     available: { available: boolean },
   ) {
     await this.findOneOrFail(id);
-
-    return this.prisma.service.update({
+    const service = this.prisma.service.update({
       where: { id },
       data: available,
     });
+
+    return new AppSuccess(service, 'Service deleted successfully');
   }
 
   private async findOneOrFail(id: string) {

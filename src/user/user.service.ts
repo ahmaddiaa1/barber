@@ -53,7 +53,7 @@ export class UserService {
         take: pageSize,
       });
 
-      return new AppSuccess(users, 'Clients fetched successfully', 200);
+      return new AppSuccess({ users }, 'Clients fetched successfully', 200);
     } catch (error) {
       console.error('Error fetching clients:', error.message);
       throw error;
@@ -73,14 +73,14 @@ export class UserService {
             barber: this.barberAndCashier,
             cashier: this.barberAndCashier,
           };
-      const users = await this.prisma.user.findMany({
+      const fetchedUser = await this.prisma.user.findMany({
         where: { role: Role[role?.toUpperCase()] ?? { not: Role.USER } },
         skip: (page - 1) * pageSize,
         take: pageSize,
         select: { ...this.user, ...include },
       });
 
-      const fetchUsers = users.map(({ admin, barber, cashier, ...user }) => {
+      const users = fetchedUser.map(({ admin, barber, cashier, ...user }) => {
         return {
           ...user,
           ...(barber && { barber }),
@@ -88,7 +88,7 @@ export class UserService {
         };
       });
 
-      return new AppSuccess(fetchUsers, 'Users fetched successfully', 200);
+      return new AppSuccess({ users }, 'Users fetched successfully', 200);
     } catch (error) {
       console.error('Error fetching users:', error.message);
       throw error;

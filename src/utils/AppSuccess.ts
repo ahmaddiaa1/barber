@@ -6,6 +6,6 @@ export class AppSuccess {
   constructor(data: any, message: string, statusCode?: number) {
     this.data = data;
     this.message = message;
-    this.statusCode = statusCode || 201;
+    this.statusCode = statusCode || 200;
   }
 }

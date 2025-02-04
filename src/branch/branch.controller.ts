@@ -7,18 +7,25 @@ import {
   Delete,
   Put,
   ParseUUIDPipe,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { BranchService } from './branch.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('branch')
 export class BranchController {
   constructor(private readonly branchService: BranchService) {}
 
   @Post()
-  create(@Body() createBranchDto: CreateBranchDto) {
-    return this.branchService.create(createBranchDto);
+  @UseInterceptors(FileInterceptor('image'))
+  create(
+    @Body() createBranchDto: CreateBranchDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.branchService.create(createBranchDto, file);
   }
 
   @Get()

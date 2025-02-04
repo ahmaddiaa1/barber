@@ -15,6 +15,7 @@ import { AuthGuard } from 'guard/auth.guard';
 import { RolesGuard } from '../../guard/role.guard';
 import { Roles } from '../../decorators/roles.decorator';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { AppSuccess } from 'src/utils/AppSuccess';
 
 @Controller('category')
 @UseGuards(RolesGuard)
@@ -23,14 +24,14 @@ export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Get()
-  public async findAllCategories(): Promise<Category[]> {
+  public async findAllCategories(): Promise<AppSuccess> {
     return await this.categoryService.findAllCategories();
   }
 
   @Get(':id')
   public async findCategoryById(
     @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<Category> {
+  ): Promise<AppSuccess> {
     return await this.categoryService.findCategoryById(id);
   }
 
@@ -38,7 +39,7 @@ export class CategoryController {
   @Post()
   public async createCategory(
     @Body() createCategoryDto: CreateCategoryDto,
-  ): Promise<Category> {
+  ): Promise<AppSuccess> {
     return await this.categoryService.createCategory(createCategoryDto);
   }
 
@@ -47,7 +48,7 @@ export class CategoryController {
   public async updateCategory(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
-  ): Promise<Category> {
+  ): Promise<AppSuccess> {
     return await this.categoryService.updateCategory(id, updateCategoryDto);
   }
 
@@ -56,7 +57,7 @@ export class CategoryController {
   public async deleteCategory(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() available: { available: boolean },
-  ): Promise<Category> {
+  ): Promise<AppSuccess> {
     return await this.categoryService.softDeleteCategory(id, available);
   }
 }

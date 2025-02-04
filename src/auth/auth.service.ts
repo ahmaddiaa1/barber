@@ -178,7 +178,7 @@ export class AuthService {
           data: { ...rest, role, password: hashedPassword },
         });
 
-        return prisma.user.update({
+        return await prisma.user.update({
           where: { id: user.id },
           data,
         });

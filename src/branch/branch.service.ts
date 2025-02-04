@@ -3,16 +3,33 @@ import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
+import { SupabaseService } from 'src/supabase/supabase.service';
 
 @Injectable()
 export class BranchService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly supabaseService: SupabaseService,
+  ) {}
 
-  async create(createBranchDto: CreateBranchDto) {
+  async create(createBranchDto: CreateBranchDto, file: Express.Multer.File) {
+    const generateRandomCode = () => {
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let code = '';
+      for (let i = 0; i < 12; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        code += characters.charAt(randomIndex);
+      }
+      return code;
+    };
+
+    const branchImg = file
+      ? await this.supabaseService.uploadAvatar(file, generateRandomCode())
+      : undefined;
+
     const newBranch = await this.prisma.branch.create({
       data: {
-        branchImg:
-          'https://nvdxwkkypzjhvicgdbxs.supabase.co/storage/v1/object/public/avatars/defult-avatar.png',
+        ...(branchImg && { branchImg }),
         ...createBranchDto,
       },
     });

@@ -83,7 +83,7 @@ export class ComplainService {
     if (!complain) throw new NotFoundException('Complain not found');
 
     return new AppSuccess(
-      this.prisma.complain.delete({
+      await this.prisma.complain.delete({
         where: {
           id,
         },

@@ -12,7 +12,7 @@ export class PromoCodeService {
 
     const promoCode = code ?? this.generateRandomCode();
 
-    return this.prisma.promoCode.create({
+    return await this.prisma.promoCode.create({
       data: {
         ...reset,
         code: promoCode,
@@ -33,7 +33,7 @@ export class PromoCodeService {
   }
 
   async getAllPromoCode() {
-    return this.prisma.promoCode.findMany();
+    return await this.prisma.promoCode.findMany();
   }
 
   findOne(id: number) {

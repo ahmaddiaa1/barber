@@ -133,7 +133,7 @@ export class AuthService {
   async invalidateToken(token: string) {
     const isToken = await this.prisma.token.findUnique({ where: { token } });
     if (!isToken) throw new UnauthorizedException('User already logged out');
-    return this.prisma.token.delete({
+    return await this.prisma.token.delete({
       where: { token },
     });
   }
@@ -141,7 +141,7 @@ export class AuthService {
   async loginToken(token: string) {
     const decoded = jwt.decode(token);
     if (typeof decoded === 'object' && decoded !== null && 'exp' in decoded) {
-      return this.prisma.token.create({
+      return await this.prisma.token.create({
         data: { token, expiredAt: new Date(decoded.exp * 1000) },
       });
     }

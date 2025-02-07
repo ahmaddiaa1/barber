@@ -28,7 +28,7 @@ export class CategoryService {
   public async createCategory(
     createCategoryDto: CreateCategoryDto,
   ): Promise<AppSuccess> {
-    const category = this.prisma.category.create({
+    const category = await this.prisma.category.create({
       data: {
         ...createCategoryDto,
       },
@@ -43,7 +43,7 @@ export class CategoryService {
   ): Promise<AppSuccess> {
     await this.findOneOrFail(id);
 
-    const updatedCategory = this.prisma.category.update({
+    const updatedCategory = await this.prisma.category.update({
       where: { id },
       data: updateCategoryDto,
       include: {

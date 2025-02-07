@@ -1,17 +1,18 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { AppSuccess } from 'src/utils/AppSuccess';
 
 @Injectable()
 export class OrderService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getAllOrders() {
-    return this.prisma.order.findMany();
+    return await this.prisma.order.findMany();
   }
 
   async getOrderById(id: string) {
-    return this.prisma.order.findUnique({
+    return await this.prisma.order.findUnique({
       where: { id },
       include: {
         service: true,
@@ -106,15 +107,18 @@ export class OrderService {
       total = subTotal - validPromoCode.discount;
     }
 
-    const slots = await this.getSlots(dataWithoutTime, createOrderDto.barberId);
+    const { data } = await this.getSlots(
+      dataWithoutTime,
+      createOrderDto.barberId,
+    );
 
-    if (!slots.find((slot) => slot === createOrderDto.slot)) {
+    if (!data.slots.find((slot: string) => slot === createOrderDto.slot)) {
       throw new ConflictException(
         `Slot ${createOrderDto.slot} is not available for booking.`,
       );
     }
 
-    return this.prisma.order.create({
+    return await this.prisma.order.create({
       data: {
         ...createOrderDto,
         slot: createOrderDto.slot,
@@ -162,7 +166,11 @@ export class OrderService {
       throw new ConflictException('No slots found in the database.');
     }
 
-    return allSlots.slot.filter((slot) => !unavailableSlots.includes(slot));
+    const slots = allSlots.slot.filter(
+      (slot) => !unavailableSlots.includes(slot),
+    );
+
+    return new AppSuccess({ slots }, 'slots fetched successfully');
   }
 
   async generateSlot(start: number, end: number) {
@@ -187,26 +195,30 @@ export class OrderService {
     }
     const existingSlots = await this.prisma.slot.findMany();
     if (existingSlots) {
-      return this.prisma.slot.updateMany({
+      const slots = await this.prisma.slot.updateMany({
         data: {
           start,
           end,
           slot: slotsArray,
         },
       });
+
+      return new AppSuccess(slots, 'Slots updated successfully');
     }
 
-    return this.prisma.slot.create({
+    const slots = await this.prisma.slot.create({
       data: {
         start,
         end,
         slot: slotsArray,
       },
     });
+
+    return new AppSuccess(slots, 'Slots created successfully');
   }
 
   private async findOneOrFail(id: string) {
-    return this.prisma.order.findUnique({
+    return await this.prisma.order.findUnique({
       where: { id },
       include: {
         service: true,

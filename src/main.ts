@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { config } from 'dotenv';
-import { ValidationPipe } from '@nestjs/common';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
 
 config();
@@ -17,7 +17,13 @@ async function bootstrap() {
   await prismaService.onModuleInit();
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
-    new ValidationPipe({ forbidUnknownValues: false, whitelist: true }),
+    new ValidationPipe({
+      forbidUnknownValues: false,
+      whitelist: true,
+      exceptionFactory: () => {
+        return new BadRequestException('All fields are required');
+      },
+    }),
   );
   await app.listen(process.env.PORT ?? 8080, () => {
     console.log(`Server is running on port ${process.env.PORT}`);

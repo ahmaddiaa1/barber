@@ -34,7 +34,7 @@ export class CategoryService {
       },
     });
 
-    return new AppSuccess({ category }, 'Category created successfully');
+    return new AppSuccess(category, 'Category created successfully');
   }
 
   public async updateCategory(

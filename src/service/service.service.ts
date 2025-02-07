@@ -43,7 +43,7 @@ export class ServiceService {
       ? await this.supabaseService.uploadAvatar(file, generateRandomCode())
       : undefined;
 
-    const service = this.prisma.service.create({
+    const service = await this.prisma.service.create({
       data: { ...createServiceDto, ...(serviceImg && { serviceImg }) },
     });
 

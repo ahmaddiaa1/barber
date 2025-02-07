@@ -137,10 +137,12 @@ export class UserService {
       ? await this.supabaseService.uploadAvatar(file, id)
       : undefined;
 
-    const updateUser = this.prisma.user.update({
+    const updateUser = await this.prisma.user.update({
       where: { id },
       data: { ...userData, ...(avatarUrl && { avatar: avatarUrl }) },
     });
+
+    console.log(updateUser);
 
     return new AppSuccess(updateUser, 'User updated successfully', 200);
   }

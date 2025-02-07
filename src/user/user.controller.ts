@@ -24,18 +24,27 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  findAll(@Query() {role, page, pageSize}: {role?: Role; page: number; pageSize: number}) {
+  findAll(
+    @Query()
+    { role, page, pageSize }: { role?: Role; page: number; pageSize: number },
+  ) {
     return this.userService.findAllUser(page, pageSize, role);
   }
 
   @Get('clients')
-  findAllClients(@Query() { page, pageSize, phone }: { page: number; pageSize: number; phone?: string }) {
+  findAllClients(
+    @Query()
+    {
+      page,
+      pageSize,
+      phone,
+    }: {
+      page: number;
+      pageSize: number;
+      phone?: string;
+    },
+  ) {
     return this.userService.findAllClients(page, pageSize, phone);
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOneUser(id);
   }
 
   @Put(':id')
@@ -46,6 +55,10 @@ export class UserController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.userService.updateUser(id, user, file);
+  }
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.userService.findOneUser(id);
   }
 
   @Get('current/profile')

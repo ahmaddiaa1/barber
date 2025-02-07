@@ -140,6 +140,12 @@ export class UserService {
     const updateUser = await this.prisma.user.update({
       where: { id },
       data: { ...userData, ...(avatarUrl && { avatar: avatarUrl }) },
+      select: {
+        firstName: true,
+        lastName: true,
+        avatar: true,
+        phone: true,
+      },
     });
 
     console.log(updateUser);

@@ -194,19 +194,21 @@ export class OrderService {
       }
     }
     const existingSlots = await this.prisma.slot.findMany();
-    if (existingSlots) {
-      const slots = await this.prisma.slot.updateMany({
+    if (!existingSlots) {
+  
+      const slots = await this.prisma.slot.create({
         data: {
           start,
           end,
           slot: slotsArray,
         },
       });
-
-      return new AppSuccess(slots, 'Slots updated successfully');
+  
+      return new AppSuccess(slots, 'Slots created successfully');
+  
+  
     }
-
-    const slots = await this.prisma.slot.create({
+    const slots = await this.prisma.slot.updateMany({
       data: {
         start,
         end,
@@ -214,7 +216,8 @@ export class OrderService {
       },
     });
 
-    return new AppSuccess(slots, 'Slots created successfully');
+    return new AppSuccess(slots, 'Slots updated successfully');
+  
   }
 
   private async findOneOrFail(id: string) {

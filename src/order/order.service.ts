@@ -193,7 +193,8 @@ export class OrderService {
         );
       }
     }
-    const existingSlots = await this.prisma.slot.findMany();
+    const existingSlots = await this.prisma.slot.findFirst();
+
     if (!existingSlots) {
       const slots = await this.prisma.slot.create({
         data: {

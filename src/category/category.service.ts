@@ -16,6 +16,8 @@ export class CategoryService {
       },
     });
 
+    console.log('categories');
+
     return new AppSuccess({ categories }, 'Categories found successfully');
   }
 

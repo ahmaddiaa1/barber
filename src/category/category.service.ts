@@ -29,11 +29,22 @@ export class CategoryService {
       },
     });
 
+    const packages = await this.prisma.packages.findFirst({
+      where: {
+        id: CurrUser.client.ClientPackages[0].packageService[0].service
+          .packagesId,
+      },
+    });
+
     if (!CurrUser) throw new NotFoundException('User not found');
 
     const client = CurrUser.client.ClientPackages.map((item) => {
       const { packageService, ...rest } = item;
-      return { ...rest, service: packageService.flatMap((i) => i) };
+      return {
+        ...rest,
+        name: packages.title,
+        service: packageService.flatMap((i) => i.service),
+      };
     });
 
     const categories = await this.prisma.category.findMany({

@@ -28,6 +28,7 @@ export class UserController {
     @Query()
     { role, page, pageSize }: { role?: Role; page: number; pageSize: number },
   ) {
+    console.log(role);
     return this.userService.findAllUser(page, pageSize, role);
   }
 

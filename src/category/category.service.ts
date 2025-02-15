@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Category } from '@prisma/client';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
@@ -15,6 +14,8 @@ export class CategoryService {
         services: true,
       },
     });
+
+    console.log('categories');
 
     return new AppSuccess({ categories }, 'Categories found successfully');
   }

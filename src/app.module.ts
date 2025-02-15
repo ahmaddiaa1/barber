@@ -13,6 +13,7 @@ import { TokenService } from './token.service';
 import { ComplainModule } from './complain/complain.module';
 import { AwsModule } from './aws/aws.module';
 import { ConfigModule } from '@nestjs/config';
+import { PointsModule } from './points/points.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ConfigModule } from '@nestjs/config';
     ScheduleModule.forRoot(),
     ComplainModule,
     AwsModule,
+    PointsModule,
   ],
   controllers: [],
   providers: [TokenService],

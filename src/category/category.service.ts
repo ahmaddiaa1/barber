@@ -13,11 +13,39 @@ export class CategoryService {
     const CurrUser = await this.prisma.user.findUnique({
       where: { id: user.id },
       include: {
-        client: { include: {} },
+        client: {
+          include: {
+            ClientPackages: {
+              include: {
+                packageService: {
+                  select: {
+                    service: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const packages = await this.prisma.packages.findFirst({
+      where: {
+        id: CurrUser.client.ClientPackages[0].packageService[0].service
+          .packagesId,
       },
     });
 
     if (!CurrUser) throw new NotFoundException('User not found');
+
+    const client = CurrUser.client.ClientPackages.map((item) => {
+      const { packageService, clientId, isActive, ...rest } = item;
+      return {
+        ...rest,
+        name: packages.title,
+        services: packageService.flatMap((i) => i.service),
+      };
+    });
 
     const categories = await this.prisma.category.findMany({
       include: {
@@ -25,7 +53,10 @@ export class CategoryService {
       },
     });
 
-    return new AppSuccess({ categories }, 'Categories found successfully');
+    return new AppSuccess(
+      { categories, package: client },
+      'Categories found successfully',
+    );
   }
 
   public async findCategoryById(id: string): Promise<AppSuccess> {

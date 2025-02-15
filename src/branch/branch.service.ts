@@ -55,11 +55,25 @@ export class BranchService {
                 firstName: true,
                 lastName: true,
                 phone: true,
+                avatar: true,
               },
             },
           },
         },
-        Cashier: true,
+        Cashier: {
+          select: {
+            id: true,
+            user: {
+              select: {
+                id: false,
+                firstName: true,
+                lastName: true,
+                phone: true,
+                avatar: true,
+              },
+            },
+          },
+        },
       },
     });
 

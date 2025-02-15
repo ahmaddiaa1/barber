@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Global,
   Injectable,
@@ -12,81 +13,115 @@ import { LoginDto } from './dto/auth-login-dto';
 import * as jwt from 'jsonwebtoken';
 import { AppSuccess } from '../utils/AppSuccess';
 import { Role, User } from '@prisma/client';
+import { SupabaseService } from 'src/supabase/supabase.service';
 
 @Global()
 @Injectable()
 export class AuthService {
   private readonly jwtSecret = process.env.JWT_SECRET;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private supabaseService: SupabaseService,
+  ) {}
 
-  async signup(createAuthDto: RegisterDto) {
-    const { phone, password, role = 'user', branchId } = createAuthDto;
+  async signup(createAuthDto: RegisterDto, file: Express.Multer.File) {
+    const { phone, password, role = Role.USER, branchId } = createAuthDto;
     let user: User;
     const saltOrRounds = 10;
-    const roles = role.toUpperCase() as Role;
 
     const isPhoneExist = await this.prisma.user.findUnique({
       where: { phone },
     });
-
-    if (!Role[roles?.toUpperCase()]) {
-      throw new NotFoundException('Role not found');
+    if (isPhoneExist) {
+      throw new ConflictException('Phone number is already in use');
     }
 
-    if (isPhoneExist) {
-      throw new ConflictException('phone number is already in use');
+    if (!Role[role?.toUpperCase()]) {
+      throw new NotFoundException('Role not found');
     }
 
     const hashedPassword = await hash(password, saltOrRounds);
 
-    if (roles === Role.ADMIN) {
-      user = await this.createUser(createAuthDto, hashedPassword, {
-        role: 'ADMIN',
-        admin: { create: {} },
-      });
-    } else if (roles === Role.USER) {
-      let referralCode: string;
-
-      do {
-        referralCode = this.generateRandomCode(6);
-        const isReferralCodeExist = await this.prisma.client.findFirst({
-          where: { referralCode },
-        });
-        if (!isReferralCodeExist) break;
-      } while (true);
-
-      user = await this.createUser(createAuthDto, hashedPassword, {
-        client: {
-          create: {
-            referralCode,
+    switch (role.toUpperCase()) {
+      case Role.ADMIN:
+        user = await this.createUser(
+          createAuthDto,
+          hashedPassword,
+          {
+            role: Role.ADMIN,
+            admin: { create: {} },
           },
-        },
-      });
-    } else if (roles === Role.BARBER) {
-      user = await this.createUser(createAuthDto, hashedPassword, {
-        role: 'BARBER',
-        barber: {
-          create: { branchId },
-        },
-      });
-    } else if (roles === Role.CASHIER) {
-      user = await this.createUser(createAuthDto, hashedPassword, {
-        role: 'CASHIER',
-        cashier: {
-          create: { branchId },
-        },
-      });
+          file,
+        );
+
+        break;
+
+      case Role.USER:
+        let referralCode: string;
+        do {
+          referralCode = this.generateRandomCode(6);
+          const isReferralCodeExist = await this.prisma.client.findFirst({
+            where: { referralCode },
+          });
+          if (!isReferralCodeExist) break;
+        } while (true);
+
+        user = await this.createUser(
+          createAuthDto,
+          hashedPassword,
+          {
+            role: Role.USER,
+            client: {
+              create: { referralCode },
+            },
+          },
+          file,
+        );
+
+        break;
+
+      case Role.BARBER:
+        if (!branchId)
+          throw new BadRequestException('Branch ID is required for barbers');
+        user = await this.createUser(
+          createAuthDto,
+          hashedPassword,
+          {
+            role: Role.BARBER,
+            barber: { create: { branchId } },
+          },
+          file,
+        );
+
+        break;
+
+      case Role.CASHIER:
+        if (!branchId)
+          throw new BadRequestException('Branch ID is required for cashiers');
+        user = await this.createUser(
+          createAuthDto,
+          hashedPassword,
+          {
+            role: Role.CASHIER,
+            cashier: { create: { branchId } },
+          },
+          file,
+        );
+
+        break;
+
+      default:
+        throw new BadRequestException('Invalid role');
     }
 
     const token = await this.generateToken(user.id);
-
     const { password: _, ...data } = user;
 
     return {
       data,
       token,
-      message: 'login successfully',
+      message: 'User registered successfully',
       statusCode: 201,
     };
   }
@@ -162,6 +197,7 @@ export class AuthService {
     createAuthDto: RegisterDto,
     hashedPassword: string,
     data: any,
+    file?: Express.Multer.File,
   ) {
     const { branchId, role: roles = 'user', ...rest } = createAuthDto;
     const role = roles.toUpperCase() as Role;
@@ -172,15 +208,23 @@ export class AuthService {
       if (!isBranchExist) throw new NotFoundException('Branch not found');
     }
 
+    const id = this.generateRandomCode(6);
+
     try {
       return this.prisma.$transaction(async (prisma) => {
+        const avatarUrl = file
+          ? await this.supabaseService.uploadAvatar(file, id)
+          : undefined;
         const user = await prisma.user.create({
           data: { ...rest, role, password: hashedPassword },
         });
 
         return await prisma.user.update({
           where: { id: user.id },
-          data,
+          data: {
+            ...data,
+            ...(avatarUrl && { avatar: avatarUrl }),
+          },
         });
       });
     } catch (error) {

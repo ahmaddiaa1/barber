@@ -3,19 +3,27 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class CategoryService {
   constructor(private readonly prisma: PrismaService) {}
 
-  public async findAllCategories(): Promise<AppSuccess> {
+  public async findAllCategories(user: User): Promise<AppSuccess> {
+    const CurrUser = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        client: { include: {} },
+      },
+    });
+
+    if (!CurrUser) throw new NotFoundException('User not found');
+
     const categories = await this.prisma.category.findMany({
       include: {
         services: true,
       },
     });
-
-    console.log('categories');
 
     return new AppSuccess({ categories }, 'Categories found successfully');
   }

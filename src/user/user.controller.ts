@@ -57,6 +57,7 @@ export class UserController {
   ) {
     return this.userService.updateUser(id, user, file);
   }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userService.findOneUser(id);

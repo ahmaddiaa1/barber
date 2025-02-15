@@ -226,4 +226,23 @@ export class OrderService {
       },
     });
   }
+
+  async validatePromoCode(promoCode: string) {
+    const validPromoCode = await this.prisma.promoCode.findFirst({
+      where: {
+        code: promoCode,
+        expiredAt: {
+          gte: new Date(),
+        },
+      },
+    });
+
+    if (!validPromoCode) {
+      throw new ConflictException(
+        `Promo code "${promoCode}" is invalid or expired.`,
+      );
+    }
+
+    return new AppSuccess(validPromoCode, 'Promo code is valid');
+  }
 }

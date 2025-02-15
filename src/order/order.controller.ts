@@ -50,4 +50,9 @@ export class OrderController {
     const { start, end } = body;
     return this.orderService.generateSlot(start, end);
   }
+
+  @Post('/valid-promo-code')
+  async validatePromoCode(@Body('code') code: string) {
+    return this.orderService.validatePromoCode(code);
+  }
 }

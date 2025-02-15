@@ -14,7 +14,7 @@ import * as jwt from 'jsonwebtoken';
 import { AppSuccess } from '../utils/AppSuccess';
 import { Role, User } from '@prisma/client';
 import { SupabaseService } from 'src/supabase/supabase.service';
-
+import { AwsService } from 'src/aws/aws.service';
 @Global()
 @Injectable()
 export class AuthService {
@@ -23,6 +23,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private supabaseService: SupabaseService,
+    private awsService: AwsService,
   ) {}
 
   async signup(createAuthDto: RegisterDto, file: Express.Multer.File) {
@@ -213,7 +214,7 @@ export class AuthService {
     try {
       return this.prisma.$transaction(async (prisma) => {
         const avatarUrl = file
-          ? await this.supabaseService.uploadAvatar(file, id)
+          ? await this.awsService.uploadFile(file, id, 'avatars')
           : undefined;
         const user = await prisma.user.create({
           data: { ...rest, role, password: hashedPassword },

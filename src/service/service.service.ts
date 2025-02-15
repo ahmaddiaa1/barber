@@ -5,12 +5,13 @@ import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
+import { AwsService } from 'src/aws/aws.service';
 
 @Injectable()
 export class ServiceService {
   constructor(
-    private supabaseService: SupabaseService,
     private readonly prisma: PrismaService,
+    private readonly awsService: AwsService,
   ) {}
 
   public async getAllService(): Promise<AppSuccess> {
@@ -40,7 +41,7 @@ export class ServiceService {
     };
 
     const serviceImg = file
-      ? await this.supabaseService.uploadAvatar(file, generateRandomCode())
+      ? await this.awsService.uploadFile(file, generateRandomCode(), 'service')
       : undefined;
 
     const service = await this.prisma.service.create({
@@ -57,7 +58,7 @@ export class ServiceService {
   ) {
     await this.findOneOrFail(id);
     const serviceImg = file
-      ? await this.supabaseService.uploadAvatar(file, id)
+      ? await this.awsService.uploadFile(file, id, 'service')
       : undefined;
     const service = this.prisma.service.update({
       where: { id },

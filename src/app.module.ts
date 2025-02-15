@@ -11,9 +11,15 @@ import { PromoCodeModule } from './promo-code/promo-code.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TokenService } from './token.service';
 import { ComplainModule } from './complain/complain.module';
+import { AwsModule } from './aws/aws.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    AwsModule,
     AuthModule,
     UserModule,
     PrismaModule,
@@ -25,6 +31,7 @@ import { ComplainModule } from './complain/complain.module';
     PromoCodeModule,
     ScheduleModule.forRoot(),
     ComplainModule,
+    AwsModule,
   ],
   controllers: [],
   providers: [TokenService],

@@ -4,12 +4,13 @@ import { UpdateBranchDto } from './dto/update-branch.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { SupabaseService } from 'src/supabase/supabase.service';
+import { AwsService } from 'src/aws/aws.service';
 
 @Injectable()
 export class BranchService {
   constructor(
     private prisma: PrismaService,
-    private readonly supabaseService: SupabaseService,
+    private awsService: AwsService,
   ) {}
 
   async create(createBranchDto: CreateBranchDto, file: Express.Multer.File) {
@@ -24,7 +25,7 @@ export class BranchService {
     };
 
     const branchImg = file
-      ? await this.supabaseService.uploadAvatar(file, generateRandomCode())
+      ? await this.awsService.uploadFile(file, generateRandomCode(), 'branch')
       : undefined;
 
     const newBranch = await this.prisma.branch.create({

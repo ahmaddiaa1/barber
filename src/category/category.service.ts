@@ -39,7 +39,7 @@ export class CategoryService {
     if (!CurrUser) throw new NotFoundException('User not found');
 
     const client = CurrUser.client.ClientPackages.map((item) => {
-      const { packageService, ...rest } = item;
+      const { packageService, clientId, isActive, ...rest } = item;
       return {
         ...rest,
         name: packages.title,

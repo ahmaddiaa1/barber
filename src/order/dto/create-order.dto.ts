@@ -45,7 +45,7 @@ export class CreateOrderDto {
   @IsOptional()
   @Transform(({ value }) => value ?? null)
   @IsString()
-  promoCodeId?: string;
+  promoCode?: string;
 
   // subTotal?: number;
   //

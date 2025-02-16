@@ -119,8 +119,6 @@ model Service {
   price            Int
   serviceImg       String?
   duration         Int
-  points           Int
-  gainPoints       Int
   categoryId       String
   available        Boolean            @default(true)
   createdAt        DateTime           @default(now())
@@ -154,6 +152,7 @@ model PromoCode {
   id        String    @id @default(uuid())
   code      String
   discount  Int
+  active    Boolean   @default(true)
   expiredAt DateTime
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -164,7 +163,7 @@ model PromoCode {
 model Order {
   id             String             @id @default(uuid())
   branchId       String
-  promoCodeId    String?
+  promoCode      String?
   date           DateTime
   slot           String
   note           String?
@@ -181,7 +180,7 @@ model Order {
   barber         User               @relation("BarberOrders", fields: [barberId], references: [id])
   branch         Branch             @relation(fields: [branchId], references: [id])
   Cashier        User?              @relation("CashierOrders", fields: [cashierId], references: [id])
-  promoCode      PromoCode?         @relation(fields: [promoCodeId], references: [id])
+  Code           PromoCode?         @relation(fields: [promoCode], references: [id])
   client         User               @relation("UserOrders", fields: [userId], references: [id])
   service        Service[]          @relation("OrderToServices")
   packageService PackagesServices[]
@@ -189,6 +188,7 @@ model Order {
 
 model Points {
   id        String   @id @default(uuid()) @map("id")
+  title     String
   points    Int
   price     Int
   createdAt DateTime @default(now()) @map("createdAt")
@@ -215,6 +215,7 @@ model PackagesServices {
   createdAt        DateTime       @default(now()) @map("createdAt")
   service          Service        @relation(fields: [serviceId], references: [id])
   Order            Order?         @relation(fields: [orderId], references: [id])
+  count            Int?
   orderId          String?
   ClientPackagesId String
   ClientPackages   ClientPackages @relation(fields: [ClientPackagesId], references: [id])
@@ -223,6 +224,7 @@ model PackagesServices {
 model ClientPackages {
   id             String             @id @default(uuid()) @map("id")
   packageService PackagesServices[]
+  type           String
   isActive       Boolean            @default(true)
   createdAt      DateTime           @default(now()) @map("createdAt")
   updatedAt      DateTime           @updatedAt @map("updatedAt")
@@ -242,6 +244,11 @@ model Offers {
   updatedAt   DateTime  @updatedAt @map("updatedAt")
   services    Service[]
   clients     Client[]  @relation("ClientOffers")
+}
+
+enum PackagesStatus {
+  MULTIPLE
+  SINGLE
 }
 
 enum OrderStatus {

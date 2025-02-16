@@ -33,16 +33,10 @@ export class CreateServiceDto {
     (obj) =>
       typeof obj.duration === 'string' || typeof obj.duration === 'number',
   )
-  @Transform(({ value }) => +value)
-  points: number;
-
   @ValidateIf(
     (obj) =>
       typeof obj.duration === 'string' || typeof obj.duration === 'number',
   )
-  @Transform(({ value }) => +value)
-  gainPoints: number;
-
   @IsUUID()
   @IsNotEmpty()
   categoryId: string;

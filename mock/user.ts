@@ -78,6 +78,29 @@ const clients = [
   },
 ];
 
+const admin = [
+  {
+    firstName: 'admin',
+    lastName: 'no.1',
+    phone: '01234567890',
+    password: '1234',
+    role: 'admin',
+  },
+  {
+    firstName: 'admin',
+    lastName: 'no.2',
+    phone: '01234567891',
+    password: '1234',
+    role: 'admin',
+  },
+  {
+    firstName: 'admin',
+    lastName: 'no.3',
+    phone: '01234567892',
+    password: '1234',
+    role: 'admin',
+  },
+];
 const barbers1 = [
   {
     firstName: 'barber',

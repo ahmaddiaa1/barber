@@ -31,11 +31,6 @@ export class OrderController {
     return this.orderService.getOrderById(id);
   }
 
-  @Get('/booked/slots')
-  async getBookedSlots(@Query('date') date: Date) {
-    return this.orderService.getBookedSlots(date);
-  }
-
   @UseGuards(AuthGuard)
   @Post()
   async createOrder(
@@ -49,10 +44,5 @@ export class OrderController {
   async generateSlot(@Body() body: { start: number; end: number }) {
     const { start, end } = body;
     return this.orderService.generateSlot(start, end);
-  }
-
-  @Post('/valid-promo-code')
-  async validatePromoCode(@Body('code') code: string) {
-    return this.orderService.validatePromoCode(code);
   }
 }

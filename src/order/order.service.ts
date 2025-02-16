@@ -8,42 +8,13 @@ export class OrderService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getAllOrders() {
-    return await this.prisma.order.findMany();
+    const orders = await this.prisma.order.findMany({});
+    return new AppSuccess(orders, 'Orders fetched successfully');
   }
 
   async getOrderById(id: string) {
-    return await this.prisma.order.findUnique({
-      where: { id },
-      include: {
-        service: true,
-        barber: {
-          include: {
-            barber: true,
-          },
-        },
-      },
-    });
-  }
-
-  async getBookedSlots(date: Date) {
-    const dateWithoutTime = date.toString().split('T')[0];
-    const parsedDate = new Date(dateWithoutTime);
-    if (isNaN(parsedDate.getTime())) {
-      throw new Error(`Invalid date format: ${date}`);
-    }
-
-    const bookedSlots = await this.prisma.order.findMany({
-      where: {
-        date: parsedDate,
-        status: 'PENDING',
-        booking: 'UPCOMING',
-      },
-      select: {
-        slot: true,
-      },
-    });
-
-    return bookedSlots.map((order) => order.slot);
+    const order = await this.findOneOrFail(id);
+    return new AppSuccess(order, 'Order fetched successfully');
   }
 
   async createOrder(createOrderDto: CreateOrderDto, userId: string) {
@@ -68,7 +39,7 @@ export class OrderService {
       );
     }
 
-    const promoCode = createOrderDto.promoCodeId;
+    const promoCode = createOrderDto.promoCode;
 
     const validPromoCode = await this.prisma.promoCode.findFirst({
       where: {
@@ -124,7 +95,7 @@ export class OrderService {
         slot: createOrderDto.slot,
         userId,
         date: new Date(dataWithoutTime),
-        promoCodeId: validPromoCode?.id,
+        promoCode: validPromoCode?.id,
         service: {
           connect: createOrderDto.service.map((serviceId) => ({
             id: serviceId,
@@ -141,36 +112,46 @@ export class OrderService {
   }
 
   async getSlots(date: string, barberId: string) {
-    const dateWithoutTime = date.toString().split('T')[0];
+    const dateWithoutTime = date.split('T')[0];
 
-    const orders = await this.prisma.order.findMany({
-      where: {
-        date: new Date(dateWithoutTime),
-        barberId,
-      },
-      select: {
-        slot: true,
-        service: { select: { duration: true } },
-      },
-    });
+    const [orders, allSlotsData] = await Promise.all([
+      this.prisma.order.findMany({
+        where: { date: new Date(dateWithoutTime), barberId },
+        select: {
+          slot: true,
+          service: { select: { duration: true } },
+        },
+      }),
+      this.prisma.slot.findFirst({ select: { slot: true } }),
+    ]);
 
-    const unavailableSlots = orders.map((order) => order.slot);
-
-    const allSlots = await this.prisma.slot.findFirst({
-      select: {
-        slot: true,
-      },
-    });
-
-    if (!allSlots) {
+    if (!allSlotsData)
       throw new ConflictException('No slots found in the database.');
+
+    const allSlots = allSlotsData.slot;
+    const blockedSlots = new Set<string>();
+
+    // Compute blocked slots
+    for (const order of orders) {
+      const startIndex = allSlots.indexOf(order.slot);
+      if (startIndex === -1) continue;
+
+      const totalDuration = order.service.reduce(
+        (sum, s) => sum + s.duration,
+        0,
+      );
+      allSlots
+        .slice(startIndex, startIndex + totalDuration)
+        .forEach((slot) => blockedSlots.add(slot));
     }
 
-    const slots = allSlots.slot.filter(
-      (slot) => !unavailableSlots.includes(slot),
-    );
+    // Get available slots
+    const availableSlots = allSlots.filter((slot) => !blockedSlots.has(slot));
 
-    return new AppSuccess({ slots }, 'slots fetched successfully');
+    return new AppSuccess(
+      { slots: availableSlots },
+      'Slots fetched successfully',
+    );
   }
 
   async generateSlot(start: number, end: number) {
@@ -218,31 +199,17 @@ export class OrderService {
   }
 
   private async findOneOrFail(id: string) {
-    return await this.prisma.order.findUnique({
+    const order = await this.prisma.order.findUnique({
       where: { id },
       include: {
         service: true,
         barber: { include: { barber: true } },
       },
     });
-  }
-
-  async validatePromoCode(promoCode: string) {
-    const validPromoCode = await this.prisma.promoCode.findFirst({
-      where: {
-        code: promoCode,
-        expiredAt: {
-          gte: new Date(),
-        },
-      },
-    });
-
-    if (!validPromoCode) {
-      throw new ConflictException(
-        `Promo code "${promoCode}" is invalid or expired.`,
-      );
+    if (!order) {
+      throw new ConflictException(`Order with ID "${id}" not found`);
     }
 
-    return new AppSuccess(validPromoCode, 'Promo code is valid');
+    return order;
   }
 }

@@ -106,6 +106,8 @@ const barbers1 = [
     firstName: 'barber',
     lastName: 'no.1',
     phone: '11234567891',
+    avatar:
+      'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/avatars/zxDeWp-1739649119709-freepik__the-style-is-candid-image-photography-with-natural__47103.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIA5V6I6YNP7SGCMSAM%2F20250216%2Feu-north-1%2Fs3%2Faws4_request&X-Amz-Date=20250216T201604Z&X-Amz-Expires=300&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEDwaCmV1LW5vcnRoLTEiRjBEAiBG5BnVRkqvKCJWvoHYRZEtrRDjFDkXAV6%2FSY8m41akGwIgXBUJCLIvLUR0fBy9zVbLOaBsJ51JoxgAshCUdWo1iSIq7AIIZRAAGgw5NDA0ODI0MTM0MDciDHD1%2BXGMHkUVZBn2HyrJAouJ1ktYfMwM4z9BMYs0OFXg2NZKj7ZhWlp%2B288mZ3LED3%2FddNfoaFtRA3u9HhVM23mysdFEbPCr6t7wXj3S64vqnpZRezYJnV%2FdBA5sqAWir1b2A4WLcaHIlPJZAvmWfinc7zZs7eymqEp%2B3K9T2di771MABbTx57N6iD8XaK4X6mmU5tA9G5lpu9ihUnhRe8dMyB3mYQ1cxVK3bHUlc0ejySnbWSXyEI8Nz50t9qYLQr0fdaLN%2BiATzlrJFl%2BVbt4unCDXgAV1Z1W4FlSTN6SSB%2FrdBExzFJwaw5ZOwsEey7QD43nY58IL2C9%2F6V37NkgwxfZW19j%2FnhrxZuz2HucG4ykHeRyFMIW4%2FFBS6VEMOf03DoPfhKaQ5ifZOhR3OUw3T5ESpQ6SPoekQRez9%2BOwqhaogwjpK81zptVNT4Ng0SAYamt18kUNMJ7JyL0GOrQCeScRV5xY1U4HRbhibasflUkO5mhrPt52N97HuZfhz6%2BZkRpEwPKvwY79c7%2BSacXQsPMzHKVnYm3WIyW3CdSEIv0hZucYe4PHmn4y7svKX6J7g67sbiitDdYwnNb7ipbR3xQ3V9XElzvQdFHvF0HlmPRlQvFrKuWTAFeUpAIiVvD1RYXOQf9LfUU3KnZS4Qiyv1ZHHeJUP9lF8e3ReCIAurOIlV8vMEdmp7viof9WdD3v8D37g29wPJ5QGMev6LbXUGUO4j0UyVK8sfp0qxGOZTvis7sITZlLTucd%2B44nOuVzbmHMOntV0sSlqgp1LaWEasQTro97C7u3LZvZ3BxM1M7DRaQcL1FTIJVZljETKK7FGY%2BBNKkfDE4NNeWU44g4RwaWKpDW4%2FAhQ88hjyp2N%2FFW%2FDo%3D&X-Amz-Signature=808eb909077f5d3bbc9367bb44000e8e420ef2c27296b25b3af1ccc829745526&X-Amz-SignedHeaders=host&response-content-disposition=inline',
     password: '1234',
     role: 'barber',
   },
@@ -113,6 +115,9 @@ const barbers1 = [
     firstName: 'barber',
     lastName: 'no.2',
     phone: '11234567892',
+    avatar:
+      'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/avatars/zxDeWp-1739649119709-freepik__the-style-is-candid-image-photography-with-natural__47103.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIA5V6I6YNP7SGCMSAM%2F20250216%2Feu-north-1%2Fs3%2Faws4_request&X-Amz-Date=20250216T201604Z&X-Amz-Expires=300&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEDwaCmV1LW5vcnRoLTEiRjBEAiBG5BnVRkqvKCJWvoHYRZEtrRDjFDkXAV6%2FSY8m41akGwIgXBUJCLIvLUR0fBy9zVbLOaBsJ51JoxgAshCUdWo1iSIq7AIIZRAAGgw5NDA0ODI0MTM0MDciDHD1%2BXGMHkUVZBn2HyrJAouJ1ktYfMwM4z9BMYs0OFXg2NZKj7ZhWlp%2B288mZ3LED3%2FddNfoaFtRA3u9HhVM23mysdFEbPCr6t7wXj3S64vqnpZRezYJnV%2FdBA5sqAWir1b2A4WLcaHIlPJZAvmWfinc7zZs7eymqEp%2B3K9T2di771MABbTx57N6iD8XaK4X6mmU5tA9G5lpu9ihUnhRe8dMyB3mYQ1cxVK3bHUlc0ejySnbWSXyEI8Nz50t9qYLQr0fdaLN%2BiATzlrJFl%2BVbt4unCDXgAV1Z1W4FlSTN6SSB%2FrdBExzFJwaw5ZOwsEey7QD43nY58IL2C9%2F6V37NkgwxfZW19j%2FnhrxZuz2HucG4ykHeRyFMIW4%2FFBS6VEMOf03DoPfhKaQ5ifZOhR3OUw3T5ESpQ6SPoekQRez9%2BOwqhaogwjpK81zptVNT4Ng0SAYamt18kUNMJ7JyL0GOrQCeScRV5xY1U4HRbhibasflUkO5mhrPt52N97HuZfhz6%2BZkRpEwPKvwY79c7%2BSacXQsPMzHKVnYm3WIyW3CdSEIv0hZucYe4PHmn4y7svKX6J7g67sbiitDdYwnNb7ipbR3xQ3V9XElzvQdFHvF0HlmPRlQvFrKuWTAFeUpAIiVvD1RYXOQf9LfUU3KnZS4Qiyv1ZHHeJUP9lF8e3ReCIAurOIlV8vMEdmp7viof9WdD3v8D37g29wPJ5QGMev6LbXUGUO4j0UyVK8sfp0qxGOZTvis7sITZlLTucd%2B44nOuVzbmHMOntV0sSlqgp1LaWEasQTro97C7u3LZvZ3BxM1M7DRaQcL1FTIJVZljETKK7FGY%2BBNKkfDE4NNeWU44g4RwaWKpDW4%2FAhQ88hjyp2N%2FFW%2FDo%3D&X-Amz-Signature=808eb909077f5d3bbc9367bb44000e8e420ef2c27296b25b3af1ccc829745526&X-Amz-SignedHeaders=host&response-content-disposition=inline',
+
     password: '1234',
     role: 'barber',
   },
@@ -120,6 +125,9 @@ const barbers1 = [
     firstName: 'barber',
     lastName: 'no.3',
     phone: '11234567893',
+    avatar:
+      'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/avatars/zxDeWp-1739649119709-freepik__the-style-is-candid-image-photography-with-natural__47103.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIA5V6I6YNP7SGCMSAM%2F20250216%2Feu-north-1%2Fs3%2Faws4_request&X-Amz-Date=20250216T201604Z&X-Amz-Expires=300&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEDwaCmV1LW5vcnRoLTEiRjBEAiBG5BnVRkqvKCJWvoHYRZEtrRDjFDkXAV6%2FSY8m41akGwIgXBUJCLIvLUR0fBy9zVbLOaBsJ51JoxgAshCUdWo1iSIq7AIIZRAAGgw5NDA0ODI0MTM0MDciDHD1%2BXGMHkUVZBn2HyrJAouJ1ktYfMwM4z9BMYs0OFXg2NZKj7ZhWlp%2B288mZ3LED3%2FddNfoaFtRA3u9HhVM23mysdFEbPCr6t7wXj3S64vqnpZRezYJnV%2FdBA5sqAWir1b2A4WLcaHIlPJZAvmWfinc7zZs7eymqEp%2B3K9T2di771MABbTx57N6iD8XaK4X6mmU5tA9G5lpu9ihUnhRe8dMyB3mYQ1cxVK3bHUlc0ejySnbWSXyEI8Nz50t9qYLQr0fdaLN%2BiATzlrJFl%2BVbt4unCDXgAV1Z1W4FlSTN6SSB%2FrdBExzFJwaw5ZOwsEey7QD43nY58IL2C9%2F6V37NkgwxfZW19j%2FnhrxZuz2HucG4ykHeRyFMIW4%2FFBS6VEMOf03DoPfhKaQ5ifZOhR3OUw3T5ESpQ6SPoekQRez9%2BOwqhaogwjpK81zptVNT4Ng0SAYamt18kUNMJ7JyL0GOrQCeScRV5xY1U4HRbhibasflUkO5mhrPt52N97HuZfhz6%2BZkRpEwPKvwY79c7%2BSacXQsPMzHKVnYm3WIyW3CdSEIv0hZucYe4PHmn4y7svKX6J7g67sbiitDdYwnNb7ipbR3xQ3V9XElzvQdFHvF0HlmPRlQvFrKuWTAFeUpAIiVvD1RYXOQf9LfUU3KnZS4Qiyv1ZHHeJUP9lF8e3ReCIAurOIlV8vMEdmp7viof9WdD3v8D37g29wPJ5QGMev6LbXUGUO4j0UyVK8sfp0qxGOZTvis7sITZlLTucd%2B44nOuVzbmHMOntV0sSlqgp1LaWEasQTro97C7u3LZvZ3BxM1M7DRaQcL1FTIJVZljETKK7FGY%2BBNKkfDE4NNeWU44g4RwaWKpDW4%2FAhQ88hjyp2N%2FFW%2FDo%3D&X-Amz-Signature=808eb909077f5d3bbc9367bb44000e8e420ef2c27296b25b3af1ccc829745526&X-Amz-SignedHeaders=host&response-content-disposition=inline',
+
     password: '1234',
     role: 'barber',
   },
@@ -130,6 +138,8 @@ const barbers2 = [
     firstName: 'barber',
     lastName: 'no.1',
     phone: '21234567891',
+    avatar:
+      'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/avatars/zxDeWp-1739649119709-freepik__the-style-is-candid-image-photography-with-natural__47103.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIA5V6I6YNP7SGCMSAM%2F20250216%2Feu-north-1%2Fs3%2Faws4_request&X-Amz-Date=20250216T201604Z&X-Amz-Expires=300&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEDwaCmV1LW5vcnRoLTEiRjBEAiBG5BnVRkqvKCJWvoHYRZEtrRDjFDkXAV6%2FSY8m41akGwIgXBUJCLIvLUR0fBy9zVbLOaBsJ51JoxgAshCUdWo1iSIq7AIIZRAAGgw5NDA0ODI0MTM0MDciDHD1%2BXGMHkUVZBn2HyrJAouJ1ktYfMwM4z9BMYs0OFXg2NZKj7ZhWlp%2B288mZ3LED3%2FddNfoaFtRA3u9HhVM23mysdFEbPCr6t7wXj3S64vqnpZRezYJnV%2FdBA5sqAWir1b2A4WLcaHIlPJZAvmWfinc7zZs7eymqEp%2B3K9T2di771MABbTx57N6iD8XaK4X6mmU5tA9G5lpu9ihUnhRe8dMyB3mYQ1cxVK3bHUlc0ejySnbWSXyEI8Nz50t9qYLQr0fdaLN%2BiATzlrJFl%2BVbt4unCDXgAV1Z1W4FlSTN6SSB%2FrdBExzFJwaw5ZOwsEey7QD43nY58IL2C9%2F6V37NkgwxfZW19j%2FnhrxZuz2HucG4ykHeRyFMIW4%2FFBS6VEMOf03DoPfhKaQ5ifZOhR3OUw3T5ESpQ6SPoekQRez9%2BOwqhaogwjpK81zptVNT4Ng0SAYamt18kUNMJ7JyL0GOrQCeScRV5xY1U4HRbhibasflUkO5mhrPt52N97HuZfhz6%2BZkRpEwPKvwY79c7%2BSacXQsPMzHKVnYm3WIyW3CdSEIv0hZucYe4PHmn4y7svKX6J7g67sbiitDdYwnNb7ipbR3xQ3V9XElzvQdFHvF0HlmPRlQvFrKuWTAFeUpAIiVvD1RYXOQf9LfUU3KnZS4Qiyv1ZHHeJUP9lF8e3ReCIAurOIlV8vMEdmp7viof9WdD3v8D37g29wPJ5QGMev6LbXUGUO4j0UyVK8sfp0qxGOZTvis7sITZlLTucd%2B44nOuVzbmHMOntV0sSlqgp1LaWEasQTro97C7u3LZvZ3BxM1M7DRaQcL1FTIJVZljETKK7FGY%2BBNKkfDE4NNeWU44g4RwaWKpDW4%2FAhQ88hjyp2N%2FFW%2FDo%3D&X-Amz-Signature=808eb909077f5d3bbc9367bb44000e8e420ef2c27296b25b3af1ccc829745526&X-Amz-SignedHeaders=host&response-content-disposition=inline',
     password: '1234',
     role: 'barber',
   },
@@ -137,6 +147,8 @@ const barbers2 = [
     firstName: 'barber',
     lastName: 'no.2',
     phone: '21234567892',
+    avatar:
+      'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/avatars/zxDeWp-1739649119709-freepik__the-style-is-candid-image-photography-with-natural__47103.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIA5V6I6YNP7SGCMSAM%2F20250216%2Feu-north-1%2Fs3%2Faws4_request&X-Amz-Date=20250216T201604Z&X-Amz-Expires=300&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEDwaCmV1LW5vcnRoLTEiRjBEAiBG5BnVRkqvKCJWvoHYRZEtrRDjFDkXAV6%2FSY8m41akGwIgXBUJCLIvLUR0fBy9zVbLOaBsJ51JoxgAshCUdWo1iSIq7AIIZRAAGgw5NDA0ODI0MTM0MDciDHD1%2BXGMHkUVZBn2HyrJAouJ1ktYfMwM4z9BMYs0OFXg2NZKj7ZhWlp%2B288mZ3LED3%2FddNfoaFtRA3u9HhVM23mysdFEbPCr6t7wXj3S64vqnpZRezYJnV%2FdBA5sqAWir1b2A4WLcaHIlPJZAvmWfinc7zZs7eymqEp%2B3K9T2di771MABbTx57N6iD8XaK4X6mmU5tA9G5lpu9ihUnhRe8dMyB3mYQ1cxVK3bHUlc0ejySnbWSXyEI8Nz50t9qYLQr0fdaLN%2BiATzlrJFl%2BVbt4unCDXgAV1Z1W4FlSTN6SSB%2FrdBExzFJwaw5ZOwsEey7QD43nY58IL2C9%2F6V37NkgwxfZW19j%2FnhrxZuz2HucG4ykHeRyFMIW4%2FFBS6VEMOf03DoPfhKaQ5ifZOhR3OUw3T5ESpQ6SPoekQRez9%2BOwqhaogwjpK81zptVNT4Ng0SAYamt18kUNMJ7JyL0GOrQCeScRV5xY1U4HRbhibasflUkO5mhrPt52N97HuZfhz6%2BZkRpEwPKvwY79c7%2BSacXQsPMzHKVnYm3WIyW3CdSEIv0hZucYe4PHmn4y7svKX6J7g67sbiitDdYwnNb7ipbR3xQ3V9XElzvQdFHvF0HlmPRlQvFrKuWTAFeUpAIiVvD1RYXOQf9LfUU3KnZS4Qiyv1ZHHeJUP9lF8e3ReCIAurOIlV8vMEdmp7viof9WdD3v8D37g29wPJ5QGMev6LbXUGUO4j0UyVK8sfp0qxGOZTvis7sITZlLTucd%2B44nOuVzbmHMOntV0sSlqgp1LaWEasQTro97C7u3LZvZ3BxM1M7DRaQcL1FTIJVZljETKK7FGY%2BBNKkfDE4NNeWU44g4RwaWKpDW4%2FAhQ88hjyp2N%2FFW%2FDo%3D&X-Amz-Signature=808eb909077f5d3bbc9367bb44000e8e420ef2c27296b25b3af1ccc829745526&X-Amz-SignedHeaders=host&response-content-disposition=inline',
     password: '1234',
     role: 'barber',
   },
@@ -144,6 +156,8 @@ const barbers2 = [
     firstName: 'barber',
     lastName: 'no.3',
     phone: '21234567893',
+    avatar:
+      'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/avatars/zxDeWp-1739649119709-freepik__the-style-is-candid-image-photography-with-natural__47103.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIA5V6I6YNP7SGCMSAM%2F20250216%2Feu-north-1%2Fs3%2Faws4_request&X-Amz-Date=20250216T201604Z&X-Amz-Expires=300&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEDwaCmV1LW5vcnRoLTEiRjBEAiBG5BnVRkqvKCJWvoHYRZEtrRDjFDkXAV6%2FSY8m41akGwIgXBUJCLIvLUR0fBy9zVbLOaBsJ51JoxgAshCUdWo1iSIq7AIIZRAAGgw5NDA0ODI0MTM0MDciDHD1%2BXGMHkUVZBn2HyrJAouJ1ktYfMwM4z9BMYs0OFXg2NZKj7ZhWlp%2B288mZ3LED3%2FddNfoaFtRA3u9HhVM23mysdFEbPCr6t7wXj3S64vqnpZRezYJnV%2FdBA5sqAWir1b2A4WLcaHIlPJZAvmWfinc7zZs7eymqEp%2B3K9T2di771MABbTx57N6iD8XaK4X6mmU5tA9G5lpu9ihUnhRe8dMyB3mYQ1cxVK3bHUlc0ejySnbWSXyEI8Nz50t9qYLQr0fdaLN%2BiATzlrJFl%2BVbt4unCDXgAV1Z1W4FlSTN6SSB%2FrdBExzFJwaw5ZOwsEey7QD43nY58IL2C9%2F6V37NkgwxfZW19j%2FnhrxZuz2HucG4ykHeRyFMIW4%2FFBS6VEMOf03DoPfhKaQ5ifZOhR3OUw3T5ESpQ6SPoekQRez9%2BOwqhaogwjpK81zptVNT4Ng0SAYamt18kUNMJ7JyL0GOrQCeScRV5xY1U4HRbhibasflUkO5mhrPt52N97HuZfhz6%2BZkRpEwPKvwY79c7%2BSacXQsPMzHKVnYm3WIyW3CdSEIv0hZucYe4PHmn4y7svKX6J7g67sbiitDdYwnNb7ipbR3xQ3V9XElzvQdFHvF0HlmPRlQvFrKuWTAFeUpAIiVvD1RYXOQf9LfUU3KnZS4Qiyv1ZHHeJUP9lF8e3ReCIAurOIlV8vMEdmp7viof9WdD3v8D37g29wPJ5QGMev6LbXUGUO4j0UyVK8sfp0qxGOZTvis7sITZlLTucd%2B44nOuVzbmHMOntV0sSlqgp1LaWEasQTro97C7u3LZvZ3BxM1M7DRaQcL1FTIJVZljETKK7FGY%2BBNKkfDE4NNeWU44g4RwaWKpDW4%2FAhQ88hjyp2N%2FFW%2FDo%3D&X-Amz-Signature=808eb909077f5d3bbc9367bb44000e8e420ef2c27296b25b3af1ccc829745526&X-Amz-SignedHeaders=host&response-content-disposition=inline',
     password: '1234',
     role: 'barber',
   },
@@ -154,6 +168,8 @@ const barbers3 = [
     firstName: 'barber',
     lastName: 'no.1',
     phone: '31234567891',
+    avatar:
+      'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/avatars/zxDeWp-1739649119709-freepik__the-style-is-candid-image-photography-with-natural__47103.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIA5V6I6YNP7SGCMSAM%2F20250216%2Feu-north-1%2Fs3%2Faws4_request&X-Amz-Date=20250216T201604Z&X-Amz-Expires=300&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEDwaCmV1LW5vcnRoLTEiRjBEAiBG5BnVRkqvKCJWvoHYRZEtrRDjFDkXAV6%2FSY8m41akGwIgXBUJCLIvLUR0fBy9zVbLOaBsJ51JoxgAshCUdWo1iSIq7AIIZRAAGgw5NDA0ODI0MTM0MDciDHD1%2BXGMHkUVZBn2HyrJAouJ1ktYfMwM4z9BMYs0OFXg2NZKj7ZhWlp%2B288mZ3LED3%2FddNfoaFtRA3u9HhVM23mysdFEbPCr6t7wXj3S64vqnpZRezYJnV%2FdBA5sqAWir1b2A4WLcaHIlPJZAvmWfinc7zZs7eymqEp%2B3K9T2di771MABbTx57N6iD8XaK4X6mmU5tA9G5lpu9ihUnhRe8dMyB3mYQ1cxVK3bHUlc0ejySnbWSXyEI8Nz50t9qYLQr0fdaLN%2BiATzlrJFl%2BVbt4unCDXgAV1Z1W4FlSTN6SSB%2FrdBExzFJwaw5ZOwsEey7QD43nY58IL2C9%2F6V37NkgwxfZW19j%2FnhrxZuz2HucG4ykHeRyFMIW4%2FFBS6VEMOf03DoPfhKaQ5ifZOhR3OUw3T5ESpQ6SPoekQRez9%2BOwqhaogwjpK81zptVNT4Ng0SAYamt18kUNMJ7JyL0GOrQCeScRV5xY1U4HRbhibasflUkO5mhrPt52N97HuZfhz6%2BZkRpEwPKvwY79c7%2BSacXQsPMzHKVnYm3WIyW3CdSEIv0hZucYe4PHmn4y7svKX6J7g67sbiitDdYwnNb7ipbR3xQ3V9XElzvQdFHvF0HlmPRlQvFrKuWTAFeUpAIiVvD1RYXOQf9LfUU3KnZS4Qiyv1ZHHeJUP9lF8e3ReCIAurOIlV8vMEdmp7viof9WdD3v8D37g29wPJ5QGMev6LbXUGUO4j0UyVK8sfp0qxGOZTvis7sITZlLTucd%2B44nOuVzbmHMOntV0sSlqgp1LaWEasQTro97C7u3LZvZ3BxM1M7DRaQcL1FTIJVZljETKK7FGY%2BBNKkfDE4NNeWU44g4RwaWKpDW4%2FAhQ88hjyp2N%2FFW%2FDo%3D&X-Amz-Signature=808eb909077f5d3bbc9367bb44000e8e420ef2c27296b25b3af1ccc829745526&X-Amz-SignedHeaders=host&response-content-disposition=inline',
     password: '1234',
     role: 'barber',
   },
@@ -161,6 +177,8 @@ const barbers3 = [
     firstName: 'barber',
     lastName: 'no.2',
     phone: '31234567892',
+    avatar:
+      'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/avatars/zxDeWp-1739649119709-freepik__the-style-is-candid-image-photography-with-natural__47103.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIA5V6I6YNP7SGCMSAM%2F20250216%2Feu-north-1%2Fs3%2Faws4_request&X-Amz-Date=20250216T201604Z&X-Amz-Expires=300&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEDwaCmV1LW5vcnRoLTEiRjBEAiBG5BnVRkqvKCJWvoHYRZEtrRDjFDkXAV6%2FSY8m41akGwIgXBUJCLIvLUR0fBy9zVbLOaBsJ51JoxgAshCUdWo1iSIq7AIIZRAAGgw5NDA0ODI0MTM0MDciDHD1%2BXGMHkUVZBn2HyrJAouJ1ktYfMwM4z9BMYs0OFXg2NZKj7ZhWlp%2B288mZ3LED3%2FddNfoaFtRA3u9HhVM23mysdFEbPCr6t7wXj3S64vqnpZRezYJnV%2FdBA5sqAWir1b2A4WLcaHIlPJZAvmWfinc7zZs7eymqEp%2B3K9T2di771MABbTx57N6iD8XaK4X6mmU5tA9G5lpu9ihUnhRe8dMyB3mYQ1cxVK3bHUlc0ejySnbWSXyEI8Nz50t9qYLQr0fdaLN%2BiATzlrJFl%2BVbt4unCDXgAV1Z1W4FlSTN6SSB%2FrdBExzFJwaw5ZOwsEey7QD43nY58IL2C9%2F6V37NkgwxfZW19j%2FnhrxZuz2HucG4ykHeRyFMIW4%2FFBS6VEMOf03DoPfhKaQ5ifZOhR3OUw3T5ESpQ6SPoekQRez9%2BOwqhaogwjpK81zptVNT4Ng0SAYamt18kUNMJ7JyL0GOrQCeScRV5xY1U4HRbhibasflUkO5mhrPt52N97HuZfhz6%2BZkRpEwPKvwY79c7%2BSacXQsPMzHKVnYm3WIyW3CdSEIv0hZucYe4PHmn4y7svKX6J7g67sbiitDdYwnNb7ipbR3xQ3V9XElzvQdFHvF0HlmPRlQvFrKuWTAFeUpAIiVvD1RYXOQf9LfUU3KnZS4Qiyv1ZHHeJUP9lF8e3ReCIAurOIlV8vMEdmp7viof9WdD3v8D37g29wPJ5QGMev6LbXUGUO4j0UyVK8sfp0qxGOZTvis7sITZlLTucd%2B44nOuVzbmHMOntV0sSlqgp1LaWEasQTro97C7u3LZvZ3BxM1M7DRaQcL1FTIJVZljETKK7FGY%2BBNKkfDE4NNeWU44g4RwaWKpDW4%2FAhQ88hjyp2N%2FFW%2FDo%3D&X-Amz-Signature=808eb909077f5d3bbc9367bb44000e8e420ef2c27296b25b3af1ccc829745526&X-Amz-SignedHeaders=host&response-content-disposition=inline',
     password: '1234',
     role: 'barber',
   },
@@ -168,6 +186,8 @@ const barbers3 = [
     firstName: 'barber',
     lastName: 'no.3',
     phone: '31234567893',
+    avatar:
+      'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/avatars/zxDeWp-1739649119709-freepik__the-style-is-candid-image-photography-with-natural__47103.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIA5V6I6YNP7SGCMSAM%2F20250216%2Feu-north-1%2Fs3%2Faws4_request&X-Amz-Date=20250216T201604Z&X-Amz-Expires=300&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEDwaCmV1LW5vcnRoLTEiRjBEAiBG5BnVRkqvKCJWvoHYRZEtrRDjFDkXAV6%2FSY8m41akGwIgXBUJCLIvLUR0fBy9zVbLOaBsJ51JoxgAshCUdWo1iSIq7AIIZRAAGgw5NDA0ODI0MTM0MDciDHD1%2BXGMHkUVZBn2HyrJAouJ1ktYfMwM4z9BMYs0OFXg2NZKj7ZhWlp%2B288mZ3LED3%2FddNfoaFtRA3u9HhVM23mysdFEbPCr6t7wXj3S64vqnpZRezYJnV%2FdBA5sqAWir1b2A4WLcaHIlPJZAvmWfinc7zZs7eymqEp%2B3K9T2di771MABbTx57N6iD8XaK4X6mmU5tA9G5lpu9ihUnhRe8dMyB3mYQ1cxVK3bHUlc0ejySnbWSXyEI8Nz50t9qYLQr0fdaLN%2BiATzlrJFl%2BVbt4unCDXgAV1Z1W4FlSTN6SSB%2FrdBExzFJwaw5ZOwsEey7QD43nY58IL2C9%2F6V37NkgwxfZW19j%2FnhrxZuz2HucG4ykHeRyFMIW4%2FFBS6VEMOf03DoPfhKaQ5ifZOhR3OUw3T5ESpQ6SPoekQRez9%2BOwqhaogwjpK81zptVNT4Ng0SAYamt18kUNMJ7JyL0GOrQCeScRV5xY1U4HRbhibasflUkO5mhrPt52N97HuZfhz6%2BZkRpEwPKvwY79c7%2BSacXQsPMzHKVnYm3WIyW3CdSEIv0hZucYe4PHmn4y7svKX6J7g67sbiitDdYwnNb7ipbR3xQ3V9XElzvQdFHvF0HlmPRlQvFrKuWTAFeUpAIiVvD1RYXOQf9LfUU3KnZS4Qiyv1ZHHeJUP9lF8e3ReCIAurOIlV8vMEdmp7viof9WdD3v8D37g29wPJ5QGMev6LbXUGUO4j0UyVK8sfp0qxGOZTvis7sITZlLTucd%2B44nOuVzbmHMOntV0sSlqgp1LaWEasQTro97C7u3LZvZ3BxM1M7DRaQcL1FTIJVZljETKK7FGY%2BBNKkfDE4NNeWU44g4RwaWKpDW4%2FAhQ88hjyp2N%2FFW%2FDo%3D&X-Amz-Signature=808eb909077f5d3bbc9367bb44000e8e420ef2c27296b25b3af1ccc829745526&X-Amz-SignedHeaders=host&response-content-disposition=inline',
     password: '1234',
     role: 'barber',
   },

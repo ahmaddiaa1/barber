@@ -84,6 +84,7 @@ export class MockService {
           password: await hash(barber.password, 10),
           phone: barber.phone,
           role: Role[barber.role.toUpperCase()],
+          avatar: barber.avatar,
           barber: {
             create: {
               branchId: createdBranches[0].id,
@@ -100,6 +101,7 @@ export class MockService {
           password: await hash(barber.password, 10),
           phone: barber.phone,
           role: Role[barber.role.toUpperCase()],
+          avatar: barber.avatar,
           barber: {
             create: {
               branchId: createdBranches[1].id,
@@ -116,6 +118,7 @@ export class MockService {
           password: await hash(barber.password, 10),
           phone: barber.phone,
           role: Role[barber.role.toUpperCase()],
+          avatar: barber.avatar,
           barber: {
             create: {
               branchId: createdBranches[2].id,

@@ -29,14 +29,14 @@ export class CategoryService {
       },
     });
 
+    if (!CurrUser) throw new NotFoundException('User not found');
+
     const packages = await this.prisma.packages.findFirst({
       where: {
-        id: CurrUser.client.ClientPackages[0].packageService[0].service
-          .packagesId,
+        id: CurrUser?.client?.ClientPackages[0]?.packageService[0]?.service
+          ?.packagesId,
       },
     });
-
-    if (!CurrUser) throw new NotFoundException('User not found');
 
     const client = CurrUser.client.ClientPackages.map((item) => {
       const { packageService, clientId, isActive, ...rest } = item;
@@ -54,7 +54,7 @@ export class CategoryService {
     });
 
     return new AppSuccess(
-      { categories, package: client },
+      { categories, ...(client.length && { package: client }) },
       'Categories found successfully',
     );
   }

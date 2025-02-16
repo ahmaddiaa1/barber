@@ -25,7 +25,7 @@ export class AuthGuard implements CanActivate {
     const result = await this.prisma.token.findUnique({ where: { token } });
 
     if (!result)
-      throw new UnauthorizedException('Unautorized - No token provider');
+      throw new UnauthorizedException('Unauthorized - No token provider');
 
     try {
       const payload = this.authService.verifyToken(token) as JwtPayload;
@@ -39,6 +39,7 @@ export class AuthGuard implements CanActivate {
           client: true,
         },
       });
+
       req.user = user;
       req.token = token;
       return true;

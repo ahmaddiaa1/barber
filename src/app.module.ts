@@ -14,6 +14,7 @@ import { ComplainModule } from './complain/complain.module';
 import { AwsModule } from './aws/aws.module';
 import { ConfigModule } from '@nestjs/config';
 import { PointsModule } from './points/points.module';
+import { MockModule } from './mock/mock.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { PointsModule } from './points/points.module';
     ComplainModule,
     AwsModule,
     PointsModule,
+    MockModule,
   ],
   controllers: [],
   providers: [TokenService],

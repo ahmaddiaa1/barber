@@ -1,10 +1,11 @@
-const clients = [
+export const clients = [
   {
     firstName: 'client',
     lastName: 'no.1',
     phone: '1234567891',
     password: '1234',
     role: 'user',
+    referralCode: 'AK3dm3cs',
   },
   {
     firstName: 'client',
@@ -12,6 +13,7 @@ const clients = [
     phone: '1234567892',
     password: '1234',
     role: 'user',
+    referralCode: 'K2skn2nl1',
   },
   {
     firstName: 'client',
@@ -19,6 +21,7 @@ const clients = [
     phone: '1234567893',
     password: '1234',
     role: 'user',
+    referralCode: 'ak5fn3fs',
   },
   {
     firstName: 'client',
@@ -26,6 +29,7 @@ const clients = [
     phone: '1234567894',
     password: '1234',
     role: 'user',
+    referralCode: 'Af0gn3m2',
   },
   {
     firstName: 'client',
@@ -33,6 +37,7 @@ const clients = [
     phone: '1234567895',
     password: '1234',
     role: 'user',
+    referralCode: 'mASd932j',
   },
   {
     firstName: 'client',
@@ -40,6 +45,7 @@ const clients = [
     phone: '1234567896',
     password: '1234',
     role: 'user',
+    referralCode: 'ASD9dw2d,',
   },
   {
     firstName: 'client',
@@ -47,6 +53,7 @@ const clients = [
     phone: '1234567897',
     password: '1234',
     role: 'user',
+    referralCode: 'ALKSb23da',
   },
   {
     firstName: 'client',
@@ -54,6 +61,7 @@ const clients = [
     phone: '1234567898',
     password: '1234',
     role: 'user',
+    referralCode: '3ffe33',
   },
   {
     firstName: 'client',
@@ -61,6 +69,7 @@ const clients = [
     phone: '1234567899',
     password: '1234',
     role: 'user',
+    referralCode: '3Fad3',
   },
   {
     firstName: 'client',
@@ -68,6 +77,7 @@ const clients = [
     phone: '1234567890',
     password: '1234',
     role: 'user',
+    referralCode: 'Fas3gad3',
   },
   {
     firstName: 'Abdaelrahman',
@@ -75,10 +85,11 @@ const clients = [
     phone: '01000262238',
     password: '1234',
     role: 'user',
+    referralCode: 'nb4nba32r',
   },
 ];
 
-const admin = [
+export const admin = [
   {
     firstName: 'admin',
     lastName: 'no.1',
@@ -101,7 +112,8 @@ const admin = [
     role: 'admin',
   },
 ];
-const barbers1 = [
+
+export const barbers1 = [
   {
     firstName: 'barber',
     lastName: 'no.1',
@@ -133,7 +145,7 @@ const barbers1 = [
   },
 ];
 
-const barbers2 = [
+export const barbers2 = [
   {
     firstName: 'barber',
     lastName: 'no.1',
@@ -163,7 +175,7 @@ const barbers2 = [
   },
 ];
 
-const barbers3 = [
+export const barbers3 = [
   {
     firstName: 'barber',
     lastName: 'no.1',
@@ -193,7 +205,7 @@ const barbers3 = [
   },
 ];
 
-const branches = [
+export const branches = [
   {
     name: 'Al Rehab',
     location: 'Al Rehab',
@@ -217,13 +229,13 @@ const branches = [
   },
 ];
 
-const categories = [
+export const categories = [
   { name: 'HairCare' },
   { name: 'Beard' },
   { name: 'HairCut' },
 ];
 
-const BeardServices = [
+export const BeardServices = [
   {
     name: 'Beard Extra',
     price: 100,
@@ -247,7 +259,7 @@ const BeardServices = [
   },
 ];
 
-const HairCutServices = [
+export const HairCutServices = [
   {
     name: 'Haircut',
     price: 100,
@@ -271,7 +283,7 @@ const HairCutServices = [
   },
 ];
 
-const HairCareServices = [
+export const HairCareServices = [
   {
     name: 'Hair Dye',
     price: 100,

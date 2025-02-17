@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateComplainDto } from './dto/create-complain.dto';
-import { User } from '@prisma/client';
+import { Complain, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
 
@@ -11,7 +11,7 @@ export class ComplainService {
   async createComplain(
     createComplainDto: CreateComplainDto,
     user: User,
-  ): Promise<AppSuccess> {
+  ): Promise<AppSuccess<Complain>> {
     const complain = await this.prisma.complain.create({
       data: {
         ...createComplainDto,
@@ -26,7 +26,7 @@ export class ComplainService {
     return new AppSuccess(complain, 'Complain created successfully');
   }
 
-  async getAllComplains(): Promise<AppSuccess> {
+  async getAllComplains(): Promise<AppSuccess<{ complains: Complain[] }>> {
     const complains = await this.prisma.complain.findMany({
       include: {
         client: {
@@ -48,7 +48,7 @@ export class ComplainService {
     return new AppSuccess({ complains }, 'Complains found successfully');
   }
 
-  async findOne(id: string): Promise<AppSuccess> {
+  async findOne(id: string): Promise<AppSuccess<Complain>> {
     const complain = await this.prisma.complain.findUnique({
       where: {
         id,
@@ -75,7 +75,7 @@ export class ComplainService {
     return new AppSuccess(complain, 'Complain found successfully');
   }
 
-  async remove(id: string): Promise<AppSuccess> {
+  async remove(id: string): Promise<AppSuccess<Complain>> {
     const complain = await this.prisma.complain.findUnique({
       where: { id },
     });

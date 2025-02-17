@@ -15,13 +15,13 @@ export class ServiceService {
     private readonly awsService: AwsService,
   ) {}
 
-  public async getAllService(): Promise<AppSuccess> {
+  public async getAllService(): Promise<AppSuccess<{ services: Service[] }>> {
     const services = await this.prisma.service.findMany();
 
-    return new AppSuccess(services, 'Services found successfully');
+    return new AppSuccess({ services }, 'Services found successfully');
   }
 
-  public async getServiceById(id: string): Promise<AppSuccess> {
+  public async getServiceById(id: string): Promise<AppSuccess<Service>> {
     const service = await this.findOneOrFail(id);
 
     return new AppSuccess(service, 'Service found successfully');
@@ -30,7 +30,7 @@ export class ServiceService {
   public async createService(
     createServiceDto: CreateServiceDto,
     file: Express.Multer.File,
-  ): Promise<AppSuccess> {
+  ): Promise<AppSuccess<Service>> {
     const serviceImg =
       file && (await this.awsService.uploadFile(file, Random(11), 'service'));
 
@@ -45,12 +45,12 @@ export class ServiceService {
     id: string,
     updateServiceDto: UpdateServiceDto,
     file: Express.Multer.File,
-  ) {
+  ): Promise<AppSuccess<Service>> {
     await this.findOneOrFail(id);
     const serviceImg =
       file && (await this.awsService.uploadFile(file, id, 'service'));
 
-    const service = this.prisma.service.update({
+    const service = await this.prisma.service.update({
       where: { id },
       data: { ...updateServiceDto, ...(serviceImg && { serviceImg }) },
     });
@@ -61,9 +61,9 @@ export class ServiceService {
   public async softDeleteService(
     id: string,
     available: { available: boolean },
-  ) {
+  ): Promise<AppSuccess<Service>> {
     await this.findOneOrFail(id);
-    const service = this.prisma.service.update({
+    const service = await this.prisma.service.update({
       where: { id },
       data: available,
     });
@@ -71,7 +71,7 @@ export class ServiceService {
     return new AppSuccess(service, 'Service deleted successfully');
   }
 
-  private async findOneOrFail(id: string) {
+  private async findOneOrFail(id: string): Promise<Service> {
     const service = await this.prisma.service.findUnique({
       where: { id },
     });

@@ -3,13 +3,15 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
-import { User } from '@prisma/client';
+import { Category, User } from '@prisma/client';
 
 @Injectable()
 export class CategoryService {
   constructor(private readonly prisma: PrismaService) {}
 
-  public async findAllCategories(user: User): Promise<AppSuccess> {
+  public async findAllCategories(
+    user: User,
+  ): Promise<AppSuccess<{ categories: Category[]; package: any }>> {
     const CurrUser = await this.prisma.user.findUnique({
       where: { id: user.id },
       include: {
@@ -59,7 +61,7 @@ export class CategoryService {
     );
   }
 
-  public async findCategoryById(id: string): Promise<AppSuccess> {
+  public async findCategoryById(id: string): Promise<AppSuccess<Category>> {
     const category = await this.findOneOrFail(id);
 
     return new AppSuccess(category, 'Category found successfully');
@@ -67,7 +69,7 @@ export class CategoryService {
 
   public async createCategory(
     createCategoryDto: CreateCategoryDto,
-  ): Promise<AppSuccess> {
+  ): Promise<AppSuccess<Category>> {
     const category = await this.prisma.category.create({
       data: {
         ...createCategoryDto,
@@ -80,7 +82,7 @@ export class CategoryService {
   public async updateCategory(
     id: string,
     updateCategoryDto: UpdateCategoryDto,
-  ): Promise<AppSuccess> {
+  ): Promise<AppSuccess<Category>> {
     await this.findOneOrFail(id);
 
     const updatedCategory = await this.prisma.category.update({
@@ -97,7 +99,7 @@ export class CategoryService {
   public async softDeleteCategory(
     id: string,
     available: { available: boolean },
-  ): Promise<AppSuccess> {
+  ): Promise<AppSuccess<Category>> {
     await this.findOneOrFail(id);
 
     const updatedCategory = await this.prisma.category.update({

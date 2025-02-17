@@ -1,11 +1,20 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
+import { PromoCodeService } from 'src/promo-code/promo-code.service';
 
 @Injectable()
 export class OrderService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly promoCodeService: PromoCodeService,
+  ) {}
 
   async getAllOrders() {
     const orders = await this.prisma.order.findMany({});
@@ -15,6 +24,83 @@ export class OrderService {
   async getOrderById(id: string) {
     const order = await this.findOneOrFail(id);
     return new AppSuccess(order, 'Order fetched successfully');
+  }
+
+  async GetData(createOrderDto: CreateOrderDto) {
+    const { promoCode, service, slot, barberId, date, branchId } =
+      createOrderDto;
+
+    const dataWithoutTime = date.toString().split('T')[0];
+
+    const order = await this.prisma.order.findFirst({
+      where: {
+        barberId: barberId,
+        date: new Date(dataWithoutTime),
+        slot: slot,
+        OR: [
+          { status: 'PENDING' },
+          { status: 'IN_PROGRESS' },
+          { booking: 'UPCOMING' },
+        ],
+      },
+    });
+
+    if (order)
+      throw new ConflictException(
+        `Slot ${createOrderDto.slot} is already booked`,
+      );
+
+    const { data } = await this.getSlots(dataWithoutTime, barberId);
+    const { data: validPromoCode } =
+      await this.promoCodeService.validatePromoCode(promoCode);
+
+    const services = await this.prisma.service.findMany({
+      where: {
+        id: {
+          in: service,
+        },
+      },
+    });
+
+    const branch = await this.prisma.branch.findUnique({
+      where: { id: branchId },
+      include: {
+        barber: true,
+      },
+    });
+    // console.log('promoCode', promoCode, validPromoCode);
+    // if (promoCode && !validPromoCode)
+    // throw new NotFoundException(
+    // `Promo code ${promoCode} is invalid or expired. ${validPromoCode}`,
+    // );
+    if (!services.length)
+      throw new NotFoundException('No services found with the given ids.');
+
+    if (!data.slots.find((slot: string) => slot === slot)) {
+      throw new ServiceUnavailableException(
+        `Slot ${slot} is not available for booking.`,
+      );
+    }
+    // const { type, discount: dis } = validPromoCode;
+
+    const subTotal = services.reduce((acc, service) => acc + service.price, 0);
+    // const discount = type === 'PERCENTAGE' ? (subTotal * dis) / 100 : dis;
+    // const total = promoCode ? subTotal - discount : subTotal;
+    const duration =
+      services.reduce((acc, service) => acc + service.duration, 0) * 15;
+
+    return new AppSuccess(
+      {
+        date,
+        startTime: slot,
+        duration,
+        branch,
+        // service: services,
+        subTotal,
+        // total,
+      },
+      'Data fetched successfully',
+    );
   }
 
   async createOrder(createOrderDto: CreateOrderDto, userId: string) {
@@ -50,11 +136,12 @@ export class OrderService {
       },
     });
 
-    if (promoCode && !validPromoCode) {
-      throw new ConflictException(
-        `Promo code "${promoCode}" is invalid or expired.`,
-      );
-    }
+    // console.log('promoCode', promoCode, validPromoCode);
+    // if (promoCode && !validPromoCode) {
+    //   throw new ConflictException(
+    //     `Promo code ${promoCode} is invalid or expired.`,
+    //   );
+    // }
 
     const services = await this.prisma.service.findMany({
       where: {

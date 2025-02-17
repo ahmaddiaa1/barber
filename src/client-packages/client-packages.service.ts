@@ -92,8 +92,8 @@ export class ClientPackagesService {
     );
   }
 
-  findOne(id: string) {
-    const clientPackage = this.prisma.clientPackages.findUnique({
+  async findOne(id: string) {
+    const clientPackage = await this.prisma.clientPackages.findUnique({
       where: { id: id },
       include: {
         packageService: {

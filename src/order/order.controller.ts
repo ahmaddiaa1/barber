@@ -22,10 +22,16 @@ export class OrderController {
     return this.orderService.getAllOrders();
   }
 
+  @Post('/OrderDetails')
+  async getOrderDetails(@Body() orderDto: CreateOrderDto) {
+    return this.orderService.GetData(orderDto);
+  }
+
   @Get('/slots')
   async getSlots(@Query('') query: { date: string; barberId: string }) {
     return this.orderService.getSlots(query.date, query.barberId);
   }
+
   @Get(':id')
   async getOrderById(@Param('id') id: string) {
     return this.orderService.getOrderById(id);

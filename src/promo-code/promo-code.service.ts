@@ -3,42 +3,36 @@ import { CreatePromoCodeDto } from './dto/create-promo-code.dto';
 import { UpdatePromoCodeDto } from './dto/update-promo-code.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
+import { PromoCode } from '@prisma/client';
+import { Random } from 'src/utils/generate';
 
 @Injectable()
 export class PromoCodeService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private generateRandomCode(length = 10): string {
-    const characters =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * characters.length);
-      result += characters[randomIndex];
-    }
-    return result;
-  }
-
-  async createPromoCode(createPromoCodeDto: CreatePromoCodeDto) {
+  async createPromoCode(
+    createPromoCodeDto: CreatePromoCodeDto,
+  ): Promise<AppSuccess<PromoCode>> {
     const { code, ...reset } = createPromoCodeDto;
 
-    const promoCode = code ?? this.generateRandomCode();
+    const promoCode = code ?? Random(6);
 
-    return await this.prisma.promoCode.create({
+    const newPromoCode = await this.prisma.promoCode.create({
       data: {
         ...reset,
         code: promoCode,
         expiredAt: new Date(reset.expiredAt),
       },
     });
+    return new AppSuccess(newPromoCode, 'Promo code created successfully');
   }
 
-  async getAllPromoCode() {
+  async getAllPromoCode(): Promise<AppSuccess<PromoCode[]>> {
     const promoCode = await this.prisma.promoCode.findMany();
     return new AppSuccess(promoCode, 'Promo code list');
   }
 
-  async validatePromoCode(promoCode: string) {
+  async validatePromoCode(promoCode: string): Promise<AppSuccess<PromoCode>> {
     const validPromoCode = await this.prisma.promoCode.findFirst({
       where: {
         code: promoCode,

@@ -27,14 +27,14 @@ export class CategoryController {
   @Get()
   public async findAllCategories(
     @UserData('user') user: User,
-  ): Promise<AppSuccess> {
+  ): Promise<AppSuccess<{ categories: Category[]; package: any }>> {
     return await this.categoryService.findAllCategories(user);
   }
 
   @Get(':id')
   public async findCategoryById(
     @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<AppSuccess> {
+  ): Promise<AppSuccess<Category>> {
     return await this.categoryService.findCategoryById(id);
   }
 
@@ -42,7 +42,7 @@ export class CategoryController {
   @Post()
   public async createCategory(
     @Body() createCategoryDto: CreateCategoryDto,
-  ): Promise<AppSuccess> {
+  ): Promise<AppSuccess<Category>> {
     return await this.categoryService.createCategory(createCategoryDto);
   }
 
@@ -51,7 +51,7 @@ export class CategoryController {
   public async updateCategory(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
-  ): Promise<AppSuccess> {
+  ): Promise<AppSuccess<Category>> {
     return await this.categoryService.updateCategory(id, updateCategoryDto);
   }
 
@@ -60,7 +60,7 @@ export class CategoryController {
   public async deleteCategory(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() available: { available: boolean },
-  ): Promise<AppSuccess> {
+  ): Promise<AppSuccess<Category>> {
     return await this.categoryService.softDeleteCategory(id, available);
   }
 }

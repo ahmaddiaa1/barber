@@ -211,7 +211,7 @@ export class AuthService {
             ...rest,
             role,
             password: hashedPassword,
-            ...(avatarUrl && { avatar: avatarUrl }),
+            ...(avatar && { avatar: avatar }),
           },
         });
 

@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
+import dateformat from 'dateformat';
 
 @Injectable()
 export class OrderService {
@@ -30,12 +31,12 @@ export class OrderService {
     const { promoCode, service, slot, barberId, date, branchId } =
       createOrderDto;
 
-    const dataWithoutTime = date.toString().split('T')[0];
+    const dateWithoutTime = date.toString().split('T')[0];
 
     const order = await this.prisma.order.findFirst({
       where: {
         barberId: barberId,
-        date: new Date(dataWithoutTime),
+        date: new Date(dateWithoutTime),
         slot: slot,
         OR: [
           { status: 'PENDING' },
@@ -50,9 +51,10 @@ export class OrderService {
         `Slot ${createOrderDto.slot} is already booked`,
       );
 
-    const { data } = await this.getSlots(dataWithoutTime, barberId);
-    const { data: validPromoCode } =
-      await this.promoCodeService.validatePromoCode(promoCode);
+    const { data } = await this.getSlots(dateWithoutTime, barberId);
+    const validPromoCode =
+      promoCode &&
+      (await this.promoCodeService.validatePromoCode(promoCode)).data;
 
     const services = await this.prisma.service.findMany({
       where: {
@@ -64,52 +66,70 @@ export class OrderService {
 
     const branch = await this.prisma.branch.findUnique({
       where: { id: branchId },
-      include: {
-        barber: true,
+      select: {
+        name: true,
+        barber: {
+          where: { id: barberId },
+          select: {
+            user: { include: { barber: true } },
+          },
+        },
       },
     });
-    // console.log('promoCode', promoCode, validPromoCode);
-    // if (promoCode && !validPromoCode)
-    // throw new NotFoundException(
-    // `Promo code ${promoCode} is invalid or expired. ${validPromoCode}`,
-    // );
+
     if (!services.length)
       throw new NotFoundException('No services found with the given ids.');
 
-    if (!data.slots.find((slot: string) => slot === slot)) {
+    if (!data.slots.find((slot: string) => slot === createOrderDto.slot)) {
       throw new ServiceUnavailableException(
         `Slot ${slot} is not available for booking.`,
       );
     }
-    // const { type, discount: dis } = validPromoCode;
+    const type = validPromoCode?.type;
+    const dis = validPromoCode?.discount;
 
     const subTotal = services.reduce((acc, service) => acc + service.price, 0);
-    // const discount = type === 'PERCENTAGE' ? (subTotal * dis) / 100 : dis;
-    // const total = promoCode ? subTotal - discount : subTotal;
+
+    const discount = promoCode
+      ? type === 'PERCENTAGE'
+        ? (subTotal * dis) / 100
+        : dis
+      : 0;
+
+    const total = subTotal - discount;
+
     const duration =
       services.reduce((acc, service) => acc + service.duration, 0) * 15;
 
+    const OrderDate = dateformat(dateWithoutTime, 'dddd, mmmm dS, yyyy');
+
     return new AppSuccess(
       {
-        date,
+        date: OrderDate,
         startTime: slot,
-        duration,
-        branch,
-        // service: services,
-        subTotal,
-        // total,
+        duration: `${duration} Minutes`,
+        branch: branch.name,
+        user: branch.barber[0].user,
+        service: services,
+        subTotal: subTotal.toString(),
+        discount: promoCode
+          ? type === 'PERCENTAGE'
+            ? `${dis}%`
+            : `- ${dis}`
+          : 0,
+        total: total.toString(),
       },
       'Data fetched successfully',
     );
   }
 
   async createOrder(createOrderDto: CreateOrderDto, userId: string) {
-    const dataWithoutTime = createOrderDto.date.toString().split('T')[0];
+    const dateWithoutTime = createOrderDto.date.toString().split('T')[0];
 
     const existingOrder = await this.prisma.order.findFirst({
       where: {
         barberId: createOrderDto.barberId,
-        date: new Date(dataWithoutTime),
+        date: new Date(dateWithoutTime),
         slot: createOrderDto.slot,
         OR: [
           { status: 'PENDING' },
@@ -166,7 +186,7 @@ export class OrderService {
     }
 
     const { data } = await this.getSlots(
-      dataWithoutTime,
+      dateWithoutTime,
       createOrderDto.barberId,
     );
 
@@ -181,7 +201,7 @@ export class OrderService {
         ...createOrderDto,
         slot: createOrderDto.slot,
         userId,
-        date: new Date(dataWithoutTime),
+        date: new Date(dateWithoutTime),
         promoCode: validPromoCode?.id,
         service: {
           connect: createOrderDto.service.map((serviceId) => ({

@@ -67,9 +67,4 @@ export class UserController {
   CurrentUser(@UserData('user') user: User) {
     return this.userService.CurrentUser(user);
   }
-
-  @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.userService.removeUser(id);
-  }
 }

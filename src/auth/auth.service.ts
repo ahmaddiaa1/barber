@@ -13,8 +13,9 @@ import { LoginDto } from './dto/auth-login-dto';
 import * as jwt from 'jsonwebtoken';
 import { AppSuccess } from '../utils/AppSuccess';
 import { Role, User } from '@prisma/client';
-import { SupabaseService } from 'src/supabase/supabase.service';
 import { AwsService } from 'src/aws/aws.service';
+import { Random } from 'src/utils/generate';
+
 @Global()
 @Injectable()
 export class AuthService {
@@ -22,11 +23,10 @@ export class AuthService {
 
   constructor(
     private prisma: PrismaService,
-    private supabaseService: SupabaseService,
     private awsService: AwsService,
   ) {}
 
-  async signup(createAuthDto: RegisterDto, file: Express.Multer.File) {
+  public async signup(createAuthDto: RegisterDto, file: Express.Multer.File) {
     const { phone, password, role = Role.USER, branchId } = createAuthDto;
     let user: User;
     const saltOrRounds = 10;
@@ -61,7 +61,7 @@ export class AuthService {
       case Role.USER:
         let referralCode: string;
         do {
-          referralCode = this.generateRandomCode(6);
+          referralCode = Random(6);
           const isReferralCodeExist = await this.prisma.client.findFirst({
             where: { referralCode },
           });
@@ -127,7 +127,7 @@ export class AuthService {
     };
   }
 
-  async login(createAuthDto: LoginDto) {
+  public async login(createAuthDto: LoginDto) {
     const { phone, password } = createAuthDto;
 
     const user = await this.prisma.user.findUnique({
@@ -153,12 +153,12 @@ export class AuthService {
     };
   }
 
-  async logout(token: string) {
+  public async logout(token: string) {
     await this.invalidateToken(token);
     return new AppSuccess(null, 'logout successfully', 200);
   }
 
-  verifyToken(token: string) {
+  public verifyToken(token: string) {
     try {
       return jwt.verify(token, this.jwtSecret);
     } catch (error) {
@@ -166,7 +166,7 @@ export class AuthService {
     }
   }
 
-  async invalidateToken(token: string) {
+  public async invalidateToken(token: string) {
     const isToken = await this.prisma.token.findUnique({ where: { token } });
     if (!isToken) throw new UnauthorizedException('User already logged out');
     return await this.prisma.token.delete({
@@ -174,7 +174,7 @@ export class AuthService {
     });
   }
 
-  async loginToken(token: string) {
+  public async loginToken(token: string) {
     const decoded = jwt.decode(token);
     if (typeof decoded === 'object' && decoded !== null && 'exp' in decoded) {
       return await this.prisma.token.create({
@@ -182,16 +182,6 @@ export class AuthService {
       });
     }
     throw new Error('Invalid token');
-  }
-
-  private generateRandomCode(length: number): string {
-    const chars =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < length; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
   }
 
   private async createUser(
@@ -202,6 +192,8 @@ export class AuthService {
   ) {
     const { branchId, role: roles = 'user', ...rest } = createAuthDto;
     const role = roles.toUpperCase() as Role;
+    const id = Random(11);
+
     if (branchId) {
       const isBranchExist = await this.prisma.branch.findUnique({
         where: { id: branchId },
@@ -209,13 +201,11 @@ export class AuthService {
       if (!isBranchExist) throw new NotFoundException('Branch not found');
     }
 
-    const id = this.generateRandomCode(6);
-
     try {
       return this.prisma.$transaction(async (prisma) => {
-        const avatarUrl = file
-          ? await this.awsService.uploadFile(file, id, 'avatars')
-          : undefined;
+        const avatar =
+          file && (await this.awsService.uploadFile(file, id, 'avatars'));
+
         const user = await prisma.user.create({
           data: { ...rest, role, password: hashedPassword },
         });
@@ -224,7 +214,7 @@ export class AuthService {
           where: { id: user.id },
           data: {
             ...data,
-            ...(avatarUrl && { avatar: avatarUrl }),
+            ...(avatar && { avatar: avatar }),
           },
         });
       });

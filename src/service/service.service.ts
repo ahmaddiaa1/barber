@@ -6,6 +6,7 @@ import { UpdateServiceDto } from './dto/update-service.dto';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { AwsService } from 'src/aws/aws.service';
+import { Random } from 'src/utils/generate';
 
 @Injectable()
 export class ServiceService {
@@ -30,19 +31,8 @@ export class ServiceService {
     createServiceDto: CreateServiceDto,
     file: Express.Multer.File,
   ): Promise<AppSuccess> {
-    const generateRandomCode = () => {
-      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let code = '';
-      for (let i = 0; i < 20; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        code += characters.charAt(randomIndex);
-      }
-      return code;
-    };
-
-    const serviceImg = file
-      ? await this.awsService.uploadFile(file, generateRandomCode(), 'service')
-      : undefined;
+    const serviceImg =
+      file && (await this.awsService.uploadFile(file, Random(11), 'service'));
 
     const service = await this.prisma.service.create({
       data: { ...createServiceDto, ...(serviceImg && { serviceImg }) },
@@ -57,9 +47,9 @@ export class ServiceService {
     file: Express.Multer.File,
   ) {
     await this.findOneOrFail(id);
-    const serviceImg = file
-      ? await this.awsService.uploadFile(file, id, 'service')
-      : undefined;
+    const serviceImg =
+      file && (await this.awsService.uploadFile(file, id, 'service'));
+
     const service = this.prisma.service.update({
       where: { id },
       data: { ...updateServiceDto, ...(serviceImg && { serviceImg }) },

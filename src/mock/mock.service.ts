@@ -19,11 +19,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class MockService {
   constructor(private readonly prisma: PrismaService) {}
   async createMockClientData() {
+    await this.prisma.branch.deleteMany();
     await this.prisma.client.deleteMany();
     await this.prisma.admin.deleteMany();
     await this.prisma.barber.deleteMany();
     await this.prisma.cashier.deleteMany();
     await this.prisma.user.deleteMany();
+    await this.prisma.service.deleteMany();
+    await this.prisma.category.deleteMany();
 
     const client = clients.map(async (client) => {
       console.log(client);
@@ -169,7 +172,7 @@ export class MockService {
       });
     });
 
-    await Promise.all([
+    const promise = await Promise.all([
       ...client,
       ...admins,
       ...barber1,
@@ -178,6 +181,7 @@ export class MockService {
     ]);
 
     return {
+      promise,
       client,
       admins,
       barber1,

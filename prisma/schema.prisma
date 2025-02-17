@@ -224,7 +224,7 @@ model PackagesServices {
 model ClientPackages {
   id             String             @id @default(uuid()) @map("id")
   packageService PackagesServices[]
-  type           String
+  type           PackagesStatus
   isActive       Boolean            @default(true)
   createdAt      DateTime           @default(now()) @map("createdAt")
   updatedAt      DateTime           @updatedAt @map("updatedAt")

@@ -24,9 +24,9 @@ export class BranchService {
       return code;
     };
 
-    const branchImg = file
-      ? await this.awsService.uploadFile(file, generateRandomCode(), 'branch')
-      : undefined;
+    const branchImg =
+      file &&
+      (await this.awsService.uploadFile(file, generateRandomCode(), 'branch'));
 
     const newBranch = await this.prisma.branch.create({
       data: {

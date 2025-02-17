@@ -207,7 +207,12 @@ export class AuthService {
           file && (await this.awsService.uploadFile(file, id, 'avatars'));
 
         const user = await prisma.user.create({
-          data: { ...rest, role, password: hashedPassword },
+          data: {
+            ...rest,
+            role,
+            password: hashedPassword,
+            ...(avatarUrl && { avatar: avatarUrl }),
+          },
         });
 
         return await prisma.user.update({

@@ -27,7 +27,7 @@ export class OrderService {
     return new AppSuccess(order, 'Order fetched successfully');
   }
 
-  async GetData(createOrderDto: CreateOrderDto) {
+  async GetData(createOrderDto: CreateOrderDto, userId: string) {
     const { promoCode, service, slot, barberId, date, branchId } =
       createOrderDto;
 
@@ -62,7 +62,51 @@ export class OrderService {
           in: service,
         },
       },
+      include: {
+        PackagesServices: {
+          select: {
+            id: true,
+          },
+        },
+      },
     });
+
+    const client = await this.prisma.client.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        ClientPackages: {
+          where: { isActive: true, type: 'SINGLE' },
+          select: {
+            type: true,
+            packageService: {
+              where: { isActive: true, remainingCount: { gt: 0 } },
+              select: {
+                service: {
+                  select: {
+                    id: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const clientPackageServiceIds = client.ClientPackages.flatMap((pkg) =>
+      pkg.packageService.map((service) => service.service.id),
+    );
+
+    const modifiedServices = services.map((service) => ({
+      ...service,
+      isFree: clientPackageServiceIds.includes(service.id),
+    }));
+
+    const chargeableServices = modifiedServices.filter(
+      (service) => !service.isFree,
+    );
 
     const branch = await this.prisma.branch.findUnique({
       where: { id: branchId },
@@ -88,7 +132,10 @@ export class OrderService {
     const type = validPromoCode?.type;
     const dis = validPromoCode?.discount;
 
-    const subTotal = services.reduce((acc, service) => acc + service.price, 0);
+    const subTotal = chargeableServices.reduce(
+      (acc, service) => acc + service.price,
+      0,
+    );
 
     const discount = promoCode
       ? type === 'PERCENTAGE'
@@ -96,7 +143,7 @@ export class OrderService {
         : dis
       : 0;
 
-    const total = subTotal - discount;
+    const total = Math.max(subTotal - discount, 0);
 
     const duration =
       services.reduce((acc, service) => acc + service.duration, 0) * 15;
@@ -110,12 +157,12 @@ export class OrderService {
         duration: `${duration} Minutes`,
         branch: branch.name,
         user: branch.barber[0].user,
-        service: services,
+        service: modifiedServices,
         subTotal: subTotal.toString(),
         discount: promoCode
           ? type === 'PERCENTAGE'
             ? `${dis}%`
-            : `- ${dis}`
+            : `${dis}EGP`
           : 0,
         total: total.toString(),
       },
@@ -124,12 +171,14 @@ export class OrderService {
   }
 
   async createOrder(createOrderDto: CreateOrderDto, userId: string) {
-    const dateWithoutTime = createOrderDto.date.toString().split('T')[0];
+    const dataWithoutTime = createOrderDto.date.toString().split('T')[0];
+    const { slot, service, barberId, packages, branchId, ...rest } =
+      createOrderDto;
 
     const existingOrder = await this.prisma.order.findFirst({
       where: {
         barberId: createOrderDto.barberId,
-        date: new Date(dateWithoutTime),
+        date: new Date(dataWithoutTime),
         slot: createOrderDto.slot,
         OR: [
           { status: 'PENDING' },
@@ -138,6 +187,70 @@ export class OrderService {
         ],
       },
     });
+
+    const client = await this.prisma.client.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        ClientPackages: {
+          select: {
+            type: true,
+            packageService: {
+              select: {
+                service: {
+                  select: {
+                    id: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    const barber = await this.prisma.barber.findUnique({
+      where: { id: createOrderDto.barberId },
+    });
+    const branch = await this.prisma.branch.findUnique({
+      where: { id: branchId },
+    });
+    const Services = await this.prisma.service.findMany({
+      where: { id: { in: service } },
+    });
+
+    if (!barber) throw new NotFoundException('Barber not found');
+    if (!client) throw new NotFoundException('Client not found');
+    if (!branch) throw new NotFoundException('Branch not found');
+    if (!Services || !Services.length)
+      throw new NotFoundException('Service not found');
+
+    const services = await this.prisma.service.findMany({
+      where: {
+        id: {
+          in: createOrderDto.service,
+        },
+      },
+      select: {
+        id: true,
+        price: true,
+      },
+    });
+
+    const clientPackageServiceIds = client.ClientPackages.flatMap((pkg) =>
+      pkg.packageService.map((service) => service.service.id),
+    );
+
+    console.log('clientPackageServiceIds', clientPackageServiceIds);
+
+    const modifiedServices = services.map((service) => ({
+      ...service,
+      isFree: clientPackageServiceIds.includes(service.id),
+    }));
+
+    const chargeableServices = modifiedServices.filter(
+      (service) => !service.isFree,
+    );
 
     if (existingOrder) {
       throw new ConflictException(
@@ -156,28 +269,18 @@ export class OrderService {
       },
     });
 
-    // console.log('promoCode', promoCode, validPromoCode);
-    // if (promoCode && !validPromoCode) {
-    //   throw new ConflictException(
-    //     `Promo code ${promoCode} is invalid or expired.`,
-    //   );
-    // }
+    if (promoCode && !validPromoCode) {
+      throw new ConflictException(
+        `Promo code "${promoCode}" is invalid or expired.`,
+      );
+    }
 
-    const services = await this.prisma.service.findMany({
-      where: {
-        id: {
-          in: createOrderDto.service,
-        },
-      },
-      select: {
-        id: true,
-        price: true,
-      },
-    });
+    const subTotal = chargeableServices.reduce(
+      (acc, service) => acc + service.price,
+      0,
+    );
 
-    const subTotal = services.reduce((acc, service) => acc + service.price, 0);
-
-    let total = subTotal;
+    let total = Math.max(subTotal, 0);
 
     if (promoCode && validPromoCode?.type === 'PERCENTAGE') {
       total = subTotal - (subTotal * validPromoCode.discount) / 100;
@@ -186,36 +289,113 @@ export class OrderService {
     }
 
     const { data } = await this.getSlots(
-      dateWithoutTime,
+      dataWithoutTime,
       createOrderDto.barberId,
     );
 
-    if (!data.slots.find((slot: string) => slot === createOrderDto.slot)) {
+    if (!data.slots.find((slots: string) => slots === slot)) {
       throw new ConflictException(
         `Slot ${createOrderDto.slot} is not available for booking.`,
       );
     }
 
-    return await this.prisma.order.create({
+    const order = await this.prisma.order.create({
       data: {
-        ...createOrderDto,
-        slot: createOrderDto.slot,
+        ...rest,
+        ...(validPromoCode && { promoCode: validPromoCode?.id }),
+        slot,
         userId,
-        date: new Date(dateWithoutTime),
-        promoCode: validPromoCode?.id,
+        barberId,
+        branchId,
+        date: new Date(dataWithoutTime),
         service: {
-          connect: createOrderDto.service.map((serviceId) => ({
-            id: serviceId,
-          })),
+          connect: modifiedServices.map((service) => ({ id: service.id })),
         },
-        barberId: createOrderDto.barberId,
         subTotal,
         total,
       },
       include: {
-        service: true,
+        service: {
+          include: {
+            PackagesServices: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
       },
     });
+
+    const packageServiceIds = order.service.flatMap((s) =>
+      s.PackagesServices.map((ps) => ps.id),
+    );
+
+    await this.prisma.packagesServices.updateMany({
+      where: {
+        id: { in: packageServiceIds },
+        ClientPackages: { clientId: order.userId },
+        isActive: true,
+      },
+      data: {
+        isActive: false,
+        usedAt: new Date(),
+        remainingCount: {
+          decrement: 1,
+        },
+      },
+    });
+
+    return new AppSuccess(order, 'Order created successfully');
+  }
+
+  async startOrder(id: string) {
+    const updatedOrder = await this.prisma.order.update({
+      where: { id },
+      data: { status: 'IN_PROGRESS' },
+    });
+
+    return new AppSuccess(updatedOrder, 'Order started successfully');
+  }
+
+  async completeOrder(id: string) {
+    const updatedOrder = await this.prisma.order.update({
+      where: { id },
+      data: { status: 'COMPLETED' },
+      include: {
+        service: {
+          include: {
+            PackagesServices: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const packageServiceIds = updatedOrder.service.flatMap((s) =>
+      s.PackagesServices.map((ps) => ps.id),
+    );
+
+    await this.prisma.packagesServices.deleteMany({
+      where: {
+        AND: [
+          { id: { in: packageServiceIds } },
+          {
+            ClientPackages: {
+              clientId: updatedOrder.userId,
+            },
+          },
+        ],
+      },
+    });
+
+    return new AppSuccess(
+      updatedOrder,
+      'Order completed successfully, used services removed.',
+    );
   }
 
   async getSlots(date: string, barberId: string) {
@@ -238,7 +418,6 @@ export class OrderService {
     const allSlots = allSlotsData.slot;
     const blockedSlots = new Set<string>();
 
-    // Compute blocked slots
     for (const order of orders) {
       const startIndex = allSlots.indexOf(order.slot);
       if (startIndex === -1) continue;
@@ -252,7 +431,6 @@ export class OrderService {
         .forEach((slot) => blockedSlots.add(slot));
     }
 
-    // Get available slots
     const availableSlots = allSlots.filter((slot) => !blockedSlots.has(slot));
 
     return new AppSuccess(

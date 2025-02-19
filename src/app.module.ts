@@ -15,6 +15,8 @@ import { AwsModule } from './aws/aws.module';
 import { ConfigModule } from '@nestjs/config';
 import { PointsModule } from './points/points.module';
 import { MockModule } from './mock/mock.module';
+import { PackageModule } from './package/package.module';
+import { ClientPackagesModule } from './client-packages/client-packages.module';
 
 @Module({
   imports: [
@@ -25,6 +27,7 @@ import { MockModule } from './mock/mock.module';
     AuthModule,
     UserModule,
     PrismaModule,
+    PackageModule,
     CategoryModule,
     ServiceModule,
     SupabaseModule,
@@ -33,7 +36,7 @@ import { MockModule } from './mock/mock.module';
     PromoCodeModule,
     ScheduleModule.forRoot(),
     ComplainModule,
-    AwsModule,
+    ClientPackagesModule,
     PointsModule,
     MockModule,
   ],

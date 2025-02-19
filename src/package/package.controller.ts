@@ -18,9 +18,9 @@ import { RolesGuard } from 'guard/role.guard';
 import { Roles } from 'decorators/roles.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 
-@Controller('package')
 @UseGuards(RolesGuard)
 @UseGuards(AuthGuard)
+@Controller('package')
 export class PackageController {
   constructor(private readonly packageService: PackageService) {}
 

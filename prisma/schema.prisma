@@ -161,29 +161,29 @@ model PromoCode {
 }
 
 model Order {
-  id             String             @id @default(uuid())
-  branchId       String
-  promoCode      String?
-  date           DateTime
-  slot           String
-  note           String?
-  booking        BookingStatus      @default(UPCOMING)
-  status         OrderStatus        @default(PENDING)
-  points         Int                @default(0)
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  subTotal       Int
-  total          Int
-  userId         String
-  barberId       String
-  cashierId      String?
-  barber         User               @relation("BarberOrders", fields: [barberId], references: [id])
-  branch         Branch             @relation(fields: [branchId], references: [id])
-  Cashier        User?              @relation("CashierOrders", fields: [cashierId], references: [id])
-  Code           PromoCode?         @relation(fields: [promoCode], references: [id])
-  client         User               @relation("UserOrders", fields: [userId], references: [id])
-  service        Service[]          @relation("OrderToServices")
-  packageService PackagesServices[]
+  id           String           @id @default(uuid())
+  branchId     String
+  promoCode    String?
+  date         DateTime
+  slot         String
+  note         String?
+  booking      BookingStatus    @default(UPCOMING)
+  status       OrderStatus      @default(PENDING)
+  points       Int              @default(0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  subTotal     Int
+  total        Int
+  userId       String
+  barberId     String
+  cashierId    String?
+  barber       User             @relation("BarberOrders", fields: [barberId], references: [id])
+  branch       Branch           @relation(fields: [branchId], references: [id])
+  Cashier      User?            @relation("CashierOrders", fields: [cashierId], references: [id])
+  Code         PromoCode?       @relation(fields: [promoCode], references: [id])
+  client       User             @relation("UserOrders", fields: [userId], references: [id])
+  service      Service[]        @relation("OrderToServices")
+  usedPackages ClientPackages[] @relation("UsedPackages")
 }
 
 model Points {
@@ -214,9 +214,7 @@ model PackagesServices {
   usedAt           DateTime?
   createdAt        DateTime       @default(now()) @map("createdAt")
   service          Service        @relation(fields: [serviceId], references: [id])
-  Order            Order?         @relation(fields: [orderId], references: [id])
-  count            Int?
-  orderId          String?
+  remainingCount   Int?
   ClientPackagesId String
   ClientPackages   ClientPackages @relation(fields: [ClientPackagesId], references: [id])
 }
@@ -230,6 +228,7 @@ model ClientPackages {
   updatedAt      DateTime           @updatedAt @map("updatedAt")
   clientId       String
   client         Client             @relation(fields: [clientId], references: [id])
+  usedInOrders   Order[]            @relation("UsedPackages")
 }
 
 model Offers {

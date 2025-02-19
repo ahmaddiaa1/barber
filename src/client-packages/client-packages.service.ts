@@ -26,20 +26,18 @@ export class ClientPackagesService {
       throw new NotFoundException('Client package already exists');
     }
 
-    const servicesLength = pkg.services.length;
-
     const clientPackage = await this.prisma.client.update({
       where: { id: user.id },
       data: {
         ClientPackages: {
           create: {
             packageId: pkg.id,
-            type: 'SINGLE', // replace 'someType' with the appropriate type value
+            type: pkg.type,
             packageService: {
               createMany: {
                 data: pkg.services.map((service) => ({
                   serviceId: service.id,
-                  remainingCount: servicesLength,
+                  remainingCount: pkg.count,
                 })),
               },
             },

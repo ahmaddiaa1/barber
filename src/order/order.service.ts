@@ -194,9 +194,11 @@ export class OrderService {
       },
       select: {
         ClientPackages: {
+          where: { isActive: true, type: 'SINGLE' },
           select: {
             type: true,
             packageService: {
+              where: { isActive: true, remainingCount: { gt: 0 } },
               select: {
                 service: {
                   select: {
@@ -349,6 +351,55 @@ export class OrderService {
     return new AppSuccess(order, 'Order created successfully');
   }
 
+  async cancelOrder(id: string) {
+    const updatedOrder = await this.prisma.order.update({
+      where: { id },
+      include: {
+        service: {
+          include: {
+            PackagesServices: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
+      data: { status: 'CANCELLED' },
+    });
+
+    if (
+      updatedOrder.status === 'IN_PROGRESS' ||
+      updatedOrder.status === 'COMPLETED' ||
+      updatedOrder.status === 'PAID'
+    ) {
+      throw new ConflictException(
+        'Order cannot be cancelled, it has already started or completed.',
+      );
+    }
+
+    const packageServiceIds = updatedOrder.service.flatMap((s) =>
+      s.PackagesServices.map((ps) => ps.id),
+    );
+
+    await this.prisma.packagesServices.updateMany({
+      where: {
+        id: { in: packageServiceIds },
+        ClientPackages: { clientId: updatedOrder.userId },
+        isActive: false,
+      },
+      data: {
+        isActive: true,
+        usedAt: null,
+        remainingCount: {
+          increment: 1,
+        },
+      },
+    });
+
+    return new AppSuccess(updatedOrder, 'Order cancelled successfully');
+  }
+
   async startOrder(id: string) {
     const updatedOrder = await this.prisma.order.update({
       where: { id },
@@ -381,14 +432,10 @@ export class OrderService {
 
     await this.prisma.packagesServices.deleteMany({
       where: {
-        AND: [
-          { id: { in: packageServiceIds } },
-          {
-            ClientPackages: {
-              clientId: updatedOrder.userId,
-            },
-          },
-        ],
+        id: { in: packageServiceIds },
+        ClientPackages: {
+          clientId: updatedOrder.userId,
+        },
       },
     });
 

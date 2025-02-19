@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateClientPackageDto } from './dto/create-client-package.dto';
 import { UpdateClientPackageDto } from './dto/update-client-package.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from '@prisma/client';
@@ -14,21 +13,24 @@ export class ClientPackagesService {
       where: { id: packageId },
       include: { services: true },
     });
-    console.log('pkg', pkg);
+
     if (!pkg) {
       throw new NotFoundException('Package not found');
     }
+
+    const servicesLength = pkg.services.length;
 
     const clientPackage = await this.prisma.client.update({
       where: { id: user.id },
       data: {
         ClientPackages: {
           create: {
-            type: 'SINGLE', // replace 'someType' with the appropriate type value
+            type: 'SINGLE',
             packageService: {
               createMany: {
                 data: pkg.services.map((service) => ({
                   serviceId: service.id,
+                  remainingCount: servicesLength,
                 })),
               },
             },
@@ -37,6 +39,9 @@ export class ClientPackagesService {
       },
       include: {
         ClientPackages: {
+          select: {
+            id: true,
+          },
           include: {
             packageService: {
               include: {
@@ -125,7 +130,19 @@ export class ClientPackagesService {
     return `This action updates a #${id} clientPackage`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} clientPackage`;
+  async remove(id: string) {
+    console.log('id', id);
+
+    await this.prisma.$transaction(async (prisma) => {
+      await prisma.packagesServices.deleteMany({
+        where: { ClientPackagesId: id },
+      });
+
+      await prisma.clientPackages.delete({
+        where: { id },
+      });
+
+      return 'deleted';
+    });
   }
 }

@@ -45,6 +45,6 @@ export class ClientPackagesController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.clientPackagesService.remove(+id);
+    return this.clientPackagesService.remove(id);
   }
 }

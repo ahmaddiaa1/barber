@@ -1,3 +1,7 @@
-import { IsArray, IsBoolean, IsNotEmpty } from 'class-validator';
+import { PackagesStatus } from '@prisma/client';
+import { IsArray, IsBoolean, IsEnum, IsNotEmpty } from 'class-validator';
 
-export class CreateClientPackageDto {}
+export class CreateClientPackageDto {
+  @IsEnum(PackagesStatus)
+  type: string;
+}

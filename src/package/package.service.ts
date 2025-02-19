@@ -7,26 +7,17 @@ import { CreatePackageDto } from './dto/create-package.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
-import { SupabaseService } from 'src/supabase/supabase.service';
+import { AwsService } from 'src/aws/aws.service';
+import { Random } from 'src/utils/generate';
 
 @Injectable()
 export class PackageService {
   constructor(
     private prisma: PrismaService,
-    private supabase: SupabaseService,
+    private awsService: AwsService,
   ) {}
 
   async create(createPackageDto: CreatePackageDto, file: Express.Multer.File) {
-    const generateRandomCode = () => {
-      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let code = '';
-      for (let i = 0; i < 20; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        code += characters.charAt(randomIndex);
-      }
-      return code;
-    };
-
     const { serviceIds, ...rest } = createPackageDto;
 
     const existingServiceIds = (
@@ -47,7 +38,7 @@ export class PackageService {
     }
 
     const image =
-      file && (await this.supabase.uploadAvatar(file, generateRandomCode()));
+      file && (await this.awsService.uploadFile(file, Random(10), 'packages'));
 
     const packages = await this.prisma.packages.create({
       data: {

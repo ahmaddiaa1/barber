@@ -10,10 +10,7 @@ export class PaymobService {
   private readonly paymobBaseUrl = 'https://accept.paymob.com/api';
   private readonly apiKey = process.env.PAYMOB_API_KEY;
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly purchasePackage: ClientPackagesService,
-  ) {}
+  constructor(private readonly purchasePackage: ClientPackagesService) {}
 
   async getAuthToken() {
     const response = await axios.post(`${this.paymobBaseUrl}/auth/tokens`, {

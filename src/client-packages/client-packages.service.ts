@@ -24,6 +24,7 @@ export class ClientPackagesService {
       data: {
         ClientPackages: {
           create: {
+            packageId: pkg.id,
             type: 'SINGLE', // replace 'someType' with the appropriate type value
             packageService: {
               createMany: {

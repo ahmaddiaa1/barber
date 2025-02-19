@@ -16,20 +16,18 @@ export class NotificationService {
   }
 
   async sendNotificationToUsers(title: string, message: string) {
-    // 1️⃣ Fetch all users (excluding admins) with an FCM token
     const users = await this.prisma.user.findMany({
-      where: { role: 'USER', NOT: { fcmToken: null } }, // Exclude admins & users without tokens
-      select: { fcmToken: true }, // Get only fcmToken field
+      where: { role: 'USER', NOT: { fcmToken: null } },
+      select: { fcmToken: true },
     });
 
-    const tokens = users.map((user) => user.fcmToken); // Extract FCM tokens
+    const tokens = users.map((user) => user.fcmToken);
 
     if (tokens.length === 0) {
       console.log('⚠️ No users with FCM tokens found.');
       return;
     }
 
-    // 2️⃣ Prepare the notification payload
     const payload = {
       notification: {
         title: title,
@@ -38,7 +36,6 @@ export class NotificationService {
     };
 
     try {
-      // 3️⃣ Send push notifications using Firebase
       const response = await admin
         .messaging()
         .sendEachForMulticast({ tokens, ...payload });

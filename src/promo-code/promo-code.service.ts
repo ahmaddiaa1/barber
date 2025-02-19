@@ -44,7 +44,7 @@ export class PromoCodeService {
 
     if (!validPromoCode) {
       throw new ConflictException(
-        `Promo code "${promoCode}" is invalid or expired.`,
+        `Promo code ${promoCode} is invalid or expired.`,
       );
     }
 

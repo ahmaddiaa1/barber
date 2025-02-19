@@ -17,6 +17,8 @@ import { PointsModule } from './points/points.module';
 import { MockModule } from './mock/mock.module';
 import { PackageModule } from './package/package.module';
 import { ClientPackagesModule } from './client-packages/client-packages.module';
+import { PaymobModule } from './paymob/paymob.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -39,6 +41,8 @@ import { ClientPackagesModule } from './client-packages/client-packages.module';
     ClientPackagesModule,
     PointsModule,
     MockModule,
+    PaymobModule,
+    NotificationModule,
   ],
   controllers: [],
   providers: [TokenService],

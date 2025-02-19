@@ -10,7 +10,9 @@ export class NotificationService {
   constructor(private readonly prisma: PrismaService) {
     admin.initializeApp({
       credential: admin.credential.cert(
-        require('../../secret/notification-barber-firebase-adminsdk-fbsvc-73b2ccd47c.json'),
+        require(
+          path.join(__dirname, '../../../src/config/serviceAccountKey.json'),
+        ),
       ),
     });
   }

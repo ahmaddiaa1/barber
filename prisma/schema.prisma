@@ -222,6 +222,7 @@ model PackagesServices {
 
 model ClientPackages {
   id             String             @id @default(uuid()) @map("id")
+  packageId      String
   packageService PackagesServices[]
   type           PackagesStatus
   isActive       Boolean            @default(true)

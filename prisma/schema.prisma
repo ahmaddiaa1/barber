@@ -15,6 +15,7 @@ model User {
   avatar        String         @default("https://i.ibb.co/P50Hk9p/avatar.png")
   phone         String         @unique
   password      String
+  fcmToken      String?
   createdAt     DateTime       @default(now()) @map("createdAt")
   updatedAt     DateTime       @updatedAt @map("updatedAt")
   role          Role           @default(USER) @map("role")
@@ -197,14 +198,16 @@ model Points {
 }
 
 model Packages {
-  id          String    @id @default(uuid()) @map("id")
+  id          String         @id @default(uuid()) @map("id")
   description String?
   title       String
   image       String?
   price       Int
+  count       Int            @default(1)
+  type        PackagesStatus @default(SINGLE)
   expiresAt   DateTime
-  createdAt   DateTime  @default(now()) @map("createdAt")
-  updatedAt   DateTime  @updatedAt @map("updatedAt")
+  createdAt   DateTime       @default(now()) @map("createdAt")
+  updatedAt   DateTime       @updatedAt @map("updatedAt")
   services    Service[]
 }
 

@@ -20,6 +20,7 @@ export class CreateOrderDto {
   @IsString()
   slot: string;
 
+  @IsOptional()
   @IsUUID()
   @IsNotEmpty()
   barberId: string;
@@ -28,6 +29,12 @@ export class CreateOrderDto {
   @IsString({ each: true })
   service: string[];
 
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  packages: string[];
+
+  @IsOptional()
   @IsUUID()
   branchId: string;
 
@@ -43,7 +50,7 @@ export class CreateOrderDto {
   points?: number;
 
   @IsOptional()
-  @Transform(({ value }) => value ?? null)
+  // @Transform(({ value }) => value ?? null)
   @IsString()
   promoCode?: string;
 

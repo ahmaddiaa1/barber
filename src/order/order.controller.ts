@@ -13,6 +13,7 @@ import { UserData } from '../../decorators/user.decorator';
 import { User } from '@prisma/client';
 import { AuthGuard } from '../../guard/auth.guard';
 
+@UseGuards(AuthGuard)
 @Controller('order')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
@@ -22,9 +23,22 @@ export class OrderController {
     return this.orderService.getAllOrders();
   }
 
+  @Post('/start-order/:id')
+  async startOrder(@Param('id') id: string) {
+    return this.orderService.startOrder(id);
+  }
+
+  @Post('/complete-order/:id')
+  async completeOrder(@Param('id') id: string) {
+    return this.orderService.completeOrder(id);
+  }
+
   @Post('/OrderDetails')
-  async getOrderDetails(@Body() orderDto: CreateOrderDto) {
-    return this.orderService.GetData(orderDto);
+  async getOrderDetails(
+    @Body() orderDto: CreateOrderDto,
+    @UserData('user') user: User,
+  ) {
+    return this.orderService.GetData(orderDto, user.id);
   }
 
   @Get('/slots')
@@ -37,7 +51,6 @@ export class OrderController {
     return this.orderService.getOrderById(id);
   }
 
-  @UseGuards(AuthGuard)
   @Post()
   async createOrder(
     @Body() createOrderDto: CreateOrderDto,

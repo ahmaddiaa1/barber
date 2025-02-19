@@ -18,6 +18,14 @@ export class ClientPackagesService {
       throw new NotFoundException('Package not found');
     }
 
+    const clientPackageExists = await this.prisma.clientPackages.findFirst({
+      where: { packageId: pkg.id, clientId: user.id },
+    });
+
+    if (clientPackageExists) {
+      throw new NotFoundException('Client package already exists');
+    }
+
     const servicesLength = pkg.services.length;
 
     const clientPackage = await this.prisma.client.update({
@@ -42,8 +50,6 @@ export class ClientPackagesService {
         ClientPackages: {
           select: {
             id: true,
-          },
-          include: {
             packageService: {
               include: {
                 service: {
@@ -60,13 +66,6 @@ export class ClientPackagesService {
       },
     });
 
-    // await this.prisma.packagesServices.createMany({
-    //   data: pkg.services.map((service) => ({
-    //     serviceId: service.id,
-    //     ClientPackagesId: clientPackage.id,
-    //   })),
-    // });
-    console.log('clientPackage', clientPackage);
     return new AppSuccess(
       clientPackage,
       'Client package created successfully',

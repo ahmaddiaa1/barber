@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -28,9 +29,8 @@ export class OrderService {
   }
 
   async GetData(createOrderDto: CreateOrderDto, userId: string) {
-    const { promoCode, service, slot, barberId, date, branchId } =
+    const { promoCode, service, slot, barberId, date, branchId, usedPackage } =
       createOrderDto;
-
     const dateWithoutTime = date.toString().split('T')[0];
 
     const order = await this.prisma.order.findFirst({
@@ -56,47 +56,45 @@ export class OrderService {
       promoCode &&
       (await this.promoCodeService.validatePromoCode(promoCode)).data;
 
-    const services = await this.prisma.service.findMany({
+    const clientPackages = await this.prisma.clientPackages.findMany({
       where: {
-        id: {
-          in: service,
-        },
-      },
-      include: {
-        PackagesServices: {
-          select: {
-            id: true,
-          },
-        },
-      },
-    });
-
-    const client = await this.prisma.client.findUnique({
-      where: {
-        id: userId,
+        clientId: userId,
+        isActive: true,
+        packageService: { some: { isActive: true, remainingCount: { gt: 0 } } },
       },
       select: {
-        ClientPackages: {
-          where: { isActive: true, type: 'SINGLE' },
-          select: {
-            type: true,
-            packageService: {
-              where: { isActive: true, remainingCount: { gt: 0 } },
-              select: {
-                service: {
-                  select: {
-                    id: true,
-                  },
-                },
-              },
-            },
-          },
+        id: true,
+        type: true,
+        packageService: {
+          select: { service: { select: { id: true } } },
         },
       },
     });
 
-    const clientPackageServiceIds = client.ClientPackages.flatMap((pkg) =>
-      pkg.packageService.map((service) => service.service.id),
+    const selectedPackage = clientPackages.find(
+      (pkg) => pkg.id === usedPackage,
+    );
+    let selectedServices = [...service];
+
+    if (selectedPackage) {
+      if (selectedPackage.type === 'MULTIPLE') {
+        selectedServices.push(
+          ...selectedPackage.packageService.map((ps) => ps.service.id),
+        );
+      }
+    }
+
+    selectedServices = [...new Set(selectedServices)];
+
+    const services = await this.prisma.service.findMany({
+      where: { id: { in: selectedServices } },
+    });
+
+    if (!services.length)
+      throw new NotFoundException('No services found with the given IDs.');
+
+    const clientPackageServiceIds = clientPackages.flatMap((pkg) =>
+      pkg.packageService.map((ps) => ps.service.id),
     );
 
     const modifiedServices = services.map((service) => ({
@@ -108,46 +106,24 @@ export class OrderService {
       (service) => !service.isFree,
     );
 
-    const branch = await this.prisma.branch.findUnique({
-      where: { id: branchId },
-      select: {
-        name: true,
-        barber: {
-          where: { id: barberId },
-          select: {
-            user: { include: { barber: true } },
-          },
-        },
-      },
-    });
-
-    if (!services.length)
-      throw new NotFoundException('No services found with the given ids.');
-
-    if (!data.slots.find((slot: string) => slot === createOrderDto.slot)) {
+    if (!data.slots.includes(slot)) {
       throw new ServiceUnavailableException(
         `Slot ${slot} is not available for booking.`,
       );
     }
-    const type = validPromoCode?.type;
-    const dis = validPromoCode?.discount;
 
     const subTotal = chargeableServices.reduce(
       (acc, service) => acc + service.price,
       0,
     );
-
     const discount = promoCode
-      ? type === 'PERCENTAGE'
-        ? (subTotal * dis) / 100
-        : dis
+      ? validPromoCode?.type === 'PERCENTAGE'
+        ? (subTotal * validPromoCode?.discount) / 100
+        : validPromoCode?.discount
       : 0;
-
     const total = Math.max(subTotal - discount, 0);
-
     const duration =
       services.reduce((acc, service) => acc + service.duration, 0) * 15;
-
     const OrderDate = dateformat(dateWithoutTime, 'dddd, mmmm dS, yyyy');
 
     return new AppSuccess(
@@ -155,14 +131,13 @@ export class OrderService {
         date: OrderDate,
         startTime: slot,
         duration: `${duration} Minutes`,
-        branch: branch.name,
-        user: branch.barber[0].user,
         service: modifiedServices,
+        usedPackage: selectedPackage ? [selectedPackage.id] : [],
         subTotal: subTotal.toString(),
         discount: promoCode
-          ? type === 'PERCENTAGE'
-            ? `${dis}%`
-            : `${dis}EGP`
+          ? validPromoCode?.type === 'PERCENTAGE'
+            ? `${validPromoCode?.discount}%`
+            : `${validPromoCode?.discount}EGP`
           : 0,
         total: total.toString(),
       },
@@ -172,8 +147,15 @@ export class OrderService {
 
   async createOrder(createOrderDto: CreateOrderDto, userId: string) {
     const dataWithoutTime = createOrderDto.date.toString().split('T')[0];
-    const { slot, service, barberId, packages, branchId, ...rest } =
-      createOrderDto;
+    const {
+      slot,
+      service,
+      barberId,
+      packages,
+      branchId,
+      usedPackage,
+      ...rest
+    } = createOrderDto;
 
     const existingOrder = await this.prisma.order.findFirst({
       where: {
@@ -227,23 +209,46 @@ export class OrderService {
     if (!Services || !Services.length)
       throw new NotFoundException('Service not found');
 
-    const services = await this.prisma.service.findMany({
+    const clientPackages = await this.prisma.clientPackages.findMany({
       where: {
-        id: {
-          in: createOrderDto.service,
-        },
+        clientId: userId,
+        isActive: true,
+        packageService: { some: { isActive: true, remainingCount: { gt: 0 } } },
       },
       select: {
         id: true,
-        price: true,
+        type: true,
+        packageService: {
+          select: { service: { select: { id: true } } },
+        },
       },
     });
 
-    const clientPackageServiceIds = client.ClientPackages.flatMap((pkg) =>
-      pkg.packageService.map((service) => service.service.id),
+    const selectedPackage = clientPackages.find(
+      (pkg) => pkg.id === usedPackage,
     );
+    let selectedServices = [...service];
 
-    console.log('clientPackageServiceIds', clientPackageServiceIds);
+    if (selectedPackage) {
+      if (selectedPackage.type === 'MULTIPLE') {
+        selectedServices.push(
+          ...selectedPackage.packageService.map((ps) => ps.service.id),
+        );
+      }
+    }
+
+    selectedServices = [...new Set(selectedServices)];
+
+    const services = await this.prisma.service.findMany({
+      where: { id: { in: selectedServices } },
+    });
+
+    if (!services.length)
+      throw new NotFoundException('No services found with the given IDs.');
+
+    const clientPackageServiceIds = clientPackages.flatMap((pkg) =>
+      pkg.packageService.map((ps) => ps.service.id),
+    );
 
     const modifiedServices = services.map((service) => ({
       ...service,
@@ -309,6 +314,7 @@ export class OrderService {
         userId,
         barberId,
         branchId,
+        usedPackage: selectedPackage ? selectedPackage.id : null,
         date: new Date(dataWithoutTime),
         service: {
           connect: modifiedServices.map((service) => ({ id: service.id })),
@@ -333,18 +339,41 @@ export class OrderService {
       s.PackagesServices.map((ps) => ps.id),
     );
 
-    await this.prisma.packagesServices.updateMany({
+    await this.prisma.$transaction(async (prisma) => {
+      await prisma.packagesServices.updateMany({
+        where: {
+          id: { in: packageServiceIds },
+          ClientPackages: { clientId: order.userId, type: 'SINGLE' },
+          isActive: true,
+        },
+        data: {
+          usedAt: new Date(),
+          remainingCount: {
+            decrement: 1,
+          },
+        },
+      });
+
+      await prisma.packagesServices.updateMany({
+        where: {
+          id: { in: packageServiceIds },
+          ClientPackages: { clientId: order.userId, type: 'SINGLE' },
+          isActive: true,
+          remainingCount: { lt: 1 },
+        },
+        data: {
+          isActive: false,
+          usedAt: new Date(),
+        },
+      });
+    });
+
+    await this.prisma.clientPackages.update({
       where: {
-        id: { in: packageServiceIds },
-        ClientPackages: { clientId: order.userId },
-        isActive: true,
+        id: order.usedPackage,
       },
       data: {
         isActive: false,
-        usedAt: new Date(),
-        remainingCount: {
-          decrement: 1,
-        },
       },
     });
 

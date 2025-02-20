@@ -31,6 +31,7 @@ export class ClientPackagesService {
       data: {
         ClientPackages: {
           create: {
+            title: pkg.title,
             packageId: pkg.id,
             type: pkg.type,
             packageService: {

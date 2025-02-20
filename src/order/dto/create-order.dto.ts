@@ -57,6 +57,9 @@ export class CreateOrderDto {
   // subTotal?: number;
   //
   // total?: number;
+  @IsOptional()
+  @IsString()
+  usedPackage?: string;
 
   @IsOptional()
   @Transform(({ value }) => value ?? null)

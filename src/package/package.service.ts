@@ -18,7 +18,7 @@ export class PackageService {
   ) {}
 
   async create(createPackageDto: CreatePackageDto, file: Express.Multer.File) {
-    const { serviceIds, ...rest } = createPackageDto;
+    const { serviceIds, type, count, ...rest } = createPackageDto;
 
     const existingServiceIds = (
       await this.prisma.service.findMany({
@@ -37,12 +37,18 @@ export class PackageService {
       );
     }
 
+    if (type === 'MULTIPLE' && count > 1) {
+      throw new BadRequestException('Count must be 1 for type MULTIPLE');
+    }
+
     const image =
       file && (await this.awsService.uploadFile(file, Random(10), 'packages'));
 
     const packages = await this.prisma.packages.create({
       data: {
         ...rest,
+        type,
+        count,
         services: { connect: serviceIds.map((id) => ({ id })) },
         ...(image && { image }),
       },

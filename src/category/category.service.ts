@@ -18,6 +18,7 @@ export class CategoryService {
         client: {
           include: {
             ClientPackages: {
+              where: { isActive: true, type: 'MULTIPLE' },
               include: {
                 packageService: {
                   select: {
@@ -33,22 +34,11 @@ export class CategoryService {
 
     if (!CurrUser) throw new NotFoundException('User not found');
 
-    const packages = await this.prisma.packages.findMany({
-      where: {
-        id: {
-          in: CurrUser.client.ClientPackages.map((item) => item.packageId),
-        },
-      },
-      include: {
-        services: true,
-      },
-    });
-
     const client = CurrUser.client.ClientPackages.map((item) => {
       const { packageService, clientId, isActive, ...rest } = item;
       return {
         ...rest,
-        name: packages.map((i) => i.title),
+        title: item.title,
         services: packageService.flatMap((i) => i.service),
       };
     });

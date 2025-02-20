@@ -19,6 +19,7 @@
     "SUPABASE_URL": "https://nvdxwkkypzjhvicgdbxs.supabase.co",
     "SUPABASE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52ZHh3a2t5cHpqaHZpY2dkYnhzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNjc5MTYzOSwiZXhwIjoyMDUyMzY3NjM5fQ.dWtNjpf7EjHSkF5AOWNeVpBcVlzU0lA3dHle7cYUKu8",
     "PORT": "3000",
+    "AWS_BUCKET_NAME": "barber-bucket-image",
     "NODE_ENV": "production"
   }
 }

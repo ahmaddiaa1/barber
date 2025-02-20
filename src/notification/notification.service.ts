@@ -23,7 +23,7 @@ export class NotificationService {
       notification: { title, body },
       token,
     };
-
+    console.log(message);
     try {
       const response = await admin.messaging().send(message);
       return { success: true, response };

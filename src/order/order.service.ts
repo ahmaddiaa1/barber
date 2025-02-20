@@ -340,13 +340,24 @@ export class OrderService {
     );
 
     await this.prisma.$transaction(async (prisma) => {
-      await prisma.packagesServices.updateMany({
+      const packageService = await prisma.packagesServices.findMany({
         where: {
           id: { in: packageServiceIds },
           ClientPackages: { clientId: order.userId, type: 'SINGLE' },
           isActive: true,
         },
+      });
+
+      const pkgServiceIds = packageService.flatMap((ps) => ps.id);
+
+      await prisma.packagesServices.updateMany({
+        where: {
+          id: { in: pkgServiceIds },
+          ClientPackages: { clientId: order.userId, type: 'SINGLE' },
+          isActive: true,
+        },
         data: {
+          ...(packageService[0].remainingCount > 1 && { isActive: false }),
           usedAt: new Date(),
           remainingCount: {
             decrement: 1,
@@ -354,23 +365,25 @@ export class OrderService {
         },
       });
 
-      await prisma.packagesServices.updateMany({
-        where: {
-          id: { in: packageServiceIds },
-          ClientPackages: { clientId: order.userId, type: 'SINGLE' },
-          isActive: true,
-          remainingCount: { lt: 1 },
-        },
-        data: {
-          isActive: false,
-          usedAt: new Date(),
-        },
-      });
+      // await prisma.packagesServices.updateMany({
+      //   where: {
+      //     id: { in: packageServiceIds },
+      //     ClientPackages: { clientId: order.userId, type: 'SINGLE' },
+      //     isActive: true,
+      //     remainingCount: { lt: 1 },
+      //   },
+      //   data: {
+      //     isActive: false,
+      //     usedAt: new Date(),
+      //   },
+      // });
     });
 
     await this.prisma.clientPackages.update({
       where: {
         id: order.usedPackage,
+        clientId: order.userId,
+        type: 'MULTIPLE',
       },
       data: {
         isActive: false,
@@ -411,18 +424,31 @@ export class OrderService {
       s.PackagesServices.map((ps) => ps.id),
     );
 
-    await this.prisma.packagesServices.updateMany({
-      where: {
-        id: { in: packageServiceIds },
-        ClientPackages: { clientId: updatedOrder.userId, type: 'SINGLE' },
-      },
-      data: {
-        isActive: true,
-        usedAt: null,
-        remainingCount: {
-          increment: 1,
+    await this.prisma.$transaction(async (prisma) => {
+      await prisma.packagesServices.updateMany({
+        where: {
+          id: { in: packageServiceIds },
+          ClientPackages: { clientId: updatedOrder.userId, type: 'SINGLE' },
         },
-      },
+        data: {
+          isActive: true,
+          usedAt: null,
+          remainingCount: {
+            increment: 1,
+          },
+        },
+      });
+
+      await prisma.clientPackages.updateMany({
+        where: {
+          id: updatedOrder.usedPackage,
+          clientId: updatedOrder.userId,
+          type: 'MULTIPLE',
+        },
+        data: {
+          isActive: true,
+        },
+      });
     });
 
     return new AppSuccess(updatedOrder, 'Order cancelled successfully');
@@ -458,13 +484,23 @@ export class OrderService {
       s.PackagesServices.map((ps) => ps.id),
     );
 
-    await this.prisma.packagesServices.deleteMany({
-      where: {
-        id: { in: packageServiceIds },
-        ClientPackages: {
+    await this.prisma.$transaction(async (prisma) => {
+      await this.prisma.packagesServices.deleteMany({
+        where: {
+          id: { in: packageServiceIds },
+          ClientPackages: {
+            clientId: updatedOrder.userId,
+          },
+          remainingCount: { lt: 1 },
+        },
+      });
+
+      await prisma.clientPackages.delete({
+        where: {
+          id: updatedOrder.usedPackage,
           clientId: updatedOrder.userId,
         },
-      },
+      });
     });
 
     return new AppSuccess(

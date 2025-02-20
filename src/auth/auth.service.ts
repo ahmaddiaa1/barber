@@ -14,7 +14,7 @@ import * as jwt from 'jsonwebtoken';
 import { AppSuccess } from '../utils/AppSuccess';
 import { Role, User } from '@prisma/client';
 import { AwsService } from 'src/aws/aws.service';
-import { Random } from 'src/utils/generate';
+import { Random } from '../utils/generate';
 
 @Global()
 @Injectable()

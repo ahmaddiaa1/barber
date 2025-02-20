@@ -1,61 +1,55 @@
-import { Injectable } from '@nestjs/common';
-import { UpdateNotificationDto } from './dto/update-notification.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
 import * as admin from 'firebase-admin';
-import * as path from 'path';
+import { Injectable } from '@nestjs/common';
+import * as fs from 'fs';
 
 @Injectable()
 export class NotificationService {
-  constructor(private readonly prisma: PrismaService) {
-    admin.initializeApp({
-      credential: admin.credential.cert(
-        require(
-          path.join(__dirname, '../../../src/config/serviceAccountKey.json'),
-        ),
-      ),
-    });
+  constructor() {
+    if (!admin.apps.length) {
+      const serviceAccount = JSON.parse(
+        fs.readFileSync('src/config/serviceAccountKey.json', 'utf-8'),
+      );
+
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+    }
   }
 
-  async sendNotificationToUsers(title: string, message: string) {
-    const users = await this.prisma.user.findMany({
-      where: { role: 'USER', NOT: { fcmToken: null } },
-      select: { fcmToken: true },
-    });
-
-    const tokens = users.map((user) => user.fcmToken);
-
-    if (tokens.length === 0) {
-      console.log('⚠️ No users with FCM tokens found.');
-      return;
-    }
-
-    const payload = {
-      notification: {
-        title: title,
-        body: message,
-      },
+  // Send notification to a single user
+  async sendNotification(token: string, title: string, body: string) {
+    const message = {
+      notification: { title, body },
+      token,
     };
 
     try {
-      const response = await admin
-        .messaging()
-        .sendEachForMulticast({ tokens, ...payload });
-      console.log('✅ Notification sent to users successfully');
+      const response = await admin.messaging().send(message);
+      return { success: true, response };
     } catch (error) {
-      console.error('❌ Error sending push notification:', error);
+      return { success: false, error };
     }
   }
 
-  findAll() {}
-  findOne(id: number) {
-    return `This action returns a #${id} notification`;
-  }
+  // Send notification to multiple users (e.g., all clients)
+  async sendNotificationToMultiple(
+    tokens: string[],
+    title: string,
+    body: string,
+  ) {
+    if (!tokens.length)
+      return { success: false, error: 'No device tokens provided' };
 
-  update(id: number, updateNotificationDto: UpdateNotificationDto) {
-    return `This action updates a #${id} notification`;
-  }
+    const message = {
+      notification: { title, body },
+      tokens,
+    };
 
-  remove(id: number) {
-    return `This action removes a #${id} notification`;
+    try {
+      const response = await admin.messaging().sendEachForMulticast(message);
+      return { success: true, response };
+    } catch (error) {
+      return { success: false, error };
+    }
   }
 }

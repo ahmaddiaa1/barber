@@ -1,4 +1,9 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Redirect,
+} from '@nestjs/common';
 import axios from 'axios';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as crypto from 'crypto';
@@ -70,7 +75,9 @@ export class PaymobService {
           },
         },
       );
-      return response.data;
+      const clientSecret = response.data.client_secret;
+
+      return `https://uae.paymob.com/unifiedcheckout/?publicKey=${process.env.PAYMOB_PUBLIC_KEY}&clientSecret=${clientSecret}`;
     } catch (error) {
       console.log(error);
     }

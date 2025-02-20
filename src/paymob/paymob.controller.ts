@@ -1,18 +1,7 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpException,
-  HttpStatus,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Query, Res } from '@nestjs/common';
 import { PaymobService } from './paymob.service';
-
+import { Response } from 'express';
 import { config } from 'dotenv';
-import { AuthGuard } from 'guard/auth.guard';
-import { UserData } from 'decorators/user.decorator';
 import { User } from '@prisma/client';
 
 config();
@@ -27,12 +16,13 @@ export class PaymobController {
 
   constructor(private readonly paymobService: PaymobService) {}
 
-  @Post('payment-key')
+  @Get('payment-key')
   async getPaymentKey(
     @Body('items') items: any[],
     @Body('billing') billing: any[],
     @Body('method') method: 'card' | 'wallet',
     @Query('amount') amount: number,
+    @Res() res: Response,
   ) {
     // console.log('items', items);
     // console.log('billing', billing);
@@ -52,7 +42,7 @@ export class PaymobController {
     // amount,
     // selectedIntegrationId,
 
-    return paymentKey;
+    return res.redirect(paymentKey);
   }
 
   @Get('verify')

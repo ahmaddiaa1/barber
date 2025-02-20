@@ -90,7 +90,11 @@ export class PackageService {
     return `This action updates a #${id} package`;
   }
 
-  remove(id: string) {
+  async remove(id: string) {
+    await this.prisma.packages.delete({
+      where: { id },
+    });
+
     return `This action removes a #${id} package`;
   }
 }

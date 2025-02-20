@@ -385,8 +385,7 @@ export class OrderService {
     await this.prisma.packagesServices.updateMany({
       where: {
         id: { in: packageServiceIds },
-        ClientPackages: { clientId: updatedOrder.userId },
-        isActive: false,
+        ClientPackages: { clientId: updatedOrder.userId, type: 'SINGLE' },
       },
       data: {
         isActive: true,

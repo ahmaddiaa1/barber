@@ -130,8 +130,7 @@ model Service {
   category         Category           @relation(fields: [categoryId], references: [id])
   offers           Offers?            @relation(fields: [offersId], references: [id])
   order            Order[]            @relation("OrderToServices")
-  Packages         Packages?          @relation(fields: [packagesId], references: [id])
-  packagesId       String?
+  packagesIds      Packages[]         @relation("PackagesToServices")
 }
 
 model Product {
@@ -163,29 +162,29 @@ model PromoCode {
 }
 
 model Order {
-  id           String           @id @default(uuid())
-  branchId     String
-  promoCode    String?
-  date         DateTime
-  slot         String
-  note         String?
-  booking      BookingStatus    @default(UPCOMING)
-  status       OrderStatus      @default(PENDING)
-  points       Int              @default(0)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  subTotal     Int
-  total        Int
-  userId       String
-  barberId     String
-  cashierId    String?
-  barber       User             @relation("BarberOrders", fields: [barberId], references: [id])
-  branch       Branch           @relation(fields: [branchId], references: [id])
-  Cashier      User?            @relation("CashierOrders", fields: [cashierId], references: [id])
-  Code         PromoCode?       @relation(fields: [promoCode], references: [id])
-  client       User             @relation("UserOrders", fields: [userId], references: [id])
-  service      Service[]        @relation("OrderToServices")
-  usedPackages ClientPackages[] @relation("UsedPackages")
+  id          String        @id @default(uuid())
+  branchId    String
+  promoCode   String?
+  date        DateTime
+  slot        String
+  note        String?
+  booking     BookingStatus @default(UPCOMING)
+  status      OrderStatus   @default(PENDING)
+  points      Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  subTotal    Int
+  total       Int
+  userId      String
+  barberId    String
+  cashierId   String?
+  barber      User          @relation("BarberOrders", fields: [barberId], references: [id])
+  branch      Branch        @relation(fields: [branchId], references: [id])
+  Cashier     User?         @relation("CashierOrders", fields: [cashierId], references: [id])
+  Code        PromoCode?    @relation(fields: [promoCode], references: [id])
+  client      User          @relation("UserOrders", fields: [userId], references: [id])
+  service     Service[]     @relation("OrderToServices")
+  usedPackage String?
 }
 
 model Points {
@@ -208,7 +207,7 @@ model Packages {
   expiresAt   DateTime
   createdAt   DateTime       @default(now()) @map("createdAt")
   updatedAt   DateTime       @updatedAt @map("updatedAt")
-  services    Service[]
+  services    Service[]      @relation("PackagesToServices")
 }
 
 model PackagesServices {
@@ -225,6 +224,9 @@ model PackagesServices {
 
 model ClientPackages {
   id             String             @id @default(uuid()) @map("id")
+  title          String
+  description    String?
+  image          String?
   packageId      String
   packageService PackagesServices[]
   type           PackagesStatus
@@ -233,7 +235,6 @@ model ClientPackages {
   updatedAt      DateTime           @updatedAt @map("updatedAt")
   clientId       String
   client         Client             @relation(fields: [clientId], references: [id])
-  usedInOrders   Order[]            @relation("UsedPackages")
 }
 
 model notification {

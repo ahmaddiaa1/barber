@@ -24,7 +24,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 export class PackageController {
   constructor(private readonly packageService: PackageService) {}
 
-  @Roles(['ADMIN'])
+  // @Roles(['ADMIN'])
   @UseInterceptors(FileInterceptor('file'))
   @Post()
   create(
@@ -50,7 +50,7 @@ export class PackageController {
     return this.packageService.update(id, updatePackageDto);
   }
 
-  @Roles(['ADMIN'])
+  // @Roles(['ADMIN'])
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.packageService.remove(id);

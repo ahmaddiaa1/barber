@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -8,7 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
-// import dateformat from 'dateformat';
+import dateformat from 'dateformat';
 
 @Injectable()
 export class OrderService {
@@ -123,8 +124,7 @@ export class OrderService {
     const total = Math.max(subTotal - discount, 0);
     const duration =
       services.reduce((acc, service) => acc + service.duration, 0) * 15;
-    const OrderDate = dateWithoutTime;
-    // dateformat(dateWithoutTime, 'dddd, mmmm dS, yyyy');
+    const OrderDate = dateformat(dateWithoutTime, 'dddd, mmmm dS, yyyy');
 
     return new AppSuccess(
       {
@@ -300,9 +300,9 @@ export class OrderService {
       createOrderDto.barberId,
     );
 
-    if (!data.slots.find((slots: string) => slots === slot)) {
-      throw new ConflictException(
-        `Slot ${createOrderDto.slot} is not available for booking.`,
+    if (!data.slots.includes(slot)) {
+      throw new ServiceUnavailableException(
+        `Slot ${slot} is not available for booking.`,
       );
     }
 
@@ -350,20 +350,22 @@ export class OrderService {
 
       const pkgServiceIds = packageService.flatMap((ps) => ps.id);
 
-      await prisma.packagesServices.updateMany({
-        where: {
-          id: { in: pkgServiceIds },
-          ClientPackages: { clientId: order.userId, type: 'SINGLE' },
-          isActive: true,
-        },
-        data: {
-          ...(packageService[0].remainingCount > 1 && { isActive: false }),
-          usedAt: new Date(),
-          remainingCount: {
-            decrement: 1,
+      if (selectedPackage && selectedPackage.type === 'SINGLE') {
+        await prisma.packagesServices.updateMany({
+          where: {
+            id: { in: pkgServiceIds },
+            ClientPackages: { clientId: order.userId, type: 'SINGLE' },
+            isActive: true,
           },
-        },
-      });
+          data: {
+            ...(packageService[0].remainingCount > 1 && { isActive: false }),
+            usedAt: new Date(),
+            remainingCount: {
+              decrement: 1,
+            },
+          },
+        });
+      }
 
       // await prisma.packagesServices.updateMany({
       //   where: {
@@ -379,16 +381,18 @@ export class OrderService {
       // });
     });
 
-    await this.prisma.clientPackages.update({
-      where: {
-        id: order.usedPackage,
-        clientId: order.userId,
-        type: 'MULTIPLE',
-      },
-      data: {
-        isActive: false,
-      },
-    });
+    if (selectedPackage && selectedPackage.type === 'MULTIPLE') {
+      await this.prisma.clientPackages.update({
+        where: {
+          id: selectedPackage.id,
+          clientId: order.userId,
+          type: 'MULTIPLE',
+        },
+        data: {
+          isActive: false,
+        },
+      });
+    }
 
     return new AppSuccess(order, 'Order created successfully');
   }
@@ -425,30 +429,34 @@ export class OrderService {
     );
 
     await this.prisma.$transaction(async (prisma) => {
-      await prisma.packagesServices.updateMany({
-        where: {
-          id: { in: packageServiceIds },
-          ClientPackages: { clientId: updatedOrder.userId, type: 'SINGLE' },
-        },
-        data: {
-          isActive: true,
-          usedAt: null,
-          remainingCount: {
-            increment: 1,
+      if (packageServiceIds.length > 0) {
+        await prisma.packagesServices.updateMany({
+          where: {
+            id: { in: packageServiceIds },
+            ClientPackages: { clientId: updatedOrder.userId, type: 'SINGLE' },
           },
-        },
-      });
+          data: {
+            isActive: true,
+            usedAt: null,
+            remainingCount: {
+              increment: 1,
+            },
+          },
+        });
+      }
 
-      await prisma.clientPackages.updateMany({
-        where: {
-          id: updatedOrder.usedPackage,
-          clientId: updatedOrder.userId,
-          type: 'MULTIPLE',
-        },
-        data: {
-          isActive: true,
-        },
-      });
+      if (updatedOrder.usedPackage) {
+        await prisma.clientPackages.update({
+          where: {
+            id: updatedOrder.usedPackage,
+            clientId: updatedOrder.userId,
+            type: 'MULTIPLE',
+          },
+          data: {
+            isActive: true,
+          },
+        });
+      }
     });
 
     return new AppSuccess(updatedOrder, 'Order cancelled successfully');
@@ -485,22 +493,26 @@ export class OrderService {
     );
 
     await this.prisma.$transaction(async (prisma) => {
-      await this.prisma.packagesServices.deleteMany({
-        where: {
-          id: { in: packageServiceIds },
-          ClientPackages: {
+      if (packageServiceIds.length > 0) {
+        await this.prisma.packagesServices.deleteMany({
+          where: {
+            id: { in: packageServiceIds },
+            ClientPackages: {
+              clientId: updatedOrder.userId,
+            },
+            remainingCount: { lt: 1 },
+          },
+        });
+      }
+
+      if (updatedOrder.usedPackage) {
+        await prisma.clientPackages.delete({
+          where: {
+            id: updatedOrder.usedPackage,
             clientId: updatedOrder.userId,
           },
-          remainingCount: { lt: 1 },
-        },
-      });
-
-      await prisma.clientPackages.delete({
-        where: {
-          id: updatedOrder.usedPackage,
-          clientId: updatedOrder.userId,
-        },
-      });
+        });
+      }
     });
 
     return new AppSuccess(
@@ -590,7 +602,7 @@ export class OrderService {
         slot: slotsArray,
       },
     });
-    console.log(slots);
+
     return new AppSuccess(slots, 'Slots updated successfully');
   }
 

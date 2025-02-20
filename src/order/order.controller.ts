@@ -23,6 +23,11 @@ export class OrderController {
     return this.orderService.getAllOrders();
   }
 
+  @Post('/cancel-order/:id')
+  async cancelOrder(@Param('id') id: string) {
+    return this.orderService.cancelOrder(id);
+  }
+
   @Post('/start-order/:id')
   async startOrder(@Param('id') id: string) {
     return this.orderService.startOrder(id);

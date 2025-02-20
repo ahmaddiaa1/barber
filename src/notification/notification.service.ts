@@ -6,12 +6,13 @@ import * as fs from 'fs';
 export class NotificationService {
   constructor() {
     if (!admin.apps.length) {
-      const serviceAccount = JSON.parse(
-        fs.readFileSync('src/config/serviceAccountKey.json', 'utf-8'),
-      );
-
+      // const serviceAccount = JSON.parse(
+      //   fs.readFileSync('src/config/serviceAccountKey.json', 'utf-8'),
+      // );
       admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
+        credential: admin.credential.cert(
+          JSON.parse(process.env.FIREBASE_SECRET),
+        ),
       });
     }
   }

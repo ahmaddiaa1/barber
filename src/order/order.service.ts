@@ -590,7 +590,7 @@ export class OrderService {
         slot: slotsArray,
       },
     });
-
+    console.log(slots);
     return new AppSuccess(slots, 'Slots updated successfully');
   }
 

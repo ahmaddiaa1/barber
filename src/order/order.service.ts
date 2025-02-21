@@ -59,9 +59,8 @@ export class OrderService {
       },
     });
 
-    if (usedPromoCode)
-      throw new ConflictException(`Promo code ${promoCode} is already used`);
-
+    if (usedPromoCode && promoCode)
+      throw new ConflictException(`Invalid Promo Code ${promoCode} `);
     if (order)
       throw new ConflictException(
         `Slot ${createOrderDto.slot} is already booked`,
@@ -146,9 +145,19 @@ export class OrderService {
     return new AppSuccess(
       {
         date: OrderDate,
-        startTime: slot,
+        slot,
+        barberId,
+        branchId,
+        cashierId: userId,
+        status: 'PENDING',
+        booking: 'UPCOMING',
+        points: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
         duration: `${duration} Minutes`,
         service: modifiedServices,
+        userId,
+        promoCode: promoCode ? promoCode : null,
         usedPackage: selectedPackage ? [selectedPackage.id] : [],
         subTotal: subTotal.toString(),
         discount: promoCode
@@ -240,10 +249,6 @@ export class OrderService {
         },
       },
     });
-
-    if (!clientPackages.length) {
-      throw new BadRequestException('No packages found for the client');
-    }
 
     const selectedPackage = clientPackages.find(
       (pkg) => pkg.id === usedPackage,

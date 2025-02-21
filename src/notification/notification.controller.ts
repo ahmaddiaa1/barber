@@ -19,4 +19,9 @@ export class NotificationController {
       'body',
     );
   }
+
+  @Post('sms')
+  sendSms(@Body() body: any) {
+    return this.notificationService.sendSms('+201141638934', 'message');
+  }
 }

@@ -5,6 +5,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { AwsService } from 'src/aws/aws.service';
+import { Random } from 'src/utils/generate';
 
 @Injectable()
 export class BranchService {
@@ -83,15 +84,25 @@ export class BranchService {
     return new AppSuccess(branch, 'Branch found successfully');
   }
 
-  async update(id: string, updateBranchDto: UpdateBranchDto) {
+  async update(
+    id: string,
+    updateBranchDto: UpdateBranchDto,
+    file: Express.Multer.File,
+  ) {
     const isBranchExist = await this.prisma.branch.findUnique({
       where: { id },
     });
     if (!isBranchExist) throw new NotFoundException('Branch not found');
 
+    const branchImg =
+      file && (await this.awsService.uploadFile(file, Random(10), 'branch'));
+
     const updatedBranch = await this.prisma.branch.update({
       where: { id },
-      data: updateBranchDto,
+      data: {
+        ...(branchImg && { branchImg }),
+        ...updateBranchDto,
+      },
     });
     return new AppSuccess(updatedBranch, 'Branch updated successfully');
   }

@@ -15,12 +15,12 @@ import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 
+@UseInterceptors(FileInterceptor('file'))
 @Controller('branch')
 export class BranchController {
   constructor(private readonly branchService: BranchService) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('file'))
   create(
     @Body() createBranchDto: CreateBranchDto,
     @UploadedFile() file: Express.Multer.File,
@@ -42,8 +42,9 @@ export class BranchController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateBranchDto: UpdateBranchDto,
+    @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.branchService.update(id, updateBranchDto);
+    return this.branchService.update(id, updateBranchDto, file);
   }
 
   @Delete(':id')

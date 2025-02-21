@@ -187,13 +187,25 @@ model Order {
   usedPackage String?
 }
 
-model Points {
-  id        String   @id @default(uuid()) @map("id")
-  title     String
-  points    Int
-  price     Int
-  createdAt DateTime @default(now()) @map("createdAt")
-  updatedAt DateTime @updatedAt @map("updatedAt")
+model Offers {
+  id          String     @id @default(uuid()) @map("id")
+  title       String
+  description String?
+  image       String?
+  price       Int
+  offerType   OfferType
+  expiresAt   DateTime
+  createdAt   DateTime   @default(now()) @map("createdAt")
+  updatedAt   DateTime   @updatedAt @map("updatedAt")
+  services    Service[]
+  clients     Client[]   @relation("ClientOffers")
+  points      Points[]
+  packages    Packages[]
+}
+
+enum OfferType {
+  POINT
+  PACKAGE
 }
 
 model Packages {
@@ -205,9 +217,22 @@ model Packages {
   count       Int            @default(1)
   type        PackagesStatus @default(SINGLE)
   expiresAt   DateTime
+  offersId    String
+  offers      Offers         @relation(fields: [offersId], references: [id])
   createdAt   DateTime       @default(now()) @map("createdAt")
   updatedAt   DateTime       @updatedAt @map("updatedAt")
   services    Service[]      @relation("PackagesToServices")
+}
+
+model Points {
+  id        String   @id @default(uuid()) @map("id")
+  title     String
+  points    Int
+  price     Int
+  Offers    Offers?  @relation(fields: [offersId], references: [id])
+  offersId  String?
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
 }
 
 model PackagesServices {
@@ -245,20 +270,6 @@ model notification {
   image       String?
   user        User[]   @relation("notifications")
   createdAt   DateTime @default(now()) @map("createdAt")
-}
-
-model Offers {
-  id          String    @id @default(uuid()) @map("id")
-  title       String
-  description String?
-  image       String?
-  price       Int
-  pointsId    String?
-  expiresAt   DateTime
-  createdAt   DateTime  @default(now()) @map("createdAt")
-  updatedAt   DateTime  @updatedAt @map("updatedAt")
-  services    Service[]
-  clients     Client[]  @relation("ClientOffers")
 }
 
 enum PackagesStatus {

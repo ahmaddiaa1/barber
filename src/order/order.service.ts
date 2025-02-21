@@ -9,7 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
-import dateformat from 'dateformat';
+// import dateformat from 'dateformat';
 
 @Injectable()
 export class OrderService {
@@ -140,7 +140,8 @@ export class OrderService {
     const total = Math.max(subTotal - discount, 0);
     const duration =
       services.reduce((acc, service) => acc + service.duration, 0) * 15;
-    const OrderDate = dateformat(dateWithoutTime, 'dddd, mmmm dS, yyyy');
+    const OrderDate = dateWithoutTime;
+    // dateformat(dateWithoutTime, 'dddd, mmmm dS, yyyy');
 
     return new AppSuccess(
       {

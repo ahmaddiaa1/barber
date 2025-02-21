@@ -48,10 +48,23 @@ export class NotificationService {
 
     try {
       const response = await admin.messaging().sendEachForMulticast(message);
-      console.log(response);
       return { success: true, response };
     } catch (error) {
       return { success: false, error };
     }
+  }
+
+  async sendSms(phone: string, message: string) {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const client = require('twilio')(accountSid, authToken);
+    client.messages
+      .create({
+        body: message,
+        from: '+1 313 482 5424',
+        to: phone,
+      })
+      .then((message) => console.log(message.sid));
+    return { success: true, message };
   }
 }

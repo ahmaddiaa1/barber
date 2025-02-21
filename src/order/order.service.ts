@@ -20,6 +20,7 @@ export class OrderService {
 
   async getAllOrders() {
     const orders = await this.prisma.order.findMany({});
+
     return new AppSuccess(orders, 'Orders fetched successfully');
   }
 
@@ -45,6 +46,21 @@ export class OrderService {
         ],
       },
     });
+
+    const usedPromoCode = await this.prisma.user.findFirst({
+      where: { id: userId },
+      select: {
+        UserOrders: {
+          where: {
+            promoCode: promoCode,
+            status: 'PENDING',
+          },
+        },
+      },
+    });
+
+    if (usedPromoCode)
+      throw new ConflictException(`Promo code ${promoCode} is already used`);
 
     if (order)
       throw new ConflictException(
@@ -523,6 +539,15 @@ export class OrderService {
       updatedOrder,
       'Order completed successfully, used services removed.',
     );
+  }
+
+  async paidOrder(id: string) {
+    const updatedOrder = await this.prisma.order.update({
+      where: { id },
+      data: { status: 'PAID' },
+    });
+
+    return new AppSuccess(updatedOrder, 'Order marked as paid');
   }
 
   async getSlots(date: string, barberId: string) {

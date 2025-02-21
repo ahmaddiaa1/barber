@@ -315,13 +315,16 @@ export class MockService {
   ];
 
   async createMockClientData() {
-    await this.prisma.branch.deleteMany();
-    await this.prisma.client.deleteMany();
-    await this.prisma.admin.deleteMany();
+    await this.prisma.order.deleteMany();
     await this.prisma.barber.deleteMany();
     await this.prisma.cashier.deleteMany();
-    await this.prisma.user.deleteMany();
+    await this.prisma.branch.deleteMany();
     await this.prisma.service.deleteMany();
+    await this.prisma.packagesServices.deleteMany();
+    await this.prisma.clientPackages.deleteMany();
+    await this.prisma.client.deleteMany();
+    await this.prisma.admin.deleteMany();
+    await this.prisma.user.deleteMany();
     await this.prisma.category.deleteMany();
 
     const client = this.clients.map(async (client) => {

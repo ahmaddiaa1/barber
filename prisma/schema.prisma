@@ -158,7 +158,6 @@ model PromoCode {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   type      PromoType
-  order     Order[]
 }
 
 model Order {
@@ -181,7 +180,7 @@ model Order {
   barber      User          @relation("BarberOrders", fields: [barberId], references: [id])
   branch      Branch        @relation(fields: [branchId], references: [id])
   Cashier     User?         @relation("CashierOrders", fields: [cashierId], references: [id])
-  Code        PromoCode?    @relation(fields: [promoCode], references: [id])
+  discount    Int           @default(0)
   client      User          @relation("UserOrders", fields: [userId], references: [id])
   service     Service[]     @relation("OrderToServices")
   usedPackage String?

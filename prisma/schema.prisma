@@ -39,7 +39,6 @@ model Client {
   points         Int              @default(0)
   user           User             @relation(fields: [id], references: [id])
   complain       Complain[]
-  Offers         Offers[]         @relation("ClientOffers")
   ClientPackages ClientPackages[]
 
   @@index([referralCode])
@@ -128,7 +127,6 @@ model Service {
   offersId         String?
   PackagesServices PackagesServices[]
   category         Category           @relation(fields: [categoryId], references: [id])
-  offers           Offers?            @relation(fields: [offersId], references: [id])
   order            Order[]            @relation("OrderToServices")
   packagesIds      Packages[]         @relation("PackagesToServices")
 }
@@ -184,23 +182,17 @@ model Order {
   discount    Int           @default(0)
   client      User          @relation("UserOrders", fields: [userId], references: [id])
   service     Service[]     @relation("OrderToServices")
-  usedPackage String?
+  usedPackage String[]
 }
 
 model Offers {
-  id          String     @id @default(uuid()) @map("id")
-  title       String
-  description String?
-  image       String?
-  price       Int
-  offerType   OfferType
-  expiresAt   DateTime
-  createdAt   DateTime   @default(now()) @map("createdAt")
-  updatedAt   DateTime   @updatedAt @map("updatedAt")
-  services    Service[]
-  clients     Client[]   @relation("ClientOffers")
-  points      Points[]
-  packages    Packages[]
+  id        String     @id @default(uuid()) @map("id")
+  offerType OfferType
+  expiresAt DateTime
+  createdAt DateTime   @default(now()) @map("createdAt")
+  updatedAt DateTime   @updatedAt @map("updatedAt")
+  points    Points[]
+  packages  Packages[]
 }
 
 enum OfferType {
@@ -217,22 +209,18 @@ model Packages {
   count       Int            @default(1)
   type        PackagesStatus @default(SINGLE)
   expiresAt   DateTime
-  offersId    String
-  offers      Offers         @relation(fields: [offersId], references: [id])
-  createdAt   DateTime       @default(now()) @map("createdAt")
-  updatedAt   DateTime       @updatedAt @map("updatedAt")
+  offersId    String?
+  offers      Offers?        @relation(fields: [offersId], references: [id])
   services    Service[]      @relation("PackagesToServices")
 }
 
 model Points {
-  id        String   @id @default(uuid()) @map("id")
-  title     String
-  points    Int
-  price     Int
-  Offers    Offers?  @relation(fields: [offersId], references: [id])
-  offersId  String?
-  createdAt DateTime @default(now()) @map("createdAt")
-  updatedAt DateTime @updatedAt @map("updatedAt")
+  id       String  @id @default(uuid()) @map("id")
+  title    String
+  points   Int
+  price    Int
+  Offers   Offers? @relation(fields: [offersId], references: [id])
+  offersId String?
 }
 
 model PackagesServices {

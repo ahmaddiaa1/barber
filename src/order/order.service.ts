@@ -87,8 +87,8 @@ export class OrderService {
       },
     });
 
-    const selectedPackage = clientPackages.find(
-      (pkg) => pkg.id === usedPackage[0],
+    const selectedPackage = clientPackages.filter((pkg) =>
+      usedPackage.includes(pkg.id),
     );
     let selectedServices = [...service];
 
@@ -99,12 +99,9 @@ export class OrderService {
     if (!services.length)
       throw new NotFoundException('No services found with the given IDs.');
 
-    const clientPackageServiceIds =
-      selectedPackage?.type === 'SINGLE'
-        ? clientPackages.flatMap((pkg) =>
-            pkg.packageService.map((ps) => ps.service.id),
-          )
-        : [];
+    const clientPackageServiceIds = clientPackages.flatMap((pkg) =>
+      pkg.packageService.map((ps) => ps.service.id),
+    );
 
     const modifiedServices = services.map((service) => ({
       ...service,
@@ -113,14 +110,14 @@ export class OrderService {
 
     let allServices = [...modifiedServices];
 
-    if (selectedPackage && selectedPackage.type === 'MULTIPLE') {
-      const services = await this.prisma.service.findMany({
-        where: {
-          id: {
-            in: selectedPackage.packageService.map((ps) => ps.service.id),
-          },
-        },
-      });
+    if (selectedPackage) {
+      for (const pkg of selectedPackage) {
+        if (pkg.type === 'MULTIPLE') {
+          selectedServices.push(
+            ...pkg.packageService.map((ps) => ps.service.id),
+          );
+        }
+      }
 
       const modifiedServices = services.map((service) => ({
         ...service,
@@ -148,7 +145,7 @@ export class OrderService {
       : 0;
     const total = Math.max(subTotal - discount, 0);
     const duration =
-      services.reduce((acc, service) => acc + service.duration, 0) * 15;
+      modifiedServices.reduce((acc, service) => acc + service.duration, 0) * 15;
     const OrderDate = dateWithoutTime;
 
     return new AppSuccess(
@@ -253,17 +250,26 @@ export class OrderService {
       },
     });
 
-    const selectedPackage = clientPackages.find(
-      (pkg) => pkg.id === usedPackage[0],
+    const selectedPackage = clientPackages.filter((pkg) =>
+      usedPackage.includes(pkg.id),
     );
+
     let selectedServices = [...service];
 
     if (selectedPackage) {
-      if (selectedPackage.type === 'MULTIPLE') {
-        selectedServices.push(
-          ...selectedPackage.packageService.map((ps) => ps.service.id),
-        );
+      for (const pkg of selectedPackage) {
+        if (pkg.type === 'MULTIPLE') {
+          selectedServices.push(
+            ...pkg.packageService.map((ps) => ps.service.id),
+          );
+        }
       }
+
+      // if (selectedPackage.type === 'MULTIPLE') {
+      //   selectedServices.push(
+      //     ...selectedPackage.packageService.map((ps) => ps.service.id),
+      //   );
+      // }
     }
 
     selectedServices = [...new Set(selectedServices)];
@@ -343,7 +349,9 @@ export class OrderService {
         userId,
         barberId,
         branchId,
-        usedPackage: selectedPackage ? selectedPackage.id : null,
+        usedPackage: selectedPackage
+          ? selectedPackage.flatMap((e) => e.id)
+          : [],
         date: new Date(dataWithoutTime),
         service: {
           connect: modifiedServices.map((service) => ({ id: service.id })),
@@ -378,41 +386,47 @@ export class OrderService {
       });
 
       const pkgServiceIds = packageService.flatMap((ps) => ps.id);
-
-      if (selectedPackage && selectedPackage.type === 'SINGLE') {
-        await prisma.packagesServices.updateMany({
-          where: {
-            id: { in: pkgServiceIds },
-            ClientPackages: { clientId: order.userId, type: 'SINGLE' },
-            isActive: true,
-          },
-          data: {
-            ...(packageService[0].remainingCount > 1 && { isActive: false }),
-            usedAt: new Date(),
-            remainingCount: {
-              decrement: 1,
-            },
-          },
-        });
+      // selectedPackage.type === 'SINGLE'
+      if (selectedPackage) {
+        for (const pkg of selectedPackage) {
+          if (pkg.type === 'SINGLE') {
+            await prisma.packagesServices.updateMany({
+              where: {
+                id: { in: pkgServiceIds },
+                ClientPackages: { clientId: order.userId, type: 'SINGLE' },
+                isActive: true,
+              },
+              data: {
+                ...(packageService[0].remainingCount > 1 && {
+                  isActive: false,
+                }),
+                usedAt: new Date(),
+                remainingCount: {
+                  decrement: 1,
+                },
+              },
+            });
+          } else if (pkg.type === 'MULTIPLE') {
+            await this.prisma.clientPackages.updateMany({
+              where: {
+                id: { in: selectedPackage.flatMap((e) => e.id) },
+                clientId: order.userId,
+                type: 'MULTIPLE',
+              },
+              data: {
+                isActive: false,
+              },
+            });
+          }
+        }
       }
     });
 
-    if (selectedPackage && selectedPackage.type === 'MULTIPLE') {
-      await this.prisma.clientPackages.update({
-        where: {
-          id: selectedPackage.id,
-          clientId: order.userId,
-          type: 'MULTIPLE',
-        },
-        data: {
-          isActive: false,
-        },
-      });
-    }
-
     const duration =
-      services.reduce((acc, service) => acc + service.duration, 0) * 15 +
-      order.usedPackage;
+      modifiedServices.reduce((acc, service) => acc + service.duration, 0) * 15;
+
+    // const duration =
+    //   services.reduce((acc, service) => acc + service.duration, 0) * 15;
 
     return new AppSuccess(
       {
@@ -486,9 +500,9 @@ export class OrderService {
       }
 
       if (updatedOrder.usedPackage) {
-        await prisma.clientPackages.update({
+        await prisma.clientPackages.updateMany({
           where: {
-            id: updatedOrder.usedPackage,
+            id: { in: updatedOrder.usedPackage },
             clientId: updatedOrder.userId,
             type: 'MULTIPLE',
           },
@@ -546,9 +560,9 @@ export class OrderService {
       }
 
       if (updatedOrder.usedPackage) {
-        await prisma.clientPackages.delete({
+        await prisma.clientPackages.deleteMany({
           where: {
-            id: updatedOrder.usedPackage,
+            id: { in: updatedOrder.usedPackage },
             clientId: updatedOrder.userId,
           },
         });

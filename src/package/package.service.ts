@@ -118,11 +118,9 @@ export class PackageService {
     }
   }
 
-  async remove(id: string) {
-    await this.prisma.packages.delete({
-      where: { id },
-    });
+  async remove() {
+    await this.prisma.packages.deleteMany();
 
-    return `This action removes a #${id} package`;
+    return `This action removes a package`;
   }
 }

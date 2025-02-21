@@ -48,6 +48,7 @@ export class NotificationService {
 
     try {
       const response = await admin.messaging().sendEachForMulticast(message);
+      console.log(response);
       return { success: true, response };
     } catch (error) {
       return { success: false, error };

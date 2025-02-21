@@ -92,16 +92,6 @@ export class OrderService {
     );
     let selectedServices = [...service];
 
-    if (selectedPackage) {
-      if (selectedPackage.type === 'MULTIPLE') {
-        selectedServices.push(
-          ...selectedPackage.packageService.map((ps) => ps.service.id),
-        );
-      }
-    }
-
-    selectedServices = [...new Set(selectedServices)];
-
     const services = await this.prisma.service.findMany({
       where: { id: { in: selectedServices } },
     });
@@ -109,18 +99,37 @@ export class OrderService {
     if (!services.length)
       throw new NotFoundException('No services found with the given IDs.');
 
-    const clientPackageServiceIds = clientPackages.flatMap((pkg) =>
-      pkg.packageService.map((ps) => ps.service.id),
-    );
+    const clientPackageServiceIds =
+      selectedPackage?.type === 'SINGLE'
+        ? clientPackages.flatMap((pkg) =>
+            pkg.packageService.map((ps) => ps.service.id),
+          )
+        : [];
 
     const modifiedServices = services.map((service) => ({
       ...service,
       isFree: clientPackageServiceIds.includes(service.id),
     }));
 
-    const chargeableServices = modifiedServices.filter(
-      (service) => !service.isFree,
-    );
+    let allServices = [...modifiedServices];
+
+    if (selectedPackage && selectedPackage.type === 'MULTIPLE') {
+      const services = await this.prisma.service.findMany({
+        where: {
+          id: {
+            in: selectedPackage.packageService.map((ps) => ps.service.id),
+          },
+        },
+      });
+
+      const modifiedServices = services.map((service) => ({
+        ...service,
+        isFree: true,
+      }));
+      allServices = [...modifiedServices, ...allServices];
+    }
+
+    const chargeableServices = allServices.filter((service) => !service.isFree);
 
     if (!data.slots.includes(slot)) {
       throw new ServiceUnavailableException(

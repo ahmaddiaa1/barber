@@ -30,6 +30,7 @@ export class OrderService {
   }
 
   async GetData(createOrderDto: CreateOrderDto, userId: string) {
+    console.log(userId);
     const { promoCode, service, slot, barberId, date, branchId, usedPackage } =
       createOrderDto;
     const dateWithoutTime = date.toString().split('T')[0];
@@ -58,8 +59,8 @@ export class OrderService {
         },
       },
     });
-
-    if (usedPromoCode && promoCode)
+    console.log(usedPromoCode);
+    if (usedPromoCode.UserOrders.length && promoCode)
       throw new ConflictException(`Invalid Promo Code ${promoCode} `);
     if (order)
       throw new ConflictException(
@@ -140,7 +141,6 @@ export class OrderService {
     const duration =
       services.reduce((acc, service) => acc + service.duration, 0) * 15;
     const OrderDate = dateWithoutTime;
-    // dateformat(dateWithoutTime, 'dddd, mmmm dS, yyyy');
 
     return new AppSuccess(
       {
@@ -148,17 +148,11 @@ export class OrderService {
         slot,
         barberId,
         branchId,
-        cashierId: userId,
-        status: 'PENDING',
-        booking: 'UPCOMING',
         points: 0,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: null,
         duration: `${duration} Minutes`,
-        service: modifiedServices,
-        userId,
         promoCode: promoCode ? promoCode : null,
-        usedPackage: selectedPackage ? [selectedPackage.id] : [],
         subTotal: subTotal.toString(),
         discount: promoCode
           ? validPromoCode?.type === 'PERCENTAGE'
@@ -335,7 +329,7 @@ export class OrderService {
     const order = await this.prisma.order.create({
       data: {
         ...rest,
-        ...(validPromoCode && { promoCode: validPromoCode?.id }),
+        ...(validPromoCode && { promoCode }),
         slot,
         userId,
         barberId,
@@ -420,7 +414,37 @@ export class OrderService {
       });
     }
 
-    return new AppSuccess(order, 'Order created successfully');
+    // const discount = promoCode
+    //   ? validPromoCode?.type === 'PERCENTAGE'
+    //     ? (subTotal * validPromoCode?.discount) / 100
+    //     : validPromoCode?.discount
+    //   : 0;
+
+    const duration =
+      services.reduce((acc, service) => acc + service.duration, 0) * 15 +
+      order.usedPackage;
+
+    return new AppSuccess(
+      {
+        date: order.date,
+        slot: order.slot,
+        barberId: order.barberId,
+        branchId: order.branchId,
+        points: order.points,
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt,
+        duration: `${duration} Minutes`,
+        promoCode: promoCode ? promoCode : null,
+        subTotal: order.subTotal,
+        discount: promoCode
+          ? validPromoCode?.type === 'PERCENTAGE'
+            ? `${validPromoCode?.discount}%`
+            : `${validPromoCode?.discount}EGP`
+          : 0,
+        total: order.total,
+      },
+      'Order created successfully',
+    );
   }
 
   async cancelOrder(id: string) {

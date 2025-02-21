@@ -145,9 +145,19 @@ export class OrderService {
     return new AppSuccess(
       {
         date: OrderDate,
-        startTime: slot,
+        slot,
+        barberId,
+        branchId,
+        cashierId: userId,
+        status: 'PENDING',
+        booking: 'UPCOMING',
+        points: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
         duration: `${duration} Minutes`,
         service: modifiedServices,
+        userId,
+        promoCode: promoCode ? promoCode : null,
         usedPackage: selectedPackage ? [selectedPackage.id] : [],
         subTotal: subTotal.toString(),
         discount: promoCode

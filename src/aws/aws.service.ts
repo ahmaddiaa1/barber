@@ -34,6 +34,7 @@ export class AwsService {
 
     try {
       await this.s3Client.send(command);
+      // return `https://${this.configService.get('AWS_BUCKET_NAME')}.s3.${this.configService.get('AWS_REGION')}.amazonaws.com/${Key}`;
       return `https://${this.configService.get('AWS_BUCKET_NAME')}.s3.${this.configService.get('AWS_REGION')}.amazonaws.com/${Key}`;
     } catch (error) {
       throw new Error(`AWS upload failed: ${error.message}`);

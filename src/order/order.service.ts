@@ -241,10 +241,6 @@ export class OrderService {
       },
     });
 
-    if (!clientPackages.length) {
-      throw new BadRequestException('No packages found for the client');
-    }
-
     const selectedPackage = clientPackages.find(
       (pkg) => pkg.id === usedPackage,
     );

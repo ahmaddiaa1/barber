@@ -88,7 +88,7 @@ export class OrderService {
     });
 
     const selectedPackage = clientPackages.find(
-      (pkg) => pkg.id === usedPackage,
+      (pkg) => pkg.id === usedPackage[0],
     );
     let selectedServices = [...service];
 
@@ -245,7 +245,7 @@ export class OrderService {
     });
 
     const selectedPackage = clientPackages.find(
-      (pkg) => pkg.id === usedPackage,
+      (pkg) => pkg.id === usedPackage[0],
     );
     let selectedServices = [...service];
 
@@ -386,19 +386,6 @@ export class OrderService {
           },
         });
       }
-
-      // await prisma.packagesServices.updateMany({
-      //   where: {
-      //     id: { in: packageServiceIds },
-      //     ClientPackages: { clientId: order.userId, type: 'SINGLE' },
-      //     isActive: true,
-      //     remainingCount: { lt: 1 },
-      //   },
-      //   data: {
-      //     isActive: false,
-      //     usedAt: new Date(),
-      //   },
-      // });
     });
 
     if (selectedPackage && selectedPackage.type === 'MULTIPLE') {
@@ -413,12 +400,6 @@ export class OrderService {
         },
       });
     }
-
-    // const discount = promoCode
-    //   ? validPromoCode?.type === 'PERCENTAGE'
-    //     ? (subTotal * validPromoCode?.discount) / 100
-    //     : validPromoCode?.discount
-    //   : 0;
 
     const duration =
       services.reduce((acc, service) => acc + service.duration, 0) * 15 +

@@ -58,8 +58,8 @@ export class CreateOrderDto {
   //
   // total?: number;
   @IsOptional()
-  @IsString()
-  usedPackage?: string;
+  @IsArray()
+  usedPackage?: string[];
 
   @IsOptional()
   @Transform(({ value }) => value ?? null)

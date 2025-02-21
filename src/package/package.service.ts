@@ -9,6 +9,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { AwsService } from 'src/aws/aws.service';
 import { Random } from 'src/utils/generate';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class PackageService {
@@ -94,6 +95,27 @@ export class PackageService {
 
   update(id: string, updatePackageDto: UpdatePackageDto) {
     return `This action updates a #${id} package`;
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async removeExpiredPackages() {
+    const result = await this.prisma.packages.findMany({
+      where: {
+        expiresAt: {
+          lt: new Date(),
+        },
+      },
+    });
+
+    if (result.length > 0) {
+      await this.prisma.packages.deleteMany({
+        where: {
+          expiresAt: {
+            lt: new Date(),
+          },
+        },
+      });
+    }
   }
 
   async remove(id: string) {

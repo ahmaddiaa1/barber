@@ -59,9 +59,8 @@ export class OrderService {
       },
     });
 
-    if (usedPromoCode)
-      throw new ConflictException(`Promo code ${promoCode} is already used`);
-
+    if (usedPromoCode && promoCode)
+      throw new ConflictException(`Invalid Promo Code ${promoCode} `);
     if (order)
       throw new ConflictException(
         `Slot ${createOrderDto.slot} is already booked`,

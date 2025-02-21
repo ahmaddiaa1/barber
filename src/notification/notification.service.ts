@@ -64,7 +64,7 @@ export class NotificationService {
         from: '+1 313 482 5424',
         to: phone,
       })
-      .then((message) => console.log(message.sid));
+      .then((message: { sid: string }) => console.log(message.sid));
     return { success: true, message };
   }
 }

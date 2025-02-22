@@ -180,7 +180,6 @@ export class OrderService {
   }
 
   async createOrder(createOrderDto: CreateOrderDto, userId: string) {
-    const dataWithoutTime = createOrderDto.date.toString().split('T')[0];
     const {
       slot,
       service,
@@ -188,45 +187,67 @@ export class OrderService {
       packages,
       branchId,
       usedPackage,
+      promoCode,
       ...rest
     } = createOrderDto;
 
-    const existingOrder = await this.prisma.order.findFirst({
-      where: {
-        barberId: createOrderDto.barberId,
-        date: new Date(dataWithoutTime),
-        slot: createOrderDto.slot,
-        OR: [
-          { status: 'PENDING' },
-          { status: 'IN_PROGRESS' },
-          { booking: 'UPCOMING' },
-        ],
-      },
-    });
+    let allServices = [] as PrismaServiceType[];
+    const dateWithoutTime = createOrderDto.date.toString().split('T')[0];
 
-    const client = await this.prisma.client.findUnique({
-      where: {
-        id: userId,
-      },
-      select: {
-        ClientPackages: {
-          where: { isActive: true, type: 'SINGLE' },
+    const [existingOrder, usedPromoCode, slots, validPromoCode] =
+      await Promise.all([
+        await this.prisma.order.findFirst({
+          where: {
+            barberId: barberId,
+            date: new Date(dateWithoutTime),
+            slot: slot,
+            OR: [
+              { status: 'PENDING' },
+              { status: 'IN_PROGRESS' },
+              { booking: 'UPCOMING' },
+            ],
+          },
+        }),
+        await this.prisma.user.findFirst({
+          where: { id: userId },
           select: {
-            type: true,
-            packageService: {
-              where: { isActive: true, remainingCount: { gt: 0 } },
-              select: {
-                service: {
-                  select: {
-                    id: true,
-                  },
-                },
+            UserOrders: {
+              where: {
+                promoCode: promoCode,
+                status: 'PENDING',
               },
             },
           },
-        },
-      },
-    });
+        }),
+        (await this.getSlots(dateWithoutTime, barberId)).data.slots,
+        promoCode &&
+          (await this.promoCodeService.validatePromoCode(promoCode)).data,
+      ]);
+
+    if (usedPromoCode.UserOrders.length && promoCode)
+      throw new ConflictException(
+        `Promo code "${promoCode}" is invalid or expired.`,
+      );
+
+    if (existingOrder)
+      throw new ConflictException(`Slot ${slot} is already booked`);
+
+    if (!slots.includes(slot))
+      throw new ServiceUnavailableException(`Slot ${slot} is Unavailable`);
+
+    // const existingOrder = await this.prisma.order.findFirst({
+    //   where: {
+    //     barberId: createOrderDto.barberId,
+    //     date: new Date(dateWithoutTime),
+    //     slot: createOrderDto.slot,
+    //     OR: [
+    //       { status: 'PENDING' },
+    //       { status: 'IN_PROGRESS' },
+    //       { booking: 'UPCOMING' },
+    //     ],
+    //   },
+    // });
+
     const barber = await this.prisma.barber.findUnique({
       where: { id: createOrderDto.barberId },
     });
@@ -238,7 +259,6 @@ export class OrderService {
     });
 
     if (!barber) throw new NotFoundException('Barber not found');
-    if (!client) throw new NotFoundException('Client not found');
     if (!branch) throw new NotFoundException('Branch not found');
     if (!Services || !Services.length)
       throw new NotFoundException('Service not found');
@@ -253,7 +273,7 @@ export class OrderService {
         id: true,
         type: true,
         packageService: {
-          select: { service: { select: { id: true } } },
+          select: { service: true },
         },
       },
     });
@@ -262,70 +282,41 @@ export class OrderService {
       usedPackage.includes(pkg.id),
     );
 
-    let selectedServices = [...service];
+    const single = clientPackages
+      .filter((pkg) => pkg.type === 'SINGLE')
+      .flatMap((pkg) =>
+        pkg.packageService.flatMap((ps) => {
+          return { ...ps.service, pkgId: pkg.id };
+        }),
+      );
 
-    if (selectedPackage) {
-      for (const pkg of selectedPackage) {
-        if (pkg.type === 'MULTIPLE') {
-          selectedServices.push(
-            ...pkg.packageService.map((ps) => ps.service.id),
-          );
-        }
-      }
-
-      // if (selectedPackage.type === 'MULTIPLE') {
-      //   selectedServices.push(
-      //     ...selectedPackage.packageService.map((ps) => ps.service.id),
-      //   );
-      // }
-    }
-
-    selectedServices = [...new Set(selectedServices)];
-
-    const services = await this.prisma.service.findMany({
-      where: { id: { in: selectedServices } },
+    const FetchedServices = await this.prisma.service.findMany({
+      where: { id: { in: service } },
     });
 
-    if (!services.length)
-      throw new NotFoundException('No services found with the given IDs.');
-
-    const clientPackageServiceIds = clientPackages.flatMap((pkg) =>
-      pkg.packageService.map((ps) => ps.service.id),
-    );
-
-    const modifiedServices = services.map((service) => ({
-      ...service,
-      isFree: clientPackageServiceIds.includes(service.id),
+    const services = FetchedServices.map((srv) => ({
+      ...srv,
+      isFree: single.some((s) => s.id === srv.id),
     }));
 
-    const chargeableServices = modifiedServices.filter(
-      (service) => !service.isFree,
-    );
+    allServices.push(...services);
 
-    if (existingOrder) {
-      throw new ConflictException(
-        `Slot ${createOrderDto.slot} is already booked`,
-      );
+    for (const pkg of selectedPackage) {
+      if (pkg.type === 'SINGLE') {
+        console.log('pkg.type', pkg.type);
+        throw new ConflictException('Can not select Packages of type SINGLE');
+      } else {
+        const service = pkg.packageService.flatMap((ps) => {
+          return { ...ps.service, isFree: true };
+        });
+
+        allServices.push(...service);
+      }
     }
 
-    const promoCode = createOrderDto.promoCode;
+    const costServices = allServices.filter((service) => !service.isFree);
 
-    const validPromoCode = await this.prisma.promoCode.findFirst({
-      where: {
-        code: promoCode,
-        expiredAt: {
-          gte: new Date(),
-        },
-      },
-    });
-
-    if (promoCode && !validPromoCode) {
-      throw new ConflictException(
-        `Promo code "${promoCode}" is invalid or expired.`,
-      );
-    }
-
-    const subTotal = chargeableServices.reduce(
+    const subTotal = costServices.reduce(
       (acc, service) => acc + service.price,
       0,
     );
@@ -336,17 +327,6 @@ export class OrderService {
       total = subTotal - (subTotal * validPromoCode.discount) / 100;
     } else if (promoCode && validPromoCode?.type === 'AMOUNT') {
       total = subTotal - validPromoCode.discount;
-    }
-
-    const { data } = await this.getSlots(
-      dataWithoutTime,
-      createOrderDto.barberId,
-    );
-
-    if (!data.slots.includes(slot)) {
-      throw new ServiceUnavailableException(
-        `Slot ${slot} is not available for booking.`,
-      );
     }
 
     const order = await this.prisma.order.create({
@@ -360,9 +340,9 @@ export class OrderService {
         usedPackage: selectedPackage
           ? selectedPackage.flatMap((e) => e.id)
           : [],
-        date: new Date(dataWithoutTime),
+        date: new Date(dateWithoutTime),
         service: {
-          connect: modifiedServices.map((service) => ({ id: service.id })),
+          connect: allServices.map((service) => ({ id: service.id })),
         },
         subTotal,
         total,
@@ -394,27 +374,30 @@ export class OrderService {
       });
 
       const pkgServiceIds = packageService.flatMap((ps) => ps.id);
+
+      if (services.length > 0) {
+        await prisma.packagesServices.updateMany({
+          where: {
+            id: { in: pkgServiceIds },
+            ClientPackages: { clientId: order.userId, type: 'SINGLE' },
+            isActive: true,
+          },
+          data: {
+            ...(packageService[0].remainingCount > 1 && {
+              isActive: false,
+            }),
+            usedAt: new Date(),
+            remainingCount: {
+              decrement: 1,
+            },
+          },
+        });
+      }
+
       // selectedPackage.type === 'SINGLE'
       if (selectedPackage) {
         for (const pkg of selectedPackage) {
-          if (pkg.type === 'SINGLE') {
-            await prisma.packagesServices.updateMany({
-              where: {
-                id: { in: pkgServiceIds },
-                ClientPackages: { clientId: order.userId, type: 'SINGLE' },
-                isActive: true,
-              },
-              data: {
-                ...(packageService[0].remainingCount > 1 && {
-                  isActive: false,
-                }),
-                usedAt: new Date(),
-                remainingCount: {
-                  decrement: 1,
-                },
-              },
-            });
-          } else if (pkg.type === 'MULTIPLE') {
+          if (pkg.type === 'MULTIPLE') {
             await this.prisma.clientPackages.updateMany({
               where: {
                 id: { in: selectedPackage.flatMap((e) => e.id) },
@@ -431,7 +414,7 @@ export class OrderService {
     });
 
     const duration =
-      modifiedServices.reduce((acc, service) => acc + service.duration, 0) * 15;
+      allServices.reduce((acc, service) => acc + service.duration, 0) * 15;
 
     // const duration =
     //   services.reduce((acc, service) => acc + service.duration, 0) * 15;

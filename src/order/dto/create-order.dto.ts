@@ -8,8 +8,9 @@ import {
   Min,
   IsUUID,
   IsNotEmpty,
+  ValidateIf,
 } from 'class-validator';
-import { OrderStatus, BookingStatus } from '@prisma/client'; // Import enums from Prisma
+import { OrderStatus, BookingStatus } from '@prisma/client';
 
 export class CreateOrderDto {
   userId: string;
@@ -20,16 +21,16 @@ export class CreateOrderDto {
   @IsString()
   slot: string;
 
-  @IsOptional()
   @IsUUID()
   @IsNotEmpty()
   barberId: string;
 
+  @ValidateIf((d) => !d.package && !d.service)
   @IsArray()
   @IsString({ each: true })
   service: string[];
 
-  @IsOptional()
+  @ValidateIf((d) => !d.package && !d.service)
   @IsArray()
   @IsString({ each: true })
   packages: string[];
@@ -50,13 +51,9 @@ export class CreateOrderDto {
   points?: number;
 
   @IsOptional()
-  // @Transform(({ value }) => value ?? null)
   @IsString()
   promoCode?: string;
 
-  // subTotal?: number;
-  //
-  // total?: number;
   @IsOptional()
   @IsArray()
   usedPackage?: string[];

@@ -19,8 +19,8 @@ export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Get()
-  async getAllOrders() {
-    return this.orderService.getAllOrders();
+  async getAllOrders(@UserData('user') user: User) {
+    return this.orderService.getAllOrders(user.id);
   }
 
   @Post('/paid-order/:id')

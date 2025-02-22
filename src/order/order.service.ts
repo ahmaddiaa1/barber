@@ -9,7 +9,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
+import { Service } from '@prisma/client';
 // import dateformat from 'dateformat';
+
+interface PrismaServiceType extends Service {
+  isFree: boolean;
+}
 
 @Injectable()
 export class OrderService {
@@ -18,10 +23,21 @@ export class OrderService {
     private readonly promoCodeService: PromoCodeService,
   ) {}
 
-  async getAllOrders() {
-    const orders = await this.prisma.order.findMany({});
+  async getAllOrders(userId: string) {
+    const orders = await this.prisma.order.findMany({
+      where: { userId: userId },
+    });
 
-    return new AppSuccess(orders, 'Orders fetched successfully');
+    console.log(userId);
+
+    const upcoming = orders.filter((order) => order.booking === 'UPCOMING');
+    const completed = orders.filter((order) => order.booking === 'PAST');
+    const cancelled = orders.filter((order) => order.booking === 'CANCELLED');
+
+    return new AppSuccess(
+      { upcoming, completed, cancelled },
+      'Orders fetched successfully',
+    );
   }
 
   async getOrderById(id: string) {
@@ -30,47 +46,48 @@ export class OrderService {
   }
 
   async GetData(createOrderDto: CreateOrderDto, userId: string) {
-    console.log(userId);
     const { promoCode, service, slot, barberId, date, branchId, usedPackage } =
       createOrderDto;
+
     const dateWithoutTime = date.toString().split('T')[0];
+    let allServices = [] as PrismaServiceType[];
 
-    const order = await this.prisma.order.findFirst({
-      where: {
-        barberId: barberId,
-        date: new Date(dateWithoutTime),
-        slot: slot,
-        OR: [
-          { status: 'PENDING' },
-          { status: 'IN_PROGRESS' },
-          { booking: 'UPCOMING' },
-        ],
-      },
-    });
-
-    const usedPromoCode = await this.prisma.user.findFirst({
-      where: { id: userId },
-      select: {
-        UserOrders: {
-          where: {
-            promoCode: promoCode,
-            status: 'PENDING',
+    const [order, usedPromoCode, slots, validPromoCode] = await Promise.all([
+      await this.prisma.order.findFirst({
+        where: {
+          barberId: barberId,
+          date: new Date(dateWithoutTime),
+          slot: slot,
+          OR: [
+            { status: 'PENDING' },
+            { status: 'IN_PROGRESS' },
+            { booking: 'UPCOMING' },
+          ],
+        },
+      }),
+      await this.prisma.user.findFirst({
+        where: { id: userId },
+        select: {
+          UserOrders: {
+            where: {
+              promoCode: promoCode,
+              status: 'PENDING',
+            },
           },
         },
-      },
-    });
-    console.log(usedPromoCode);
+      }),
+      (await this.getSlots(dateWithoutTime, barberId)).data.slots,
+      promoCode &&
+        (await this.promoCodeService.validatePromoCode(promoCode)).data,
+    ]);
+
     if (usedPromoCode.UserOrders.length && promoCode)
       throw new ConflictException(`Invalid Promo Code ${promoCode} `);
-    if (order)
-      throw new ConflictException(
-        `Slot ${createOrderDto.slot} is already booked`,
-      );
 
-    const { data } = await this.getSlots(dateWithoutTime, barberId);
-    const validPromoCode =
-      promoCode &&
-      (await this.promoCodeService.validatePromoCode(promoCode)).data;
+    if (order) throw new ConflictException(`Slot ${slot} is already booked`);
+
+    if (!slots.includes(slot))
+      throw new ServiceUnavailableException(`Slot ${slot} is Unavailable`);
 
     const clientPackages = await this.prisma.clientPackages.findMany({
       where: {
@@ -82,7 +99,7 @@ export class OrderService {
         id: true,
         type: true,
         packageService: {
-          select: { service: { select: { id: true } } },
+          select: { service: true },
         },
       },
     });
@@ -90,51 +107,42 @@ export class OrderService {
     const selectedPackage = clientPackages.filter((pkg) =>
       usedPackage.includes(pkg.id),
     );
-    let selectedServices = [...service];
 
-    const services = await this.prisma.service.findMany({
-      where: { id: { in: selectedServices } },
+    const single = clientPackages
+      .filter((pkg) => pkg.type === 'SINGLE')
+      .flatMap((pkg) =>
+        pkg.packageService.flatMap((ps) => {
+          return { ...ps.service, pkgId: pkg.id };
+        }),
+      );
+
+    const FetchedServices = await this.prisma.service.findMany({
+      where: { id: { in: service } },
     });
 
-    if (!services.length)
-      throw new NotFoundException('No services found with the given IDs.');
-
-    const clientPackageServiceIds = clientPackages.flatMap((pkg) =>
-      pkg.packageService.map((ps) => ps.service.id),
-    );
-
-    const modifiedServices = services.map((service) => ({
-      ...service,
-      isFree: clientPackageServiceIds.includes(service.id),
+    const services = FetchedServices.map((srv) => ({
+      ...srv,
+      isFree: single.some((s) => s.id === srv.id),
     }));
 
-    let allServices = [...modifiedServices];
+    allServices.push(...services);
 
-    if (selectedPackage) {
-      for (const pkg of selectedPackage) {
-        if (pkg.type === 'MULTIPLE') {
-          selectedServices.push(
-            ...pkg.packageService.map((ps) => ps.service.id),
-          );
-        }
+    for (const pkg of selectedPackage) {
+      if (pkg.type === 'SINGLE') {
+        console.log('pkg.type', pkg.type);
+        throw new ConflictException('Can not select Packages of type SINGLE');
+      } else {
+        const service = pkg.packageService.flatMap((ps) => {
+          return { ...ps.service, isFree: true };
+        });
+
+        allServices.push(...service);
       }
-
-      const modifiedServices = services.map((service) => ({
-        ...service,
-        isFree: true,
-      }));
-      allServices = [...modifiedServices, ...allServices];
     }
 
-    const chargeableServices = allServices.filter((service) => !service.isFree);
+    const costServices = allServices.filter((service) => !service.isFree);
 
-    if (!data.slots.includes(slot)) {
-      throw new ServiceUnavailableException(
-        `Slot ${slot} is not available for booking.`,
-      );
-    }
-
-    const subTotal = chargeableServices.reduce(
+    const subTotal = costServices.reduce(
       (acc, service) => acc + service.price,
       0,
     );
@@ -145,7 +153,7 @@ export class OrderService {
       : 0;
     const total = Math.max(subTotal - discount, 0);
     const duration =
-      modifiedServices.reduce((acc, service) => acc + service.duration, 0) * 15;
+      allServices.reduce((acc, service) => acc + service.duration, 0) * 15;
     const OrderDate = dateWithoutTime;
 
     return new AppSuccess(
@@ -154,7 +162,7 @@ export class OrderService {
         slot,
         barberId,
         branchId,
-        points: 0,
+        points: '0',
         createdAt: new Date(),
         updatedAt: null,
         duration: `${duration} Minutes`,
@@ -434,18 +442,18 @@ export class OrderService {
         slot: order.slot,
         barberId: order.barberId,
         branchId: order.branchId,
-        points: order.points,
+        points: order.points.toString(),
         createdAt: order.createdAt,
         updatedAt: order.updatedAt,
         duration: `${duration} Minutes`,
         promoCode: promoCode ? promoCode : null,
-        subTotal: order.subTotal,
+        subTotal: order.subTotal.toString(),
         discount: promoCode
           ? validPromoCode?.type === 'PERCENTAGE'
             ? `${validPromoCode?.discount}%`
             : `${validPromoCode?.discount}EGP`
           : 0,
-        total: order.total,
+        total: order.total.toString(),
       },
       'Order created successfully',
     );

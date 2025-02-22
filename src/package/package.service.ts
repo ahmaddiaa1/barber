@@ -39,23 +39,37 @@ export class PackageService {
     }
 
     if (type === 'MULTIPLE' && count > 1) {
-      throw new BadRequestException('Count must be 1 for type MULTIPLE');
+      throw new BadRequestException(
+        'Count of services must be 1 for type MULTIPLE',
+      );
     }
 
     const image =
       file && (await this.awsService.uploadFile(file, Random(10), 'packages'));
 
-    const packages = await this.prisma.packages.create({
-      data: {
-        ...rest,
-        type,
-        count,
-        services: { connect: serviceIds.map((id) => ({ id })) },
-        ...(image && { image }),
-      },
-    });
+    // const offer = await this.prisma.offers.create({
+    //   data: {
+    //     offerType: 'PACKAGE',
+    //     expiresAt: rest.expiresAt,
+    //   },
+    // });
 
-    return new AppSuccess(packages, 'Package created successfully', 201);
+    // const packages = await this.prisma.offers.update({
+    //   where: { id: offer.id },
+    //   data: {
+    //     packages: {
+    //       create: {
+    //         ...rest,
+    //         type,
+    //         count,
+    //         services: { connect: serviceIds.map((id) => ({ id })) },
+    //         ...(image && { image }),
+    //       },
+    //     },
+    //   },
+    // });
+
+    // return new AppSuccess(packages, 'Package created successfully', 201);
   }
 
   async findAll() {

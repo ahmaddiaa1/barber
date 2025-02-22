@@ -12,15 +12,15 @@ export class PointsService {
   async create(createPointDto: CreatePointDto) {
     const { title, price, points } = createPointDto;
 
-    const point = await this.prisma.points.create({
-      data: {
-        title,
-        price,
-        points,
-      },
-    });
+    // const point = await this.prisma.points.create({
+    //   data: {
+    //     title,
+    //     price,
+    //     points,
+    //   },
+    // });
 
-    return new AppSuccess(point, 'Point created successfully');
+    // return new AppSuccess(point, 'Point created successfully');
   }
 
   async findAll() {

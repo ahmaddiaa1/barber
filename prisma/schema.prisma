@@ -201,7 +201,7 @@ enum OfferType {
 }
 
 model Packages {
-  id          String         @id @default(uuid()) @map("id")
+  id          String         @id
   description String?
   title       String
   image       String?
@@ -209,18 +209,16 @@ model Packages {
   count       Int            @default(1)
   type        PackagesStatus @default(SINGLE)
   expiresAt   DateTime
-  offersId    String?
-  offers      Offers?        @relation(fields: [offersId], references: [id])
+  offers      Offers         @relation(fields: [id], references: [id])
   services    Service[]      @relation("PackagesToServices")
 }
 
 model Points {
-  id       String  @id @default(uuid()) @map("id")
-  title    String
-  points   Int
-  price    Int
-  Offers   Offers? @relation(fields: [offersId], references: [id])
-  offersId String?
+  id     String @id
+  title  String
+  points Int
+  price  Int
+  Offers Offers @relation(fields: [id], references: [id])
 }
 
 model PackagesServices {

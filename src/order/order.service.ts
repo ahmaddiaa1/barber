@@ -272,6 +272,7 @@ export class OrderService {
       select: {
         id: true,
         type: true,
+        isActive: true,
         packageService: {
           select: { service: true },
         },
@@ -281,6 +282,12 @@ export class OrderService {
     const selectedPackage = clientPackages.filter((pkg) =>
       usedPackage.includes(pkg.id),
     );
+
+    const notValidPackage = selectedPackage.filter((pkg) => !pkg.isActive);
+    console.log('clientPackages', selectedPackage);
+    console.log('notValidPackage', notValidPackage);
+    if (notValidPackage.length > 0)
+      throw new BadRequestException('This package is not valid anymore');
 
     const single = clientPackages
       .filter((pkg) => pkg.type === 'SINGLE')
@@ -313,6 +320,8 @@ export class OrderService {
         allServices.push(...service);
       }
     }
+
+    console.log('allServices', allServices);
 
     const costServices = allServices.filter((service) => !service.isFree);
 
@@ -375,7 +384,9 @@ export class OrderService {
 
       const pkgServiceIds = packageService.flatMap((ps) => ps.id);
 
-      if (services.length > 0) {
+      console.log('pkgServiceIds', pkgServiceIds);
+
+      if (pkgServiceIds.length > 0) {
         await prisma.packagesServices.updateMany({
           where: {
             id: { in: pkgServiceIds },
@@ -383,7 +394,7 @@ export class OrderService {
             isActive: true,
           },
           data: {
-            ...(packageService[0].remainingCount > 1 && {
+            ...(packageService[0].remainingCount < 1 && {
               isActive: false,
             }),
             usedAt: new Date(),
@@ -396,20 +407,16 @@ export class OrderService {
 
       // selectedPackage.type === 'SINGLE'
       if (selectedPackage) {
-        for (const pkg of selectedPackage) {
-          if (pkg.type === 'MULTIPLE') {
-            await this.prisma.clientPackages.updateMany({
-              where: {
-                id: { in: selectedPackage.flatMap((e) => e.id) },
-                clientId: order.userId,
-                type: 'MULTIPLE',
-              },
-              data: {
-                isActive: false,
-              },
-            });
-          }
-        }
+        await this.prisma.clientPackages.updateMany({
+          where: {
+            id: { in: usedPackage },
+            clientId: order.userId,
+            type: 'MULTIPLE',
+          },
+          data: {
+            isActive: false,
+          },
+        });
       }
     });
 

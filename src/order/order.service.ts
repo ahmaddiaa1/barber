@@ -10,7 +10,6 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
 import { Service } from '@prisma/client';
-// import dateformat from 'dateformat';
 
 interface PrismaServiceType extends Service {
   isFree: boolean;
@@ -27,8 +26,6 @@ export class OrderService {
     const orders = await this.prisma.order.findMany({
       where: { userId: userId },
     });
-
-    console.log(userId);
 
     const upcoming = orders.filter((order) => order.booking === 'UPCOMING');
     const completed = orders.filter((order) => order.booking === 'PAST');
@@ -82,7 +79,9 @@ export class OrderService {
     ]);
 
     if (usedPromoCode.UserOrders.length && promoCode)
-      throw new ConflictException(`Invalid Promo Code ${promoCode} `);
+      throw new ConflictException(
+        `Promo code "${promoCode}" is invalid or expired.`,
+      );
 
     if (order) throw new ConflictException(`Slot ${slot} is already booked`);
 
@@ -92,12 +91,12 @@ export class OrderService {
     const clientPackages = await this.prisma.clientPackages.findMany({
       where: {
         clientId: userId,
-        isActive: true,
         packageService: { some: { isActive: true, remainingCount: { gt: 0 } } },
       },
       select: {
         id: true,
         type: true,
+        isActive: true,
         packageService: {
           select: { service: true },
         },
@@ -108,8 +107,14 @@ export class OrderService {
       usedPackage.includes(pkg.id),
     );
 
+    const notValidPackage = selectedPackage.filter((pkg) => !pkg.isActive);
+
+    if (notValidPackage.length > 0) {
+      throw new BadRequestException('This package is not valid anymore');
+    }
+
     const single = clientPackages
-      .filter((pkg) => pkg.type === 'SINGLE')
+      .filter((pkg) => pkg.type === 'SINGLE' && pkg.isActive)
       .flatMap((pkg) =>
         pkg.packageService.flatMap((ps) => {
           return { ...ps.service, pkgId: pkg.id };
@@ -129,7 +134,6 @@ export class OrderService {
 
     for (const pkg of selectedPackage) {
       if (pkg.type === 'SINGLE') {
-        console.log('pkg.type', pkg.type);
         throw new ConflictException('Can not select Packages of type SINGLE');
       } else {
         const service = pkg.packageService.flatMap((ps) => {
@@ -235,19 +239,6 @@ export class OrderService {
     if (!slots.includes(slot))
       throw new ServiceUnavailableException(`Slot ${slot} is Unavailable`);
 
-    // const existingOrder = await this.prisma.order.findFirst({
-    //   where: {
-    //     barberId: createOrderDto.barberId,
-    //     date: new Date(dateWithoutTime),
-    //     slot: createOrderDto.slot,
-    //     OR: [
-    //       { status: 'PENDING' },
-    //       { status: 'IN_PROGRESS' },
-    //       { booking: 'UPCOMING' },
-    //     ],
-    //   },
-    // });
-
     const barber = await this.prisma.barber.findUnique({
       where: { id: createOrderDto.barberId },
     });
@@ -266,7 +257,6 @@ export class OrderService {
     const clientPackages = await this.prisma.clientPackages.findMany({
       where: {
         clientId: userId,
-        isActive: true,
         packageService: { some: { isActive: true, remainingCount: { gt: 0 } } },
       },
       select: {
@@ -284,8 +274,7 @@ export class OrderService {
     );
 
     const notValidPackage = selectedPackage.filter((pkg) => !pkg.isActive);
-    console.log('clientPackages', selectedPackage);
-    console.log('notValidPackage', notValidPackage);
+
     if (notValidPackage.length > 0)
       throw new BadRequestException('This package is not valid anymore');
 
@@ -310,7 +299,6 @@ export class OrderService {
 
     for (const pkg of selectedPackage) {
       if (pkg.type === 'SINGLE') {
-        console.log('pkg.type', pkg.type);
         throw new ConflictException('Can not select Packages of type SINGLE');
       } else {
         const service = pkg.packageService.flatMap((ps) => {
@@ -320,8 +308,6 @@ export class OrderService {
         allServices.push(...service);
       }
     }
-
-    console.log('allServices', allServices);
 
     const costServices = allServices.filter((service) => !service.isFree);
 
@@ -384,8 +370,6 @@ export class OrderService {
 
       const pkgServiceIds = packageService.flatMap((ps) => ps.id);
 
-      console.log('pkgServiceIds', pkgServiceIds);
-
       if (pkgServiceIds.length > 0) {
         await prisma.packagesServices.updateMany({
           where: {
@@ -405,7 +389,6 @@ export class OrderService {
         });
       }
 
-      // selectedPackage.type === 'SINGLE'
       if (selectedPackage) {
         await this.prisma.clientPackages.updateMany({
           where: {
@@ -422,9 +405,6 @@ export class OrderService {
 
     const duration =
       allServices.reduce((acc, service) => acc + service.duration, 0) * 15;
-
-    // const duration =
-    //   services.reduce((acc, service) => acc + service.duration, 0) * 15;
 
     return new AppSuccess(
       {

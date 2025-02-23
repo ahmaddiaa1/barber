@@ -14,7 +14,7 @@ export class PointsService {
 
     const offer = await this.prisma.offers.create({
       data: {
-        offerType: 'POINT',
+        offerType: 'POINTS',
         expiresAt: new Date(),
       },
     });

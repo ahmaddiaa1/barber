@@ -49,7 +49,7 @@ export class PackageService {
 
     const offer = await this.prisma.offers.create({
       data: {
-        offerType: 'PACKAGE',
+        offerType: 'PACKAGES',
         expiresAt: rest.expiresAt,
       },
     });

@@ -336,6 +336,7 @@ export class MockService {
           password: await hash(client.password, 10),
           phone: client.phone,
           role: Role[client.role.toUpperCase()],
+          avatar: `https://avatar.iran.liara.run/public/boy?username=${client.firstName + client.lastName}`,
           client: {
             create: {
               referralCode: client.referralCode,
@@ -355,6 +356,8 @@ export class MockService {
           password: await hash(admin.password, 10),
           phone: admin.phone,
           role: Role[admin.role.toUpperCase()],
+          avatar: `https://avatar.iran.liara.run/public/boy?username=${admin.firstName + admin.lastName}`,
+
           admin: {
             create: {},
           },
@@ -386,7 +389,7 @@ export class MockService {
           password: await hash(barber.password, 10),
           phone: barber.phone,
           role: Role[barber.role.toUpperCase()],
-          avatar: barber.avatar,
+          avatar: `https://avatar.iran.liara.run/public/job/barber/male`,
           barber: {
             create: {
               branchId: createdBranches[0].id,
@@ -403,7 +406,7 @@ export class MockService {
           password: await hash(barber.password, 10),
           phone: barber.phone,
           role: Role[barber.role.toUpperCase()],
-          avatar: barber.avatar,
+          avatar: `https://avatar.iran.liara.run/public/job/barber/male`,
           barber: {
             create: {
               branchId: createdBranches[1].id,
@@ -420,7 +423,7 @@ export class MockService {
           password: await hash(barber.password, 10),
           phone: barber.phone,
           role: Role[barber.role.toUpperCase()],
-          avatar: barber.avatar,
+          avatar: `https://avatar.iran.liara.run/public/job/barber/male`,
           barber: {
             create: {
               branchId: createdBranches[2].id,
@@ -447,6 +450,7 @@ export class MockService {
           price: service.price,
           duration: service.duration,
           categoryId: createdCategories[1].id,
+          serviceImg: service.serviceImg,
         },
       });
     });
@@ -457,6 +461,7 @@ export class MockService {
           price: service.price,
           duration: service.duration,
           categoryId: createdCategories[0].id,
+          serviceImg: service.serviceImg,
         },
       });
     });
@@ -467,6 +472,7 @@ export class MockService {
           price: service.price,
           duration: service.duration,
           categoryId: createdCategories[2].id,
+          serviceImg: service.serviceImg,
         },
       });
     });

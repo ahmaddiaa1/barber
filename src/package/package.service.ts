@@ -47,29 +47,29 @@ export class PackageService {
     const image =
       file && (await this.awsService.uploadFile(file, Random(10), 'packages'));
 
-    // const offer = await this.prisma.offers.create({
-    //   data: {
-    //     offerType: 'PACKAGE',
-    //     expiresAt: rest.expiresAt,
-    //   },
-    // });
+    const offer = await this.prisma.offers.create({
+      data: {
+        offerType: 'PACKAGE',
+        expiresAt: rest.expiresAt,
+      },
+    });
 
-    // const packages = await this.prisma.offers.update({
-    //   where: { id: offer.id },
-    //   data: {
-    //     packages: {
-    //       create: {
-    //         ...rest,
-    //         type,
-    //         count,
-    //         services: { connect: serviceIds.map((id) => ({ id })) },
-    //         ...(image && { image }),
-    //       },
-    //     },
-    //   },
-    // });
+    const packages = await this.prisma.offers.update({
+      where: { id: offer.id },
+      data: {
+        packages: {
+          create: {
+            ...rest,
+            type,
+            count,
+            services: { connect: serviceIds.map((id) => ({ id })) },
+            ...(image && { image }),
+          },
+        },
+      },
+    });
 
-    // return new AppSuccess(packages, 'Package created successfully', 201);
+    return new AppSuccess(packages, 'Package created successfully', 201);
   }
 
   async findAll() {

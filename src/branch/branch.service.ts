@@ -3,9 +3,9 @@ import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
-import { SupabaseService } from 'src/supabase/supabase.service';
 import { AwsService } from 'src/aws/aws.service';
 import { Random } from 'src/utils/generate';
+import { Branch } from '@prisma/client';
 
 @Injectable()
 export class BranchService {
@@ -14,20 +14,12 @@ export class BranchService {
     private awsService: AwsService,
   ) {}
 
-  async create(createBranchDto: CreateBranchDto, file: Express.Multer.File) {
-    const generateRandomCode = () => {
-      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let code = '';
-      for (let i = 0; i < 12; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        code += characters.charAt(randomIndex);
-      }
-      return code;
-    };
-
+  async create(
+    createBranchDto: CreateBranchDto,
+    file: Express.Multer.File,
+  ): Promise<AppSuccess<Branch>> {
     const branchImg =
-      file &&
-      (await this.awsService.uploadFile(file, generateRandomCode(), 'branch'));
+      file && (await this.awsService.uploadFile(file, Random(10), 'branch'));
 
     const newBranch = await this.prisma.branch.create({
       data: {
@@ -38,12 +30,16 @@ export class BranchService {
     return new AppSuccess(newBranch, 'Branch created successfully');
   }
 
-  async findAll() {
-    const branches = await this.prisma.branch.findMany({});
+  async findAll(): Promise<AppSuccess<{ branches: Branch[] }>> {
+    const branches = await this.prisma.branch.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
     return new AppSuccess({ branches }, 'Branches found successfully');
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<AppSuccess<Branch>> {
     const branch = await this.prisma.branch.findUnique({
       where: { id },
       include: {
@@ -79,7 +75,7 @@ export class BranchService {
       },
     });
 
-    if (!branch) throw new NotFoundException('Branch not found');
+    if (!branch) throw new NotFoundException(`Branch with ID ${id} not found`);
 
     return new AppSuccess(branch, 'Branch found successfully');
   }
@@ -88,11 +84,8 @@ export class BranchService {
     id: string,
     updateBranchDto: UpdateBranchDto,
     file: Express.Multer.File,
-  ) {
-    const isBranchExist = await this.prisma.branch.findUnique({
-      where: { id },
-    });
-    if (!isBranchExist) throw new NotFoundException('Branch not found');
+  ): Promise<AppSuccess<Branch>> {
+    await this.findOne(id);
 
     const branchImg =
       file && (await this.awsService.uploadFile(file, Random(10), 'branch'));

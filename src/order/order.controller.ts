@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -12,8 +13,11 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UserData } from '../../decorators/user.decorator';
 import { User } from '@prisma/client';
 import { AuthGuard } from '../../guard/auth.guard';
+import { RolesGuard } from 'guard/role.guard';
+import { Roles } from 'decorators/roles.decorator';
 
 @UseGuards(AuthGuard)
+@UseGuards(RolesGuard)
 @Controller('order')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
@@ -23,22 +27,25 @@ export class OrderController {
     return this.orderService.getAllOrders(user.id);
   }
 
-  @Post('/paid-order/:id')
-  async paidOrder(@Param('id') id: string) {
-    return this.orderService.paidOrder(id);
+  @Roles(['ADMIN', 'CASHIER'])
+  @Put('/paid-order/:id')
+  async paidOrder(@Param('id') id: string, @UserData('user') user: User) {
+    return this.orderService.paidOrder(id, user.id);
   }
 
-  @Post('/cancel-order/:id')
+  @Put('/cancel-order/:id')
   async cancelOrder(@Param('id') id: string) {
     return this.orderService.cancelOrder(id);
   }
 
-  @Post('/start-order/:id')
+  @Roles(['ADMIN', 'BARBER'])
+  @Put('/start-order/:id')
   async startOrder(@Param('id') id: string) {
     return this.orderService.startOrder(id);
   }
 
-  @Post('/complete-order/:id')
+  @Roles(['ADMIN', 'BARBER'])
+  @Put('/complete-order/:id')
   async completeOrder(@Param('id') id: string) {
     return this.orderService.completeOrder(id);
   }
@@ -69,6 +76,7 @@ export class OrderController {
     return this.orderService.createOrder(createOrderDto, user.id);
   }
 
+  @Roles(['ADMIN'])
   @Post('/generate-slot')
   async generateSlot(@Body() body: { start: number; end: number }) {
     const { start, end } = body;

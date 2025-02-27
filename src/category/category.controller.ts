@@ -56,11 +56,10 @@ export class CategoryController {
   }
 
   @Roles(['ADMIN'])
-  @Put(':id/status')
+  @Put(':id')
   public async deleteCategory(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() available: { available: boolean },
   ): Promise<AppSuccess<Category>> {
-    return await this.categoryService.softDeleteCategory(id, available);
+    return await this.categoryService.delete(id);
   }
 }

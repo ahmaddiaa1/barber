@@ -92,20 +92,14 @@ export class CategoryService {
     return new AppSuccess(updatedCategory, 'Category updated successfully');
   }
 
-  public async softDeleteCategory(
-    id: string,
-    available: { available: boolean },
-  ): Promise<AppSuccess<Category>> {
+  public async delete(id: string): Promise<AppSuccess<Category>> {
     await this.findOneOrFail(id);
 
-    const updatedCategory = await this.prisma.category.update({
+    const deleteCategory = await this.prisma.category.delete({
       where: { id },
-      data: {
-        available: available.available,
-      },
     });
 
-    return new AppSuccess(updatedCategory, 'Category updated successfully');
+    return new AppSuccess(deleteCategory, 'Category updated successfully');
   }
 
   private async findOneOrFail(id: string) {

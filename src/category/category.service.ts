@@ -34,14 +34,16 @@ export class CategoryService {
 
     if (!CurrUser) throw new NotFoundException('User not found');
 
-    const client = CurrUser.client.ClientPackages.map((item) => {
-      const { packageService, clientId, isActive, ...rest } = item;
-      return {
-        ...rest,
-        title: item.title,
-        services: packageService?.flatMap((i) => i.service),
-      };
-    });
+    const client =
+      CurrUser.role === 'USER' &&
+      CurrUser.client.ClientPackages.map((item) => {
+        const { packageService, clientId, isActive, ...rest } = item;
+        return {
+          ...rest,
+          title: item.title,
+          services: packageService?.flatMap((i) => i.service),
+        };
+      });
 
     const categories = await this.prisma.category.findMany({
       include: {

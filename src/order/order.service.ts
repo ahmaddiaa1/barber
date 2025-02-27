@@ -647,12 +647,14 @@ export class OrderService {
       end < 0 ||
       end > 24
     ) {
-      throw new Error('Start and end must be whole numbers between 0 and 24.');
+      throw new ConflictException(
+        'Start and end must be whole numbers between 0 and 24.',
+      );
     }
 
     // Ensure start is less than end
     if (start >= end) {
-      throw new Error('Start time must be less than end time.');
+      throw new ConflictException('Start time must be less than end time.');
     }
 
     for (let hour = start; hour < end; hour++) {

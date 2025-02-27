@@ -639,6 +639,22 @@ export class OrderService {
   async generateSlot(start: number, end: number) {
     const slotsArray = [];
 
+    if (
+      !Number.isInteger(start) ||
+      !Number.isInteger(end) ||
+      start < 0 ||
+      start >= 24 ||
+      end < 0 ||
+      end > 24
+    ) {
+      throw new Error('Start and end must be whole numbers between 0 and 24.');
+    }
+
+    // Ensure start is less than end
+    if (start >= end) {
+      throw new Error('Start time must be less than end time.');
+    }
+
     for (let hour = start; hour < end; hour++) {
       for (let minute = 0; minute < 60; minute += 15) {
         const slot = `${hour.toString().padStart(2, '0')}:${minute
@@ -669,7 +685,10 @@ export class OrderService {
 
       return new AppSuccess(slots, 'Slots created successfully');
     }
-    const slots = await this.prisma.slot.updateMany({
+
+    const findFirst = await this.prisma.slot.findFirst();
+    const slots = await this.prisma.slot.update({
+      where: { id: findFirst.id },
       data: {
         start,
         end,

@@ -39,12 +39,21 @@ export class OrderService {
 
   async getOrderById(id: string) {
     const order = await this.findOneOrFail(id);
+
     return new AppSuccess(order, 'Order fetched successfully');
   }
 
   async GetData(createOrderDto: CreateOrderDto, userId: string) {
-    const { promoCode, service, slot, barberId, date, branchId, usedPackage } =
-      createOrderDto;
+    const {
+      promoCode,
+      service,
+      slot,
+      barberId,
+      date,
+      branchId,
+      usedPackage,
+      points,
+    } = createOrderDto;
 
     const dateWithoutTime = date.toString().split('T')[0];
     let allServices = [] as PrismaServiceType[];
@@ -166,7 +175,7 @@ export class OrderService {
         slot,
         barberId,
         branchId,
-        points: '0',
+        points: points.toString(),
         createdAt: new Date(),
         updatedAt: null,
         duration: `${duration} Minutes`,
@@ -192,6 +201,7 @@ export class OrderService {
       branchId,
       usedPackage,
       promoCode,
+      points,
       ...rest
     } = createOrderDto;
 
@@ -332,6 +342,7 @@ export class OrderService {
         userId,
         barberId,
         branchId,
+        points,
         usedPackage: selectedPackage
           ? selectedPackage.flatMap((e) => e.id)
           : [],
@@ -414,7 +425,7 @@ export class OrderService {
         branchId: order.branchId,
         points: order.points.toString(),
         createdAt: order.createdAt,
-        updatedAt: order.updatedAt,
+        updatedAt: null,
         duration: `${duration} Minutes`,
         promoCode: promoCode ? promoCode : null,
         subTotal: order.subTotal.toString(),
@@ -430,6 +441,8 @@ export class OrderService {
   }
 
   async cancelOrder(id: string) {
+    await this.findOneOrFail(id);
+
     const updatedOrder = await this.prisma.order.update({
       where: { id },
       include: {
@@ -495,6 +508,8 @@ export class OrderService {
   }
 
   async startOrder(id: string) {
+    await this.findOneOrFail(id);
+
     const updatedOrder = await this.prisma.order.update({
       where: { id },
       data: { status: 'IN_PROGRESS' },
@@ -504,6 +519,8 @@ export class OrderService {
   }
 
   async completeOrder(id: string) {
+    await this.findOneOrFail(id);
+
     const updatedOrder = await this.prisma.order.update({
       where: { id },
       data: { status: 'COMPLETED' },
@@ -553,10 +570,12 @@ export class OrderService {
     );
   }
 
-  async paidOrder(id: string) {
+  async paidOrder(id: string, userId: string) {
+    await this.findOneOrFail(id);
+
     const updatedOrder = await this.prisma.order.update({
       where: { id },
-      data: { status: 'PAID' },
+      data: { status: 'PAID', cashierId: userId },
     });
 
     return new AppSuccess(updatedOrder, 'Order marked as paid');

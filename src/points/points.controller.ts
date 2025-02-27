@@ -22,7 +22,7 @@ export class PointsController {
 
   @Post()
   create(@Body() createPointDto: CreatePointDto) {
-    return this.pointsService.create(createPointDto);
+    return this.pointsService.createPoints(createPointDto);
   }
 
   @Get()

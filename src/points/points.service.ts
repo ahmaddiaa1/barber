@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePointDto } from './dto/create-point.dto';
 import { UpdatePointDto } from './dto/update-point.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -9,7 +9,37 @@ import { User } from '@prisma/client';
 export class PointsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createPointDto: CreatePointDto) {
+  async create(offerId: string, user: User) {
+    const offers = await this.prisma.offers.findUnique({
+      where: {
+        id: offerId,
+      },
+      select: {
+        offerType: true,
+        points: {
+          select: {
+            title: true,
+            price: true,
+            points: true,
+          },
+        },
+      },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    const updateUser = await this.prisma.client.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        points: { increment: offers.points.points },
+      },
+    });
+    return new AppSuccess(updateUser, 'Points added successfully');
+  }
+
+  async createPoints(createPointDto: CreatePointDto) {
     const { title, price, points } = createPointDto;
 
     const offer = await this.prisma.offers.create({

@@ -191,8 +191,8 @@ model Offers {
   expiresAt DateTime
   createdAt DateTime  @default(now()) @map("createdAt")
   updatedAt DateTime  @updatedAt @map("updatedAt")
-  points    Points?
   packages  Packages?
+  points    Points?
 }
 
 enum OfferType {

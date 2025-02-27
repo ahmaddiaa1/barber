@@ -9,13 +9,18 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import * as crypto from 'crypto';
 import { ClientPackagesService } from 'src/client-packages/client-packages.service';
 import { User } from '@prisma/client';
+import { PointsService } from 'src/points/points.service';
 
 @Injectable()
 export class PaymobService {
   private readonly paymobBaseUrl = 'https://accept.paymob.com/api';
   private readonly apiKey = process.env.PAYMOB_API_KEY;
 
-  constructor(private readonly purchasePackage: ClientPackagesService) {}
+  constructor(
+    private readonly points: PointsService,
+    private readonly packages: ClientPackagesService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async getAuthToken() {
     const response = await axios.post(`${this.paymobBaseUrl}/auth/tokens`, {
@@ -25,52 +30,58 @@ export class PaymobService {
     return response.data.token;
   }
 
-  async getPaymentKey() {
+  async getPaymentKey(
+    billing_data: {
+      first_name: string;
+      last_name: string;
+      phone_number: string;
+    },
+    items: {
+      name: string;
+      amount: number;
+      description: string;
+      quantity: number;
+    }[],
+    id: string,
+    amount: number,
+  ) {
+    console.log(billing_data, items);
+
+    const { first_name, last_name, phone_number } = billing_data;
+
     try {
       const response = await axios.post(
         'https://accept.paymob.com/v1/intention',
         {
-          amount: 200 * 100,
+          amount: amount * 100,
           currency: 'EGP',
           payment_methods: [
             +process.env.PAYMOB_CARD_INTEGRATION_ID,
             +process.env.PAYMOB_WALLET_INTEGRATION_ID,
           ],
-          items: [
-            {
-              name: '5d2e9198-f2ed-4ad9-8599-dee012931cac',
-              amount: 200 * 100,
-              description: 'Item description',
-              quantity: 1,
-            },
-          ],
+          items: [...items],
           billing_data: {
             apartment: 'dumy',
-            first_name: 'kareem',
-            last_name: 'ahmad',
+            first_name,
+            last_name,
             street: 'dumy',
             building: 'dumy',
-            phone_number: '+92345xxxxxxxx',
+            phone_number,
             city: 'dumy',
             country: 'dumy',
-            email: 'ali@gmail.com',
+            email: 'test@gmail.com',
             floor: 'dumy',
             state: 'dumy',
           },
           extras: {
-            ee: 22,
+            order_id: id,
           },
-          // special_reference: 'phe4sjw11q-1xxxxxxxxx',
-          // notification_url:
-          // 'https://webhook.site/ffb5baf8-687c-45ce-ae24-8370bd5f4df3',
           redirection_url: 'https://www.google.com/',
         },
         {
           headers: {
             Authorization: `Token ${process.env.PAYMOB_SECRET_KEY}`,
-
             Accept: 'application/json',
-
             'Content-Type': 'application/json',
           },
         },
@@ -79,18 +90,16 @@ export class PaymobService {
 
       return `https://uae.paymob.com/unifiedcheckout/?publicKey=${process.env.PAYMOB_PUBLIC_KEY}&clientSecret=${clientSecret}`;
     } catch (error) {
-      console.log(error);
+      console.log(error.response.data);
     }
   }
 
   async verifyPaymobQuery(payload: any, auth_token: string, user: User) {
-    const PAYMOB_HMAC_SECRET = process.env.PAYMOB_HMAC_SECRET; // Replace with your actual secret
+    const PAYMOB_HMAC_SECRET = process.env.PAYMOB_HMAC_SECRET;
 
-    // Extract the HMAC from the payload
     const providedHmac = payload.hmac;
-    delete payload.hmac; // Remove it from the comparison data
+    delete payload.hmac;
 
-    // Arrange ordered values as per Paymob’s documentation
     const orderedValues = [
       payload.amount_cents,
       payload.created_at,
@@ -114,10 +123,8 @@ export class PaymobService {
       payload.success,
     ];
 
-    // Concatenate values into a single string
     const concatenatedString = orderedValues.join('');
 
-    // Generate HMAC using SHA-512
     const generatedHmac = crypto
       .createHmac('sha512', PAYMOB_HMAC_SECRET)
       .update(concatenatedString)
@@ -136,14 +143,32 @@ export class PaymobService {
           order_id: payload.order,
         },
       );
-      console.log('response', response.data);
-      const packageId = response.data.order.items[0].name;
+      console.log('response', response.data.payment_key_claims.extra.order_id);
+      const packageId = response.data.payment_key_claims.extra.order_id;
 
-      this.purchasePackage.create(packageId, user);
+      const offer = await this.prisma.offers
+        .findUnique({
+          where: {
+            id: packageId,
+          },
+          select: {
+            offerType: true,
+          },
+        })
+        .catch(() => {
+          throw new HttpException('Package not found', HttpStatus.NOT_FOUND);
+        });
+
+      const type = offer.offerType.toLowerCase();
+      console.log('type', type);
+
+      if (type === 'packages') {
+        await this.packages.create(packageId, user);
+      } else if (type === 'points') {
+        await this.points.create(packageId, user);
+      }
       console.log('Package purchased successfully');
     }
-
-    // Compare generated HMAC with provided HMAC
     return generatedHmac === providedHmac;
   }
 }

@@ -39,7 +39,7 @@ export class CategoryService {
       return {
         ...rest,
         title: item.title,
-        services: packageService.flatMap((i) => i.service),
+        services: packageService?.flatMap((i) => i.service),
       };
     });
 

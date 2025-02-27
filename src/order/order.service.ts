@@ -208,7 +208,7 @@ export class OrderService {
     let allServices = [] as PrismaServiceType[];
     const dateWithoutTime = createOrderDto.date.toString().split('T')[0];
 
-    const [existingOrder, usedPromoCode, slots, validPromoCode] =
+    const [existingOrder, usedPromoCode, slots, validPromoCode, user] =
       await Promise.all([
         await this.prisma.order.findFirst({
           where: {
@@ -236,6 +236,10 @@ export class OrderService {
         (await this.getSlots(dateWithoutTime, barberId)).data.slots,
         promoCode &&
           (await this.promoCodeService.validatePromoCode(promoCode)).data,
+        await this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { client: { select: { points: true } } },
+        }),
       ]);
 
     if (usedPromoCode.UserOrders.length && promoCode)
@@ -334,6 +338,16 @@ export class OrderService {
       total = subTotal - validPromoCode.discount;
     }
 
+    const d = allServices.sort((a, b) => a.price - b.price)[0].price;
+    const point = points >= d ? points : 0;
+
+    points > user.client.points && new ConflictException('');
+
+    d > points &&
+      new ConflictException(
+        'Points must be at least equal to the lowest price of the services',
+      );
+
     const order = await this.prisma.order.create({
       data: {
         ...rest,
@@ -342,7 +356,7 @@ export class OrderService {
         userId,
         barberId,
         branchId,
-        points,
+        points: point,
         usedPackage: selectedPackage
           ? selectedPackage.flatMap((e) => e.id)
           : [],

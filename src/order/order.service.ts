@@ -341,7 +341,8 @@ export class OrderService {
     const d = allServices.sort((a, b) => a.price - b.price)[0].price;
     const point = points >= d ? points : 0;
 
-    points > user.client.points && new ConflictException('');
+    points > user.client.points &&
+      new ConflictException('you do not have enough points');
 
     d > points &&
       new ConflictException(
@@ -639,16 +640,14 @@ export class OrderService {
   async generateSlot(start: number, end: number) {
     const slotsArray = [];
 
-    if (
-      !Number.isInteger(start) ||
-      !Number.isInteger(end) ||
-      start < 0 ||
-      start >= 24 ||
-      end < 0 ||
-      end > 24
-    ) {
+    if (!Number.isInteger(start) || !Number.isInteger(end))
       throw new ConflictException(
-        'Start and end must be whole numbers between 0 and 24.',
+        'Start and end must not be decimal numbers or negative numbers.',
+      );
+
+    if (start < 0 || start >= 24 || end < 0 || end > 24) {
+      throw new ConflictException(
+        'Start and end must be Integer numbers between 0 and 24.',
       );
     }
 

@@ -642,7 +642,7 @@ export class OrderService {
 
     if (!Number.isInteger(start) || !Number.isInteger(end))
       throw new ConflictException(
-        'Start and end must not be decimal numbers or negative numbers.',
+        'Start and end must not be decimal, negative or string.',
       );
 
     if (start < 0 || start >= 24 || end < 0 || end > 24) {

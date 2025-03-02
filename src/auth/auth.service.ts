@@ -203,8 +203,9 @@ export class AuthService {
 
     try {
       return this.prisma.$transaction(async (prisma) => {
-        const avatar =
-          file && (await this.awsService.uploadFile(file, id, 'avatars'));
+        const avatar = file.path;
+        console.log(avatar);
+        //  && (await this.awsService.uploadFile(file, id, 'avatars'));
 
         const user = await prisma.user.create({
           data: {

@@ -175,18 +175,18 @@ export class OrderService {
         slot,
         barberId,
         branchId,
-        points: points.toString(),
+        points: points?.toString(),
         createdAt: new Date(),
         updatedAt: null,
         duration: `${duration} Minutes`,
         promoCode: promoCode ? promoCode : null,
-        subTotal: subTotal.toString(),
+        subTotal: subTotal?.toString(),
         discount: promoCode
           ? validPromoCode?.type === 'PERCENTAGE'
             ? `${validPromoCode?.discount}%`
             : `${validPromoCode?.discount}EGP`
           : 0,
-        total: total.toString(),
+        total: total?.toString(),
       },
       'Data fetched successfully',
     );

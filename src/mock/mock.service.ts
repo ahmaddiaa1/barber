@@ -220,7 +220,7 @@ export class MockService {
         { name: 'الرحاب', lang: 'AR' },
       ],
       location: 'Al Rehab',
-      phone: '123456789',
+      phone: '1234567890',
       branchImg:
         'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/branches/branch-1.jpg',
     },
@@ -230,7 +230,7 @@ export class MockService {
         { name: 'مدينة نصر', lang: 'AR' },
       ],
       location: 'Madinaty',
-      phone: '123456789',
+      phone: '1234567891',
       branchImg:
         'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/branches/branch-2.jpg',
     },
@@ -240,7 +240,7 @@ export class MockService {
         { name: 'شيراتون', lang: 'AR' },
       ],
       location: 'Future City',
-      phone: '123456789',
+      phone: '1234567892',
       branchImg:
         'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/branches/branch-3.jpg',
     },

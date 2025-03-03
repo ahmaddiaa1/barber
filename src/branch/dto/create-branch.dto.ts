@@ -7,6 +7,7 @@ import {
   Max,
   IsNotEmpty,
   Length,
+  IsArray,
 } from 'class-validator';
 
 export class CreateBranchDto {
@@ -32,4 +33,17 @@ export class CreateBranchDto {
   @Min(0)
   @Max(10)
   rate?: number;
+
+  @IsArray()
+  translations: translation[];
+}
+
+export class translation {
+  @IsString()
+  @Transform(({ value }) => value ?? null)
+  name: string;
+
+  @IsString()
+  @Transform(({ value }) => value ?? null)
+  lang: 'EN' | 'AR';
 }

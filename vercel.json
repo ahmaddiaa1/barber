@@ -13,11 +13,9 @@
     }
   ],
   "env": {
-    "DATABASE_URL": "postgresql://postgres:BarberAmazon123@barber-postgres-aws.cv6gmyo4iqkc.eu-north-1.rds.amazonaws.com:5432/postgres",
-    "DIRECT_URL": "postgresql://postgres:BarberAmazon123@barber-postgres-aws.cv6gmyo4iqkc.eu-north-1.rds.amazonaws.com:5432/postgres",
+    "DATABASE_URL": "postgresql://neondb_owner:npg_jcrLab39fAiC@ep-damp-night-a9y9g82b-pooler.gwc.azure.neon.tech/neondb?sslmode=require",
+    "DIRECT_URL": "postgresql://neondb_owner:npg_jcrLab39fAiC@ep-damp-night-a9y9g82b-pooler.gwc.azure.neon.tech/neondb?sslmode=require",
     "JWT_SECRET": "a9a6327558d4abc40861073254010cfc005fd2986af24ce0e53d6885a8a6a156",
-    "SUPABASE_URL": "https://nvdxwkkypzjhvicgdbxs.supabase.co",
-    "SUPABASE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52ZHh3a2t5cHpqaHZpY2dkYnhzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNjc5MTYzOSwiZXhwIjoyMDUyMzY3NjM5fQ.dWtNjpf7EjHSkF5AOWNeVpBcVlzU0lA3dHle7cYUKu8",
     "PORT": "3000",
     "key":"key",
     "AWS_BUCKET_NAME": "barber-bucket-image",

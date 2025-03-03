@@ -20,6 +20,7 @@ export class CategoryService {
             ClientPackages: {
               where: { isActive: true, type: 'MULTIPLE' },
               include: {
+                Translation: true,
                 packageService: {
                   select: {
                     service: true,
@@ -37,13 +38,15 @@ export class CategoryService {
     const client =
       CurrUser.role === 'USER' &&
       CurrUser.client.ClientPackages.map((item) => {
-        const { packageService, clientId, isActive, ...rest } = item;
-        return {
+        const { packageService, clientId, Translation, isActive, ...rest } =
+          item;
+        return Translation.map((translate) => ({
           ...rest,
-          title: item.title,
-          services: packageService?.flatMap((i) => i.service),
-        };
-      });
+          name: translate.name,
+          description: translate.description,
+          service: packageService.flatMap((service) => service.service),
+        }));
+      }).flat();
 
     const categories = await this.prisma.category.findMany({
       include: {

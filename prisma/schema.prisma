@@ -125,7 +125,7 @@ model Branch {
 }
 
 model Translation {
-  id         String    @id
+  id         String    @id @default(uuid())
   name       String
   language   Language
   branchId   String?
@@ -140,7 +140,7 @@ model Translation {
 }
 
 model TranslationDes {
-  id          String   @id
+  id          String   @id @default(uuid())
   name        String
   description String
   language    Language

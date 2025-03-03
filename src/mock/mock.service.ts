@@ -216,8 +216,8 @@ export class MockService {
   private readonly branches = [
     {
       translations: [
-        { name: 'Al Rehab', lang: 'en' },
-        { name: 'الرحاب', lang: 'ar' },
+        { name: 'Al Rehab', lang: 'EN' },
+        { name: 'الرحاب', lang: 'AR' },
       ],
       location: 'Al Rehab',
       phone: '123456789',
@@ -226,8 +226,8 @@ export class MockService {
     },
     {
       translations: [
-        { name: 'Nasr city', lang: 'en' },
-        { name: 'مدينة نصر', lang: 'ar' },
+        { name: 'Nasr city', lang: 'EN' },
+        { name: 'مدينة نصر', lang: 'AR' },
       ],
       location: 'Madinaty',
       phone: '123456789',
@@ -236,8 +236,8 @@ export class MockService {
     },
     {
       translations: [
-        { name: 'Sheraton', lang: 'en' },
-        { name: 'شيراتون', lang: 'ar' },
+        { name: 'Sheraton', lang: 'EN' },
+        { name: 'شيراتون', lang: 'AR' },
       ],
       location: 'Future City',
       phone: '123456789',

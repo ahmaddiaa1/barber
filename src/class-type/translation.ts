@@ -1,4 +1,6 @@
 import { Language } from '@prisma/client';
+import { Transform } from 'class-transformer';
+import { IsString } from 'class-validator';
 
 export const createTranslation = <
   T extends {
@@ -49,3 +51,13 @@ export const translationDes = {
     },
   },
 };
+
+export class translation {
+  @IsString()
+  @Transform(({ value }) => value ?? null)
+  name: string;
+
+  @IsString()
+  @Transform(({ value }) => value ?? null)
+  lang: 'EN' | 'AR';
+}

@@ -4,6 +4,7 @@ import { UpdatePointDto } from './dto/update-point.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { User } from '@prisma/client';
+import { createTranslation } from 'src/class-type/translation';
 
 @Injectable()
 export class PointsService {
@@ -18,7 +19,6 @@ export class PointsService {
         offerType: true,
         points: {
           select: {
-            title: true,
             price: true,
             points: true,
           },
@@ -54,9 +54,10 @@ export class PointsService {
       data: {
         points: {
           create: {
-            title,
+            TranslationDes: createTranslation(createPointDto),
             price,
             points,
+            image: '',
           },
         },
       },
@@ -64,7 +65,6 @@ export class PointsService {
 
     return new AppSuccess(point, 'Point created successfully');
   }
-
   async findAll() {
     const points = await this.prisma.points.findMany({});
 

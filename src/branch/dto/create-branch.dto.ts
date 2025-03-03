@@ -9,6 +9,7 @@ import {
   Length,
   IsArray,
 } from 'class-validator';
+import { translation } from 'src/class-type/translation';
 
 export class CreateBranchDto {
   @IsString()
@@ -36,14 +37,4 @@ export class CreateBranchDto {
 
   @IsArray()
   translations: translation[];
-}
-
-export class translation {
-  @IsString()
-  @Transform(({ value }) => value ?? null)
-  name: string;
-
-  @IsString()
-  @Transform(({ value }) => value ?? null)
-  lang: 'EN' | 'AR';
 }

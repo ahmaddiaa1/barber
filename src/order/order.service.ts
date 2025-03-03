@@ -175,18 +175,18 @@ export class OrderService {
         slot,
         barberId,
         branchId,
-        points: points?.toString(),
+        points: points,
         createdAt: new Date(),
         updatedAt: null,
         duration: `${duration} Minutes`,
         promoCode: promoCode ? promoCode : null,
-        subTotal: subTotal?.toString(),
+        subTotal: subTotal,
         discount: promoCode
           ? validPromoCode?.type === 'PERCENTAGE'
             ? `${validPromoCode?.discount}%`
             : `${validPromoCode?.discount}EGP`
-          : 0,
-        total: total?.toString(),
+          : '0',
+        total: total,
       },
       'Data fetched successfully',
     );
@@ -438,18 +438,18 @@ export class OrderService {
         slot: order.slot,
         barberId: order.barberId,
         branchId: order.branchId,
-        points: order.points.toString(),
+        points: order.points,
         createdAt: order.createdAt,
         updatedAt: null,
         duration: `${duration} Minutes`,
         promoCode: promoCode ? promoCode : null,
-        subTotal: order.subTotal.toString(),
+        subTotal: order.subTotal,
         discount: promoCode
           ? validPromoCode?.type === 'PERCENTAGE'
             ? `${validPromoCode?.discount}%`
             : `${validPromoCode?.discount}EGP`
-          : 0,
-        total: order.total.toString(),
+          : '0',
+        total: order.total,
       },
       'Order created successfully',
     );

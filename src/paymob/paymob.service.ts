@@ -1,15 +1,12 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  Redirect,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as crypto from 'crypto';
 import { ClientPackagesService } from 'src/client-packages/client-packages.service';
 import { User } from '@prisma/client';
 import { PointsService } from 'src/points/points.service';
+import { Response } from 'express';
+import { join } from 'path';
 
 @Injectable()
 export class PaymobService {
@@ -76,7 +73,8 @@ export class PaymobService {
           extras: {
             order_id: id,
           },
-          redirection_url: 'https://www.google.com/',
+
+          // redirection_url: 'https://www.google.com/',
         },
         {
           headers: {
@@ -94,7 +92,12 @@ export class PaymobService {
     }
   }
 
-  async verifyPaymobQuery(payload: any, auth_token: string, user: User) {
+  async verifyPaymobQuery(
+    payload: any,
+    auth_token: string,
+    user: User,
+    res: Response,
+  ) {
     const PAYMOB_HMAC_SECRET = process.env.PAYMOB_HMAC_SECRET;
 
     const providedHmac = payload.hmac;
@@ -169,6 +172,19 @@ export class PaymobService {
       }
       console.log('Package purchased successfully');
     }
-    return generatedHmac === providedHmac;
+
+    // Redirect to the HTML file with the success status
+    const redirectUrl = join('transaction-status.html');
+    res.sendFile(redirectUrl, { root: '.' });
+
+    return success;
+  }
+
+  return(res: Response) {
+    console.log(
+      join(__dirname, '..', '..', 'config', 'transaction-status.html'),
+    );
+    const redirectUrl = join(__dirname, 'transaction-status.html');
+    res.sendFile(redirectUrl);
   }
 }

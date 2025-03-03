@@ -102,6 +102,7 @@ export class PaymobController {
       query,
       authToken,
       user,
+      res,
     );
 
     res.send(`
@@ -129,5 +130,10 @@ export class PaymobController {
         </body>
       </html>
     `);
+  }
+
+  @Get('test')
+  test(@Res() res: Response) {
+    this.paymobService.return(res);
   }
 }

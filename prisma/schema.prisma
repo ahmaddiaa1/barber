@@ -125,25 +125,33 @@ model Branch {
 }
 
 model Translation {
-  id       String    @id
-  name     String
-  language Language
-  branch   Branch?   @relation("branch", fields: [id], references: [id], map: "Translation_branch_key")
-  category Category? @relation("category", fields: [id], references: [id], map: "Translation_category_key")
-  service  Service?  @relation("service", fields: [id], references: [id], map: "Translation_service_key")
-  pointsId String?
+  id         String    @id
+  name       String
+  language   Language
+  branchId   String?
+  categoryId String?
+  serviceId  String?
+  branch     Branch?   @relation("branch", fields: [branchId], references: [id], map: "Translation_branch_key")
+  category   Category? @relation("category", fields: [categoryId], references: [id], map: "Translation_category_key")
+  service    Service?  @relation("service", fields: [serviceId], references: [id], map: "Translation_service_key")
+  pointsId   String?
 
   @@index([name])
 }
 
 model TranslationDes {
-  id             String          @id
-  name           String
-  description    String
-  language       Language
-  clientPackages ClientPackages? @relation("clientPackages", fields: [id], references: [id], map: "Translation_clientPackages_key")
-  Points         Points?         @relation("points", fields: [id], references: [id])
-  package        Packages?       @relation("packages", fields: [id], references: [id], map: "Translation_package_key")
+  id          String   @id
+  name        String
+  description String
+  language    Language
+
+  clientPackageId String?
+  pointsId        String?
+  packageId       String?
+
+  clientPackages ClientPackages? @relation("clientPackages", fields: [clientPackageId], references: [id], map: "Translation_clientPackages_key")
+  Points         Points?         @relation("points", fields: [pointsId], references: [id])
+  package        Packages?       @relation("packages", fields: [packageId], references: [id], map: "Translation_package_key")
 
   @@index([name])
 }
@@ -226,11 +234,11 @@ model Order {
   userId      String
   barberId    String
   cashierId   String?
-  barber      User          @relation("BarberOrders", fields: [barberId], references: [id])
-  branch      Branch        @relation(fields: [branchId], references: [id])
-  Cashier     User?         @relation("CashierOrders", fields: [cashierId], references: [id])
   discount    Int           @default(0)
+  branch      Branch        @relation(fields: [branchId], references: [id])
   client      User          @relation("UserOrders", fields: [userId], references: [id])
+  barber      User          @relation("BarberOrders", fields: [barberId], references: [id])
+  Cashier     User?         @relation("CashierOrders", fields: [cashierId], references: [id])
   service     Service[]     @relation("OrderToServices")
   usedPackage String[]
 }

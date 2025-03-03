@@ -131,7 +131,7 @@ model Translation {
   branch   Branch?   @relation("branch", fields: [id], references: [id], map: "Translation_branch_key")
   category Category? @relation("category", fields: [id], references: [id], map: "Translation_category_key")
   service  Service?  @relation("service", fields: [id], references: [id], map: "Translation_service_key")
-  offers   Offers?   @relation("offers", fields: [id], references: [id], map: "Translation_offers_key")
+  pointsId String?
 
   @@index([name])
 }
@@ -142,8 +142,8 @@ model TranslationDes {
   description    String
   language       Language
   clientPackages ClientPackages? @relation("clientPackages", fields: [id], references: [id], map: "Translation_clientPackages_key")
-  notification   notification?   @relation("notifications", fields: [notificationId], references: [id], map: "Translation_notification_key")
-  notificationId String?
+  Points         Points?         @relation("points", fields: [id], references: [id])
+  package        Packages?       @relation("packages", fields: [id], references: [id], map: "Translation_package_key")
 
   @@index([name])
 }
@@ -236,16 +236,13 @@ model Order {
 }
 
 model Offers {
-  id          String        @id @default(uuid()) @map("id")
-  price       Int
-  image       String?
-  offerType   OfferType
-  expiresAt   DateTime
-  createdAt   DateTime      @default(now()) @map("createdAt")
-  updatedAt   DateTime      @updatedAt @map("updatedAt")
-  packages    Packages?
-  points      Points?
-  Translation Translation[] @relation("offers")
+  id        String    @id @default(uuid()) @map("id")
+  offerType OfferType
+  expiresAt DateTime
+  createdAt DateTime  @default(now()) @map("createdAt")
+  updatedAt DateTime  @updatedAt @map("updatedAt")
+  packages  Packages?
+  points    Points?
 }
 
 enum OfferType {
@@ -254,18 +251,24 @@ enum OfferType {
 }
 
 model Packages {
-  id        String         @id
-  count     Int            @default(1)
-  type      PackagesStatus @default(SINGLE)
-  expiresAt DateTime
-  offers    Offers         @relation(fields: [id], references: [id])
-  services  Service[]      @relation("PackagesToServices")
+  id          String           @id
+  price       Int
+  image       String
+  count       Int              @default(1)
+  type        PackagesStatus   @default(SINGLE)
+  expiresAt   DateTime
+  offers      Offers           @relation(fields: [id], references: [id])
+  services    Service[]        @relation("PackagesToServices")
+  translation TranslationDes[] @relation("packages")
 }
 
 model Points {
-  id     String @id
-  points Int
-  Offers Offers @relation(fields: [id], references: [id])
+  id             String           @id
+  image          String
+  price          Int
+  points         Int
+  Offers         Offers           @relation(fields: [id], references: [id])
+  TranslationDes TranslationDes[] @relation("points")
 }
 
 model PackagesServices {
@@ -296,12 +299,12 @@ model ClientPackages {
 }
 
 model notification {
-  id          String           @id @default(uuid())
-  content     String
-  image       String?
-  user        User[]           @relation("notifications")
-  createdAt   DateTime         @default(now()) @map("createdAt")
-  translation TranslationDes[] @relation("notifications")
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  image     String?
+  user      User[]   @relation("notifications")
+  createdAt DateTime @default(now()) @map("createdAt")
 }
 
 enum PackagesStatus {

@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
-import { Category, User } from '@prisma/client';
+import { Category, Language, User } from '@prisma/client';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { AuthGuard } from 'guard/auth.guard';
 import { RolesGuard } from '../../guard/role.guard';
@@ -17,18 +17,22 @@ import { Roles } from '../../decorators/roles.decorator';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { UserData } from 'decorators/user.decorator';
+import { AcceptLanguage } from 'guard/accept.language';
+import { Lang } from 'decorators/accept.language';
 
 @Controller('category')
 @UseGuards(RolesGuard)
 @UseGuards(AuthGuard)
+@UseGuards(AcceptLanguage)
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Get()
   public async findAllCategories(
     @UserData('user') user: User,
+    @Lang() lang: Language,
   ): Promise<AppSuccess<{ categories: Category[]; package: any }>> {
-    return await this.categoryService.findAllCategories(user);
+    return await this.categoryService.findAllCategories(user, lang);
   }
 
   @Get(':id')

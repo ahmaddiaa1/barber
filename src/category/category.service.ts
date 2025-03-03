@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
-import { Category, User } from '@prisma/client';
+import { Category, Language, User } from '@prisma/client';
 
 @Injectable()
 export class CategoryService {
@@ -11,6 +11,7 @@ export class CategoryService {
 
   public async findAllCategories(
     user: User,
+    language: Language,
   ): Promise<AppSuccess<{ categories: Category[]; package: any }>> {
     const CurrUser = await this.prisma.user.findUnique({
       where: { id: user.id },
@@ -20,7 +21,13 @@ export class CategoryService {
             ClientPackages: {
               where: { isActive: true, type: 'MULTIPLE' },
               include: {
-                Translation: true,
+                Translation: {
+                  where: { language },
+                  select: {
+                    name: true,
+                    description: true,
+                  },
+                },
                 packageService: {
                   select: {
                     service: true,

@@ -140,6 +140,7 @@ model TranslationDes {
   id             String          @id
   name           String
   description    String
+  language       Language
   clientPackages ClientPackages? @relation("clientPackages", fields: [id], references: [id], map: "Translation_clientPackages_key")
   notification   notification?   @relation("notifications", fields: [notificationId], references: [id], map: "Translation_notification_key")
   notificationId String?

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Client, Role, User } from '@prisma/client';
 import { hash } from 'bcrypt';
+import { createTranslation } from 'src/class-type/translation';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -214,21 +215,30 @@ export class MockService {
 
   private readonly branches = [
     {
-      name: 'Al Rehab',
+      translations: [
+        { name: 'Al Rehab', lang: 'en' },
+        { name: 'الرحاب', lang: 'ar' },
+      ],
       location: 'Al Rehab',
       phone: '123456789',
       branchImg:
         'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/branches/branch-1.jpg',
     },
     {
-      name: 'Madinaty',
+      translations: [
+        { name: 'Nasr city', lang: 'en' },
+        { name: 'مدينة نصر', lang: 'ar' },
+      ],
       location: 'Madinaty',
       phone: '123456789',
       branchImg:
         'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/branches/branch-2.jpg',
     },
     {
-      name: 'Future City',
+      translations: [
+        { name: 'Sheraton', lang: 'en' },
+        { name: 'شيراتون', lang: 'ar' },
+      ],
       location: 'Future City',
       phone: '123456789',
       branchImg:
@@ -370,7 +380,7 @@ export class MockService {
     const branchPromises = this.branches.map(async (branch) => {
       const createdBranch = await this.prisma.branch.create({
         data: {
-          name: branch.name,
+          Translation: createTranslation({ translations: branch.translations }),
           location: branch.location,
           phone: branch.phone,
           branchImg: branch.branchImg,

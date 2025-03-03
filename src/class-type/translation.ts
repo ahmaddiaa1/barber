@@ -43,7 +43,7 @@ export const Translation = {
 };
 
 export const translationDes = {
-  translationDes: {
+  Translation: {
     select: {
       name: true,
       lang: true,

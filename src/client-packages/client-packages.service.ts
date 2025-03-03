@@ -3,6 +3,7 @@ import { UpdateClientPackageDto } from './dto/update-client-package.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from '@prisma/client';
 import { AppSuccess } from 'src/utils/AppSuccess';
+import { createTranslation, translationDes } from 'src/class-type/translation';
 
 @Injectable()
 export class ClientPackagesService {
@@ -11,7 +12,7 @@ export class ClientPackagesService {
   async create(packageId: string, user: User) {
     const pkg = await this.prisma.packages.findFirst({
       where: { id: packageId },
-      include: { services: true },
+      include: { services: true, ...translationDes },
     });
 
     if (!pkg) {
@@ -31,7 +32,7 @@ export class ClientPackagesService {
       data: {
         ClientPackages: {
           create: {
-            title: pkg.title,
+            Translation: createTranslation(pkg.Translation),
             packageId: pkg.id,
             type: pkg.type,
             packageService: {

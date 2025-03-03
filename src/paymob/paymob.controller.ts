@@ -49,14 +49,11 @@ export class PaymobController {
         offerType: true,
         packages: {
           select: {
-            title: true,
             price: true,
-            description: true,
           },
         },
         points: {
           select: {
-            title: true,
             price: true,
           },
         },

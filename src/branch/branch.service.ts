@@ -6,6 +6,11 @@ import { AppSuccess } from 'src/utils/AppSuccess';
 import { AwsService } from 'src/aws/aws.service';
 import { Random } from 'src/utils/generate';
 import { Branch } from '@prisma/client';
+import {
+  createTranslation,
+  Translation,
+  updateTranslation,
+} from 'src/class-type/translation';
 
 @Injectable()
 export class BranchService {
@@ -24,8 +29,10 @@ export class BranchService {
     const newBranch = await this.prisma.branch.create({
       data: {
         ...(branchImg && { branchImg }),
+        Translation: createTranslation(createBranchDto),
         ...createBranchDto,
       },
+      include: Translation,
     });
     return new AppSuccess(newBranch, 'Branch created successfully');
   }
@@ -35,6 +42,7 @@ export class BranchService {
       orderBy: {
         createdAt: 'desc',
       },
+      include: Translation,
     });
     return new AppSuccess({ branches }, 'Branches found successfully');
   }
@@ -43,6 +51,7 @@ export class BranchService {
     const branch = await this.prisma.branch.findUnique({
       where: { id },
       include: {
+        ...Translation,
         barber: {
           select: {
             id: true,
@@ -94,12 +103,14 @@ export class BranchService {
       where: { id },
       data: {
         ...(branchImg && { branchImg }),
+        ...(updateBranchDto.translations && {
+          translations: updateTranslation(updateBranchDto),
+        }),
         ...updateBranchDto,
       },
     });
     return new AppSuccess(updatedBranch, 'Branch updated successfully');
   }
-
   async remove(id: string) {
     return `This action removes a #${id} branch`;
   }

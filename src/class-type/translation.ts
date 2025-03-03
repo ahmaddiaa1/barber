@@ -37,7 +37,7 @@ export const Translation = {
   Translation: {
     select: {
       name: true,
-      lang: true,
+      language: true,
     },
   },
 };
@@ -46,7 +46,7 @@ export const translationDes = {
   Translation: {
     select: {
       name: true,
-      lang: true,
+      language: true,
       description: true,
     },
   },

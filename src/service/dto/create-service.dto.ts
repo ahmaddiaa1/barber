@@ -8,7 +8,7 @@ import {
   Matches,
   ValidateIf,
 } from 'class-validator';
-import { translation } from '../../src/class-type/translation';
+import { translation } from '../../../src/class-type/translation';
 
 export class CreateServiceDto {
   @ValidateIf(

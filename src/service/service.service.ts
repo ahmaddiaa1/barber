@@ -3,7 +3,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Language, Service } from '@prisma/client';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
-import { SupabaseService } from 'src/supabase/supabase.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { AwsService } from 'src/aws/aws.service';
 import { Random } from 'src/utils/generate';
@@ -51,6 +50,7 @@ export class ServiceService {
         ...(serviceImg && { serviceImg }),
         Translation: createTranslation(createServiceDto),
       },
+      include: Translation,
     });
 
     return new AppSuccess(service, 'Service created successfully');
@@ -74,6 +74,7 @@ export class ServiceService {
           Translation: updateTranslation(updateServiceDto),
         }),
       },
+      include: Translation,
     });
 
     return new AppSuccess(service, 'Service updated successfully');
@@ -95,6 +96,7 @@ export class ServiceService {
   private async findOneOrFail(id: string): Promise<Service> {
     const service = await this.prisma.service.findUnique({
       where: { id },
+      include: Translation,
     });
 
     if (!service) {

@@ -10,10 +10,6 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
 import { Service } from '@prisma/client';
-let dateFormat: any;
-(async () => {
-  dateFormat = await import('dateformat').then((mod) => mod.default);
-})();
 
 interface PrismaServiceType extends Service {
   isFree: boolean;
@@ -175,7 +171,7 @@ export class OrderService {
 
     return new AppSuccess(
       {
-        date: dateFormat(OrderDate, 'dddd, mmmm dS, yyyy'),
+        date: OrderDate,
         slot,
         barberId,
         branchId,

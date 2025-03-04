@@ -33,9 +33,10 @@ export class OrderService {
     });
 
     const orders = fetchedOrders.map((order) => {
-      const { barber, branch, ...rest } = order;
+      const { barber, date, branch, ...rest } = order;
       return {
         ...rest,
+        date: format(new Date(date), 'yyyy-MM-dd'),
         barber,
         branch,
       };

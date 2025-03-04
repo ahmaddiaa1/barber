@@ -7,5 +7,5 @@ export class CreateCategoryDto {
   available: boolean;
 
   @IsArray()
-  Translations: translationDto[];
+  Translation: translationDto[];
 }

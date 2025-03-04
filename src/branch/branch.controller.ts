@@ -9,11 +9,13 @@ import {
   ParseUUIDPipe,
   UseInterceptors,
   UploadedFile,
+  Res,
 } from '@nestjs/common';
 import { BranchService } from './branch.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Language } from '@prisma/client';
 
 @UseInterceptors(FileInterceptor('file'))
 @Controller('branch')
@@ -24,13 +26,16 @@ export class BranchController {
   create(
     @Body() createBranchDto: CreateBranchDto,
     @UploadedFile() file: Express.Multer.File,
+    @Res() res: Response,
   ) {
-    return this.branchService.create(createBranchDto, file);
+    const lang = res['language'] || Language.EN;
+    return this.branchService.create(createBranchDto, file, lang);
   }
 
   @Get()
-  findAll() {
-    return this.branchService.findAll();
+  findAll(@Res() res: Response) {
+    const lang = res['language'] || Language.EN;
+    return this.branchService.findAll(lang);
   }
 
   @Get(':id')

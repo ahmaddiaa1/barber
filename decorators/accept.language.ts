@@ -7,7 +7,9 @@ import {
 // Custom decorator to set the Accept-Language header
 export const Lang = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest();
-    return request.headers['accept-language'] || 'EN';
+    const req = ctx.switchToHttp().getRequest();
+    return (
+      req.headers['accept-language'] || req.headers['Accept-Language'] || 'EN'
+    );
   },
 );

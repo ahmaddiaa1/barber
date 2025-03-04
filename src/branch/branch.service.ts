@@ -5,7 +5,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { AwsService } from 'src/aws/aws.service';
 import { Random } from 'src/utils/generate';
-import { Branch } from '@prisma/client';
+import { Branch, Language } from '@prisma/client';
 import {
   createTranslation,
   Translation,
@@ -22,6 +22,7 @@ export class BranchService {
   async create(
     createBranchDto: CreateBranchDto,
     file: Express.Multer.File,
+    language: Language,
   ): Promise<AppSuccess<Branch>> {
     const branchImg =
       file && (await this.awsService.uploadFile(file, Random(10), 'branch'));
@@ -32,18 +33,30 @@ export class BranchService {
         ...createBranchDto,
         Translation: createTranslation(createBranchDto),
       },
-      include: Translation,
+      include: Translation(language),
     });
     return new AppSuccess(newBranch, 'Branch created successfully');
   }
 
-  async findAll(): Promise<AppSuccess<{ branches: Branch[] }>> {
-    const branches = await this.prisma.branch.findMany({
+  async findAll(
+    language: Language,
+  ): Promise<AppSuccess<{ branches: Branch[] }>> {
+    const fetchBranches = await this.prisma.branch.findMany({
       orderBy: {
         createdAt: 'desc',
       },
-      include: Translation,
+      include: Translation(language),
     });
+
+    const branches = fetchBranches.map((branch) => {
+      const { Translation, ...rest } = branch;
+      return {
+        ...rest,
+        name: Translation[0].name,
+      };
+    });
+
+    console.log('branches', branches);
     return new AppSuccess({ branches }, 'Branches found successfully');
   }
 

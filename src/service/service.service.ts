@@ -24,12 +24,7 @@ export class ServiceService {
     language: Language,
   ): Promise<AppSuccess<{ services: Service[] }>> {
     const services = await this.prisma.service.findMany({
-      include: {
-        Translation: {
-          where: { language },
-          ...Translation.Translation,
-        },
-      },
+      include: Translation(language),
     });
 
     return new AppSuccess({ services }, 'Services found successfully');

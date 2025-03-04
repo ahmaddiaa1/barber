@@ -36,5 +36,6 @@ export class CreatePackageDto {
   @Transform(({ value }) => new Date(value))
   expiresAt: Date;
 
+  @IsArray()
   Translation: translationDto[];
 }

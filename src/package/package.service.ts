@@ -47,7 +47,6 @@ export class PackageService {
     }
 
     const image = file.path;
-
     const offer = await this.prisma.offers.create({
       data: {
         offerType: 'PACKAGES',

@@ -1,6 +1,6 @@
 import { Language } from '@prisma/client';
 import { Transform } from 'class-transformer';
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export const createTranslation = <
   T extends {
@@ -79,4 +79,9 @@ export class translationDto {
   @IsString()
   @Transform(({ value }) => Language[value].toUpperCase() ?? null)
   language: Language;
+
+  @IsString()
+  @Transform(({ value }) => value ?? null)
+  @IsOptional()
+  description?: string;
 }

@@ -14,32 +14,34 @@ cloudinary.config({
 
 const formats = ['jpg', 'jpeg', 'png'];
 
-export const multerConfig: multer.Options = {
-  storage: new CloudinaryStorage({
-    cloudinary,
-    params: async (req, file) => {
-      return {
-        folder: 'barber',
-        format: file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)[1],
-        public_id: `${Date.now()}-${file.originalname.split('0')[-1]}`,
-        transformation: [{ width: 500, height: 500, crop: 'limit' }],
-      };
+export const multerConfig = (folder: string): multer.Options => {
+  return {
+    storage: new CloudinaryStorage({
+      cloudinary,
+      params: async (req, file) => {
+        return {
+          folder: 'barber',
+          format: file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)[1],
+          public_id: `${folder}/${Date.now()}-${file.originalname.split(/\.(?=[^\.]+$)/)[0]}`,
+          transformation: [{ width: 500, height: 500, crop: 'limit' }],
+        };
+      },
+    }),
+    fileFilter: (
+      req,
+      file,
+      callback: (error: Error | null, acceptFile: boolean) => void,
+    ) => {
+      if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+        return callback(
+          new UnsupportedMediaTypeException('Only image files are allowed!'),
+          false,
+        );
+      }
+      callback(null, true);
     },
-  }),
-  fileFilter: (
-    req,
-    file,
-    callback: (error: Error | null, acceptFile: boolean) => void,
-  ) => {
-    if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
-      return callback(
-        new UnsupportedMediaTypeException('Only image files are allowed!'),
-        false,
-      );
-    }
-    callback(null, true);
-  },
-  limits: {
-    fileSize: 1024 * 1024 * 5, // 5 MB
-  },
+    limits: {
+      fileSize: 1024 * 1024 * 5, // 5 MB
+    },
+  };
 };

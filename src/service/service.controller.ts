@@ -15,6 +15,7 @@ import { Language, Service } from '@prisma/client';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { multerConfig } from '../../src/config/multer.config';
 
 import { Lang } from '../../decorators/accept.language';
 import { AuthGuard } from 'guard/auth.guard';
@@ -38,7 +39,7 @@ export class ServiceController {
   }
 
   @Post()
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', multerConfig('services')))
   public async createService(
     @Body() createServiceDto: CreateServiceDto,
     @UploadedFile() file: Express.Multer.File,
@@ -52,7 +53,7 @@ export class ServiceController {
   }
 
   @Put(':id')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', multerConfig('services')))
   public async updateService(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateServiceDto: UpdateServiceDto,

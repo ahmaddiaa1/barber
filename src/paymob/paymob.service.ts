@@ -3,7 +3,7 @@ import axios from 'axios';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as crypto from 'crypto';
 import { ClientPackagesService } from 'src/client-packages/client-packages.service';
-import { User } from '@prisma/client';
+import { Language, User } from '@prisma/client';
 import { PointsService } from 'src/points/points.service';
 import { Response } from 'express';
 import { join } from 'path';
@@ -97,6 +97,7 @@ export class PaymobService {
     auth_token: string,
     user: User,
     res: Response,
+    lang: Language,
   ) {
     const PAYMOB_HMAC_SECRET = process.env.PAYMOB_HMAC_SECRET;
 
@@ -166,9 +167,9 @@ export class PaymobService {
       console.log('type', type);
 
       if (type === 'packages') {
-        await this.packages.create(packageId, user);
+        await this.packages.create(packageId, user, lang);
       } else if (type === 'points') {
-        await this.points.create(packageId, user);
+        await this.points.create(packageId, user, lang);
       }
       console.log('Package purchased successfully');
     }

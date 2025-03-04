@@ -19,8 +19,7 @@ export class ProductService {
   ) {
     const { name, productImg, price, available } = CreateProductDto;
 
-    const productImgUrl =
-      file && (await this.awsService.uploadFile(file, Random(10), 'product'));
+    const productImgUrl = file.path;
 
     const product = await this.prisma.product.create({
       data: {

@@ -24,8 +24,7 @@ export class BranchService {
     file: Express.Multer.File,
     language: Language,
   ): Promise<AppSuccess<Branch>> {
-    const branchImg =
-      file && (await this.awsService.uploadFile(file, Random(10), 'branch'));
+    const branchImg = file.path;
 
     const newBranch = await this.prisma.branch.create({
       data: {
@@ -124,8 +123,7 @@ export class BranchService {
   ): Promise<AppSuccess<Branch>> {
     await this.findOne(id);
 
-    const branchImg =
-      file && (await this.awsService.uploadFile(file, Random(10), 'branch'));
+    const branchImg = file.path;
 
     const updatedBranch = await this.prisma.branch.update({
       where: { id },

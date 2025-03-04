@@ -8,7 +8,7 @@ import {
   Matches,
   ValidateIf,
 } from 'class-validator';
-import { translation } from '../../../src/class-type/translation';
+import { translationDto } from '../../../src/class-type/translation';
 
 export class CreateServiceDto {
   @ValidateIf(
@@ -40,5 +40,5 @@ export class CreateServiceDto {
   categoryId: string;
 
   @IsArray()
-  Translation: translation[];
+  Translation: translationDto[];
 }

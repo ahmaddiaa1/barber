@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "prisma generate && nest build && cp ./config/firebase.json ./dist/config/firebase.json && cp ./config/transaction-status.html ./dist/config/transaction-status.html",
-    "build:win": "prisma generate && nest build && copy config\\firebase.json dist\\config\\firebase.json && copy config\\transaction-status.html dist\\config\\transaction-status",
+    "build:win": "prisma generate && nest build ",
     "prisma-generate": "prisma generate",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",

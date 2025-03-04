@@ -55,17 +55,20 @@ export const Translation = (language?: Language) => {
   };
 };
 
-export const translationDes = {
-  Translation: {
-    select: {
-      name: true,
-      language: true,
-      description: true,
+export const translationDes = (language?: Language) => {
+  return {
+    Translation: {
+      ...(language && { where: { language: Language[language] } }),
+      select: {
+        name: true,
+        language: true,
+        description: true,
+      },
     },
-  },
+  };
 };
 
-export class translation {
+export class translationDto {
   @IsString()
   id?: string;
 

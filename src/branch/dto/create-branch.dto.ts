@@ -9,7 +9,7 @@ import {
   Length,
   IsArray,
 } from 'class-validator';
-import { translation } from '../../../src/class-type/translation';
+import { translationDto } from '../../../src/class-type/translation';
 
 export class CreateBranchDto {
   @IsString()
@@ -33,5 +33,5 @@ export class CreateBranchDto {
   rate?: number;
 
   @IsArray()
-  Translation: translation[];
+  Translation: translationDto[];
 }

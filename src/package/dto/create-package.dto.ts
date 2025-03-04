@@ -9,6 +9,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+import { translationDto } from 'src/class-type/translation';
 
 export class CreatePackageDto {
   @IsNotEmpty()
@@ -42,4 +43,6 @@ export class CreatePackageDto {
   @IsDate()
   @Transform(({ value }) => new Date(value))
   expiresAt: Date;
+
+  Translation: translationDto[];
 }

@@ -1,5 +1,5 @@
 import { IsArray, IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { translation } from '../../../src/class-type/translation';
+import { translationDto } from '../../../src/class-type/translation';
 
 export class CreatePointDto {
   @IsString()
@@ -15,5 +15,5 @@ export class CreatePointDto {
   points: number;
 
   @IsArray()
-  Translation: translation[];
+  Translation: translationDto[];
 }

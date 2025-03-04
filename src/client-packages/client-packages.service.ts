@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateClientPackageDto } from './dto/update-client-package.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { User } from '@prisma/client';
+import { Language, User } from '@prisma/client';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import {
   createTranslation,
+  Translation,
   translationDes,
 } from '../../src/class-type/translation';
 
@@ -12,10 +13,10 @@ import {
 export class ClientPackagesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(packageId: string, user: User) {
+  async create(packageId: string, user: User, language: Language) {
     const pkg = await this.prisma.packages.findFirst({
       where: { id: packageId },
-      include: { services: true, ...translationDes },
+      include: { services: true, ...translationDes() },
     });
 
     if (!pkg) {
@@ -27,7 +28,7 @@ export class ClientPackagesService {
     });
 
     if (clientPackageExists) {
-      throw new NotFoundException('Client package already exists');
+      throw new NotFoundException('You already have this package');
     }
 
     const clientPackage = await this.prisma.client.update({
@@ -35,7 +36,7 @@ export class ClientPackagesService {
       data: {
         ClientPackages: {
           create: {
-            Translation: createTranslation(pkg.Translation),
+            Translation: createTranslation(pkg),
             packageId: pkg.id,
             type: pkg.type,
             packageService: {
@@ -56,11 +57,7 @@ export class ClientPackagesService {
             packageService: {
               include: {
                 service: {
-                  select: {
-                    id: true,
-                    Translation: true,
-                    serviceImg: true,
-                  },
+                  include: Translation(language),
                 },
               },
             },

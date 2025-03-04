@@ -15,12 +15,11 @@ import { Language, Service } from '@prisma/client';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { AcceptLanguage } from '../../guard/accept.language';
-import { Lang } from 'decorators/accept.language';
+
+import { Lang } from '../../decorators/accept.language';
 import { AuthGuard } from 'guard/auth.guard';
 
 @UseGuards(AuthGuard)
-@UseGuards(AcceptLanguage)
 @Controller('service')
 export class ServiceController {
   constructor(private readonly serviceService: ServiceService) {}

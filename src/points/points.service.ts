@@ -47,7 +47,7 @@ export class PointsService {
     createPointDto: CreatePointDto,
     file: Express.Multer.File,
   ) {
-    const { title, price, points } = createPointDto;
+    const { price, points } = createPointDto;
 
     const offer = await this.prisma.offers.create({
       data: {

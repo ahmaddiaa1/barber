@@ -24,8 +24,8 @@ export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Get()
-  async getAllOrders(@UserData('user') user: User) {
-    return this.orderService.getAllOrders(user.id);
+  async getAllOrders(@UserData('user') user: User, @Lang() lang: Language) {
+    return this.orderService.getAllOrders(user.id, lang);
   }
 
   @Roles(['ADMIN', 'CASHIER'])

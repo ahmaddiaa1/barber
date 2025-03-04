@@ -17,8 +17,8 @@ import { Roles } from '../../decorators/roles.decorator';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { UserData } from 'decorators/user.decorator';
-import { AcceptLanguage } from 'guard/accept.language';
-import { Lang } from '../../decorators/accept.language';
+import { AcceptLanguage } from '../../guard/accept.language';
+import { Lang } from 'decorators/accept.language';
 
 @Controller('category')
 @UseGuards(RolesGuard)

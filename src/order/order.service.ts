@@ -24,8 +24,21 @@ export class OrderService {
   ) {}
 
   async getAllOrders(userId: string) {
-    const orders = await this.prisma.order.findMany({
+    const fetchedOrders = await this.prisma.order.findMany({
       where: { userId: userId },
+      include: {
+        barber: true,
+        branch: true,
+      },
+    });
+
+    const orders = fetchedOrders.map((order) => {
+      const { barber, branch, ...rest } = order;
+      return {
+        ...rest,
+        barber,
+        branch,
+      };
     });
 
     const upcoming = orders.filter((order) => order.booking === 'UPCOMING');
@@ -263,14 +276,18 @@ export class OrderService {
       throw new ServiceUnavailableException(`Slot ${slot} is Unavailable`);
 
     const barber = await this.prisma.barber.findUnique({
-      where: { id: createOrderDto.barberId },
+      where: { id: barberId },
     });
+    const barbers = await this.prisma.barber.findMany({});
+    console.log(barbers);
     const branch = await this.prisma.branch.findUnique({
       where: { id: branchId },
     });
     const Services = await this.prisma.service.findMany({
       where: { id: { in: service } },
     });
+    console.log(barberId);
+    console.log(barber);
 
     if (!barber) throw new NotFoundException('Barber not found');
     if (!branch) throw new NotFoundException('Branch not found');
@@ -350,7 +367,7 @@ export class OrderService {
     const d = allServices.sort((a, b) => a.price - b.price)[0].price;
     const point = points >= d ? points : 0;
 
-    points > user.client.points &&
+    points > user.client?.points &&
       new ConflictException('you do not have enough points');
 
     d > points &&

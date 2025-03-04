@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import {
+  IsArray,
   IsNotEmpty,
   IsNumber,
   IsString,
@@ -7,12 +8,9 @@ import {
   Matches,
   ValidateIf,
 } from 'class-validator';
+import { translation } from 'src/class-type/translation';
 
 export class CreateServiceDto {
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-
   @ValidateIf(
     (obj) =>
       typeof obj.duration === 'string' || typeof obj.duration === 'number',
@@ -40,4 +38,7 @@ export class CreateServiceDto {
   @IsUUID()
   @IsNotEmpty()
   categoryId: string;
+
+  @IsArray()
+  Translation: translation[];
 }

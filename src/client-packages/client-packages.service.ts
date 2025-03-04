@@ -55,7 +55,7 @@ export class ClientPackagesService {
                 service: {
                   select: {
                     id: true,
-                    name: true,
+                    Translation: true,
                     serviceImg: true,
                   },
                 },
@@ -81,7 +81,7 @@ export class ClientPackagesService {
             service: {
               select: {
                 id: true,
-                name: true,
+                Translation: true,
                 serviceImg: true,
               },
             },
@@ -106,7 +106,7 @@ export class ClientPackagesService {
             service: {
               select: {
                 id: true,
-                name: true,
+                Translation: true,
                 serviceImg: true,
               },
             },

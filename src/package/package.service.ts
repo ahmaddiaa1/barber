@@ -78,7 +78,7 @@ export class PackageService {
         services: {
           select: {
             id: true,
-            name: true,
+            Translation: true,
             serviceImg: true,
           },
         },
@@ -95,7 +95,7 @@ export class PackageService {
         services: {
           select: {
             id: true,
-            name: true,
+            Translation: true,
             serviceImg: true,
           },
         },

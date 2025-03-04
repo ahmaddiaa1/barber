@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { translation } from 'src/class-type/translation';
 
 export class CreatePointDto {
@@ -14,5 +14,6 @@ export class CreatePointDto {
   @IsNumber()
   points: number;
 
-  translations: translation[];
+  @IsArray()
+  Translation: translation[];
 }

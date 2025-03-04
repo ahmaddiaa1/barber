@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Client, Role, User } from '@prisma/client';
 import { hash } from 'bcrypt';
-import { createTranslation } from 'src/class-type/translation';
+import { createTranslation, Translation } from 'src/class-type/translation';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -247,28 +247,70 @@ export class MockService {
   ];
 
   private readonly categories = [
-    { name: 'HairCare' },
-    { name: 'Beard' },
-    { name: 'HairCut' },
+    {
+      Translations: [
+        { name: 'Hair Care', lang: 'EN' },
+        { name: 'عناية بالشعر', lang: 'AR' },
+      ],
+    },
+    {
+      Translations: [
+        { name: 'Hair Care', lang: 'EN' },
+        { name: 'عناية بالشعر', lang: 'AR' },
+      ],
+    },
+    {
+      Translations: [
+        { name: 'Hair Care', lang: 'EN' },
+        { name: 'عناية بالشعر', lang: 'AR' },
+      ],
+    },
   ];
 
   private readonly BeardServices = [
     {
-      name: 'Beard Extra',
+      Translation: [
+        {
+          name: 'Beard Extra',
+          lang: 'EN',
+        },
+        {
+          name: 'لحية اضافية',
+          lang: 'AR',
+        },
+      ],
       price: 100,
       duration: 1,
       serviceImg:
         'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/services/Beard-Extra.jpg',
     },
     {
-      name: 'Beard razor',
+      Translation: [
+        {
+          name: 'Beard Razor',
+          lang: 'EN',
+        },
+        {
+          name: 'حلاقة لحية',
+          lang: 'AR',
+        },
+      ],
       price: 200,
       duration: 2,
       serviceImg:
         'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/services/Beard-Razor.jpg',
     },
     {
-      name: 'Beard Straightening',
+      Translation: [
+        {
+          name: 'Beard Straightening',
+          lang: 'EN',
+        },
+        {
+          name: 'تسريح لحية',
+          lang: 'AR',
+        },
+      ],
       price: 300,
       duration: 3,
       serviceImg:
@@ -278,21 +320,48 @@ export class MockService {
 
   private readonly HairCutServices = [
     {
-      name: 'Haircut',
+      Translation: [
+        {
+          name: 'Hair Cut',
+          lang: 'EN',
+        },
+        {
+          name: 'قص شعر',
+          lang: 'AR',
+        },
+      ],
       price: 100,
       duration: 1,
       serviceImg:
         'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/services/Hair-Cut.jpg',
     },
     {
-      name: 'Zero Cut',
+      Translation: [
+        {
+          name: 'Zero Cut',
+          lang: 'EN',
+        },
+        {
+          name: 'قص شعر صفر',
+          lang: 'AR',
+        },
+      ],
       price: 200,
       duration: 2,
       serviceImg:
         'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/services/Zero-Cut.jpg',
     },
     {
-      name: 'Long Hair',
+      Translation: [
+        {
+          name: 'Long Hair',
+          lang: 'EN',
+        },
+        {
+          name: 'تسريح شعر طويل',
+          lang: 'AR',
+        },
+      ],
       price: 300,
       duration: 3,
       serviceImg:
@@ -302,21 +371,48 @@ export class MockService {
 
   private readonly HairCareServices = [
     {
-      name: 'Hair Dye',
+      Translation: [
+        {
+          name: 'Hair Dye',
+          lang: 'EN',
+        },
+        {
+          name: 'صبغة شعر',
+          lang: 'AR',
+        },
+      ],
       price: 100,
       duration: 1,
       serviceImg:
         'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/services/Hair-Dye.jpg',
     },
     {
-      name: 'Hair Relaxer',
+      Translation: [
+        {
+          name: 'Hair Relaxer',
+          lang: 'EN',
+        },
+        {
+          name: 'تنعيم شعر',
+          lang: 'AR',
+        },
+      ],
       price: 200,
       duration: 2,
       serviceImg:
         'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/services/Hair-Relaxer.jpg',
     },
     {
-      name: 'Hair Protein',
+      Translation: [
+        {
+          name: 'Protein',
+          lang: 'EN',
+        },
+        {
+          name: 'بروتين',
+          lang: 'AR',
+        },
+      ],
       price: 300,
       duration: 3,
       serviceImg:
@@ -380,7 +476,7 @@ export class MockService {
     const branchPromises = this.branches.map(async (branch) => {
       const createdBranch = await this.prisma.branch.create({
         data: {
-          Translation: createTranslation({ translations: branch.translations }),
+          Translation: createTranslation({ Translation: branch.translations }),
           location: branch.location,
           phone: branch.phone,
           branchImg: branch.branchImg,
@@ -446,7 +542,9 @@ export class MockService {
     const category = this.categories.map(async (category) => {
       const c = await this.prisma.category.create({
         data: {
-          name: category.name,
+          Translation: createTranslation({
+            Translation: category.Translations,
+          }),
         },
       });
       return c;
@@ -456,7 +554,7 @@ export class MockService {
     const serviceBeard = this.BeardServices.map(async (service) => {
       await this.prisma.service.create({
         data: {
-          name: service.name,
+          Translation: createTranslation({ Translation: service.Translation }),
           price: service.price,
           duration: service.duration,
           categoryId: createdCategories[1].id,
@@ -467,7 +565,7 @@ export class MockService {
     const serviceCare = this.HairCareServices.map(async (service) => {
       await this.prisma.service.create({
         data: {
-          name: service.name,
+          Translation: createTranslation({ Translation: service.Translation }),
           price: service.price,
           duration: service.duration,
           categoryId: createdCategories[0].id,
@@ -478,7 +576,7 @@ export class MockService {
     const serviceCut = this.HairCutServices.map(async (service) => {
       await this.prisma.service.create({
         data: {
-          name: service.name,
+          Translation: createTranslation({ Translation: service.Translation }),
           price: service.price,
           duration: service.duration,
           categoryId: createdCategories[2].id,

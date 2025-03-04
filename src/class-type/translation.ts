@@ -4,13 +4,13 @@ import { IsString } from 'class-validator';
 
 export const createTranslation = <
   T extends {
-    translations: { name: string; lang: string; description?: string }[];
+    Translation: { name: string; lang: string; description?: string }[];
   },
 >(
   data: T,
 ) => ({
   createMany: {
-    data: data.translations.map((translation) => ({
+    data: data.Translation.map((translation) => ({
       name: translation.name,
       language: translation.lang as Language,
       ...(translation.description && { description: translation.description }),
@@ -19,19 +19,30 @@ export const createTranslation = <
 });
 export const updateTranslation = <
   T extends {
-    translations?: { name: string; lang: string; description?: string }[];
+    Translation?: {
+      id?: string;
+      name: string;
+      lang: string;
+      description?: string;
+    }[];
   },
 >(
   data: T,
-) => ({
-  updateMany: {
-    data: data.translations.map((translation) => ({
-      name: translation.name,
-      language: translation.lang as Language,
-      ...(translation.description && { description: translation.description }),
-    })),
-  },
-});
+) => {
+  const updates =
+    data.Translation?.filter((t) => t.id).map((translation) => ({
+      where: { id: translation.id },
+      data: {
+        name: translation.name,
+        language: translation.lang as Language,
+        ...(translation.description && {
+          description: translation.description,
+        }),
+      },
+    })) ?? [];
+
+  return updates.length ? { updateMany: updates } : {};
+};
 
 export const Translation = {
   Translation: {
@@ -53,6 +64,9 @@ export const translationDes = {
 };
 
 export class translation {
+  @IsString()
+  id?: string;
+
   @IsString()
   @Transform(({ value }) => value ?? null)
   name: string;

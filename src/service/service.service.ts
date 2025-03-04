@@ -1,12 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Service } from '@prisma/client';
+import { Language, Service } from '@prisma/client';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { AwsService } from 'src/aws/aws.service';
 import { Random } from 'src/utils/generate';
+import {
+  createTranslation,
+  Translation,
+  updateTranslation,
+} from 'src/class-type/translation';
 
 @Injectable()
 export class ServiceService {
@@ -15,8 +20,17 @@ export class ServiceService {
     private readonly awsService: AwsService,
   ) {}
 
-  public async getAllService(): Promise<AppSuccess<{ services: Service[] }>> {
-    const services = await this.prisma.service.findMany();
+  public async getAllService(
+    language: Language,
+  ): Promise<AppSuccess<{ services: Service[] }>> {
+    const services = await this.prisma.service.findMany({
+      include: {
+        Translation: {
+          where: { language },
+          ...Translation.Translation,
+        },
+      },
+    });
 
     return new AppSuccess({ services }, 'Services found successfully');
   }
@@ -35,7 +49,11 @@ export class ServiceService {
       file && (await this.awsService.uploadFile(file, Random(11), 'service'));
 
     const service = await this.prisma.service.create({
-      data: { ...createServiceDto, ...(serviceImg && { serviceImg }) },
+      data: {
+        ...createServiceDto,
+        ...(serviceImg && { serviceImg }),
+        Translation: createTranslation(createServiceDto),
+      },
     });
 
     return new AppSuccess(service, 'Service created successfully');
@@ -52,7 +70,13 @@ export class ServiceService {
 
     const service = await this.prisma.service.update({
       where: { id },
-      data: { ...updateServiceDto, ...(serviceImg && { serviceImg }) },
+      data: {
+        ...updateServiceDto,
+        ...(serviceImg && { serviceImg }),
+        ...(updateServiceDto.Translation && {
+          Translation: updateTranslation(updateServiceDto),
+        }),
+      },
     });
 
     return new AppSuccess(service, 'Service updated successfully');

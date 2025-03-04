@@ -36,5 +36,5 @@ export class CreateBranchDto {
   rate?: number;
 
   @IsArray()
-  translations: translation[];
+  Translation: translation[];
 }

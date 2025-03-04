@@ -29,8 +29,8 @@ export class BranchService {
     const newBranch = await this.prisma.branch.create({
       data: {
         ...(branchImg && { branchImg }),
-        Translation: createTranslation(createBranchDto),
         ...createBranchDto,
+        Translation: createTranslation(createBranchDto),
       },
       include: Translation,
     });
@@ -102,11 +102,11 @@ export class BranchService {
     const updatedBranch = await this.prisma.branch.update({
       where: { id },
       data: {
-        ...(branchImg && { branchImg }),
-        ...(updateBranchDto.translations && {
-          translations: updateTranslation(updateBranchDto),
-        }),
         ...updateBranchDto,
+        ...(branchImg && { branchImg }),
+        ...(updateBranchDto.Translation && {
+          Translation: updateTranslation(updateBranchDto),
+        }),
       },
     });
     return new AppSuccess(updatedBranch, 'Branch updated successfully');

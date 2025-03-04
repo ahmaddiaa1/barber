@@ -268,12 +268,12 @@ model Packages {
 }
 
 model Points {
-  id             String           @id
-  image          String
-  price          Int
-  points         Int
-  Offers         Offers           @relation(fields: [id], references: [id])
-  TranslationDes TranslationDes[] @relation("points")
+  id          String           @id
+  image       String
+  price       Int
+  points      Int
+  Offers      Offers           @relation(fields: [id], references: [id])
+  Translation TranslationDes[] @relation("points")
 }
 
 model PackagesServices {

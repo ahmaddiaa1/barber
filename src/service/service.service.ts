@@ -58,7 +58,7 @@ export class ServiceService {
 
     console.log(createServiceDto);
 
-    const service = await this.prisma.service.create({
+    const newService = await this.prisma.service.create({
       data: {
         ...createServiceDto,
         ...(serviceImg && { serviceImg }),
@@ -66,6 +66,13 @@ export class ServiceService {
       },
       include: serviceTranslation(language),
     });
+
+    const { Translation, ...rest } = newService;
+
+    const service = {
+      ...rest,
+      name: Translation[0]?.name,
+    };
 
     return new AppSuccess(service, 'Service created successfully');
   }
@@ -76,11 +83,11 @@ export class ServiceService {
     file: Express.Multer.File,
     language: Language,
   ): Promise<AppSuccess<Service>> {
-    await this.findOneOrFail(id, language);
+    await this.findOneOrFail(id);
     const serviceImg =
       file && (await this.awsService.uploadFile(file, id, 'service'));
 
-    const service = await this.prisma.service.update({
+    const updatedService = await this.prisma.service.update({
       where: { id },
       data: {
         ...updateServiceDto,
@@ -92,6 +99,13 @@ export class ServiceService {
       include: serviceTranslation(language),
     });
 
+    const { Translation, ...rest } = updatedService;
+
+    const service = {
+      ...rest,
+      name: Translation[0]?.name,
+    };
+
     return new AppSuccess(service, 'Service updated successfully');
   }
 
@@ -99,7 +113,7 @@ export class ServiceService {
     id: string,
     available: { available: boolean },
   ): Promise<AppSuccess<Service>> {
-    // await this.findOneOrFail(id);
+    await this.findOneOrFail(id);
     const service = await this.prisma.service.update({
       where: { id },
       data: available,
@@ -110,7 +124,7 @@ export class ServiceService {
 
   private async findOneOrFail(
     id: string,
-    language: Language,
+    language?: Language,
   ): Promise<Service> {
     const fetchedService = await this.prisma.service.findUnique({
       where: { id },

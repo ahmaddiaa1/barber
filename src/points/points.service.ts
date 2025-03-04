@@ -54,7 +54,7 @@ export class PointsService {
       data: {
         points: {
           create: {
-            TranslationDes: createTranslation(createPointDto),
+            Translation: createTranslation(createPointDto),
             price,
             points,
             image: '',

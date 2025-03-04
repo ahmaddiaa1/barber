@@ -19,6 +19,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePaymobDto } from './dto/create-paymob.dto';
 import { join } from 'path';
 import { Lang } from 'decorators/accept.language';
+import { Translation } from 'src/class-type/translation';
 
 config();
 
@@ -40,6 +41,7 @@ export class PaymobController {
     @Body() body: CreatePaymobDto,
     @UserData('user') user: User,
     @Res() res: Response,
+    @Lang() lang: Language,
   ) {
     const { item: id } = body;
     const { firstName, lastName, phone } = user;
@@ -52,12 +54,13 @@ export class PaymobController {
         offerType: true,
         packages: {
           select: {
-            Translation: { where: { language: 'EN' }, select: { name: true } },
+            ...Translation(lang),
             price: true,
           },
         },
         points: {
           select: {
+            ...Translation(lang),
             price: true,
           },
         },

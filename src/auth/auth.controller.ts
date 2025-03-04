@@ -14,6 +14,7 @@ import { AuthGuard } from 'guard/auth.guard';
 import { UserData } from 'decorators/user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from '../../src/config/multer.config';
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

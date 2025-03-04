@@ -49,7 +49,7 @@ export class AuthService {
             role: Role.ADMIN,
             admin: { create: {} },
           },
-          file.path,
+          file?.path,
         );
 
         break;
@@ -73,7 +73,7 @@ export class AuthService {
               create: { referralCode },
             },
           },
-          file.path,
+          file?.path,
         );
 
         break;
@@ -88,7 +88,7 @@ export class AuthService {
             role: Role.BARBER,
             barber: { create: { branchId } },
           },
-          file.path,
+          file?.path,
         );
 
         break;
@@ -103,7 +103,7 @@ export class AuthService {
             role: Role.CASHIER,
             cashier: { create: { branchId } },
           },
-          file.path,
+          file?.path,
         );
 
         break;

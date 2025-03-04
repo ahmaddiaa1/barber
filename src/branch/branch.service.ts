@@ -10,7 +10,7 @@ import {
   createTranslation,
   Translation,
   updateTranslation,
-} from 'src/class-type/translation';
+} from '../../src/class-type/translation';
 
 @Injectable()
 export class BranchService {

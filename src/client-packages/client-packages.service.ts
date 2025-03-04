@@ -3,7 +3,10 @@ import { UpdateClientPackageDto } from './dto/update-client-package.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from '@prisma/client';
 import { AppSuccess } from 'src/utils/AppSuccess';
-import { createTranslation, translationDes } from 'src/class-type/translation';
+import {
+  createTranslation,
+  translationDes,
+} from '../../src/class-type/translation';
 
 @Injectable()
 export class ClientPackagesService {

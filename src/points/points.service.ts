@@ -4,7 +4,7 @@ import { UpdatePointDto } from './dto/update-point.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { User } from '@prisma/client';
-import { createTranslation } from 'src/class-type/translation';
+import { createTranslation } from '../../src/class-type/translation';
 
 @Injectable()
 export class PointsService {

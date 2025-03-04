@@ -17,7 +17,7 @@ import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AcceptLanguage } from 'guard/accept.language';
-import { Lang } from 'decorators/accept.language';
+import { Lang } from '../../decorators/accept.language';
 import { Language } from '@prisma/client';
 
 @UseGuards(AcceptLanguage)

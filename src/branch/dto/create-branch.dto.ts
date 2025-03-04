@@ -9,7 +9,7 @@ import {
   Length,
   IsArray,
 } from 'class-validator';
-import { translation } from 'src/class-type/translation';
+import { translation } from '../../../src/class-type/translation';
 
 export class CreateBranchDto {
   @IsString()

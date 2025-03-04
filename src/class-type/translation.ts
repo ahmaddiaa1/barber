@@ -4,7 +4,7 @@ import { IsString } from 'class-validator';
 
 export const createTranslation = <
   T extends {
-    Translation: { name: string; lang: string; description?: string }[];
+    Translation: { name: string; language: string; description?: string }[];
   },
 >(
   data: T,
@@ -12,7 +12,7 @@ export const createTranslation = <
   createMany: {
     data: data.Translation.map((translation) => ({
       name: translation.name,
-      language: translation.lang as Language,
+      language: translation.language as Language,
       ...(translation.description && { description: translation.description }),
     })),
   },
@@ -22,7 +22,7 @@ export const updateTranslation = <
     Translation?: {
       id?: string;
       name: string;
-      lang: string;
+      language: string;
       description?: string;
     }[];
   },
@@ -34,7 +34,7 @@ export const updateTranslation = <
       where: { id: translation.id },
       data: {
         name: translation.name,
-        language: translation.lang as Language,
+        language: translation.language as Language,
         ...(translation.description && {
           description: translation.description,
         }),
@@ -74,6 +74,6 @@ export class translation {
   name: string;
 
   @IsString()
-  @Transform(({ value }) => value ?? null)
-  lang: 'EN' | 'AR';
+  @Transform(({ value }) => Language[value].toUpperCase() ?? null)
+  language: Language;
 }

@@ -4,7 +4,7 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { Category, Language, User } from '@prisma/client';
-import { Translation, translationDes } from 'src/class-type/translation';
+import { Translation, translationDes } from '../../src/class-type/translation';
 
 @Injectable()
 export class CategoryService {

@@ -13,16 +13,8 @@ import { translationDto } from 'src/class-type/translation';
 
 export class CreatePackageDto {
   @IsNotEmpty()
-  @IsString()
-  description: string;
-
-  @IsNotEmpty()
   @IsArray()
   serviceIds: string[];
-
-  @IsNotEmpty()
-  @IsString()
-  title: string;
 
   @IsNotEmpty()
   @Transform(({ value }) => +value)

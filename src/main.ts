@@ -3,7 +3,6 @@ import { AppModule } from './app.module';
 import { config } from 'dotenv';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
-import { AcceptLanguageInterceptor } from 'interceptors/accept-language-interceptor';
 
 config();
 async function bootstrap() {
@@ -17,7 +16,6 @@ async function bootstrap() {
   const prismaService = app.get(PrismaService);
   await prismaService.onModuleInit();
   app.setGlobalPrefix('api');
-  app.useGlobalInterceptors(new AcceptLanguageInterceptor());
   app.useGlobalPipes(
     new ValidationPipe({
       forbidUnknownValues: false,

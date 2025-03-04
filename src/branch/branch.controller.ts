@@ -9,8 +9,6 @@ import {
   ParseUUIDPipe,
   UseInterceptors,
   UploadedFile,
-  Res,
-  UseGuards,
 } from '@nestjs/common';
 import { BranchService } from './branch.service';
 import { CreateBranchDto } from './dto/create-branch.dto';

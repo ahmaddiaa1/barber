@@ -8,7 +8,7 @@ import { AwsService } from 'src/aws/aws.service';
 import { Random } from 'src/utils/generate';
 import {
   createTranslation,
-  Translation,
+  Translation as serviceTranslation,
   updateTranslation,
 } from '../../src/class-type/translation';
 
@@ -22,8 +22,18 @@ export class ServiceService {
   public async getAllService(
     language: Language,
   ): Promise<AppSuccess<{ services: Service[] }>> {
-    const services = await this.prisma.service.findMany({
-      include: Translation(language),
+    const fetchedServices = await this.prisma.service.findMany({
+      include: serviceTranslation(language),
+    });
+
+    const services = fetchedServices.map((service) => {
+      const { Translation, ...rest } = service;
+      console.log(Translation);
+
+      return {
+        ...rest,
+        name: Translation[0]?.name,
+      };
     });
 
     return new AppSuccess({ services }, 'Services found successfully');
@@ -54,7 +64,7 @@ export class ServiceService {
         ...(serviceImg && { serviceImg }),
         Translation: createTranslation(createServiceDto),
       },
-      include: Translation(language),
+      include: serviceTranslation(language),
     });
 
     return new AppSuccess(service, 'Service created successfully');
@@ -79,7 +89,7 @@ export class ServiceService {
           Translation: updateTranslation(updateServiceDto),
         }),
       },
-      include: Translation(language),
+      include: serviceTranslation(language),
     });
 
     return new AppSuccess(service, 'Service updated successfully');
@@ -102,10 +112,17 @@ export class ServiceService {
     id: string,
     language: Language,
   ): Promise<Service> {
-    const service = await this.prisma.service.findUnique({
+    const fetchedService = await this.prisma.service.findUnique({
       where: { id },
-      include: Translation(language),
+      include: serviceTranslation(language),
     });
+
+    const { Translation, ...rest } = fetchedService;
+
+    const service = {
+      ...rest,
+      name: Translation[0]?.name,
+    };
 
     if (!service) {
       throw new NotFoundException('Service not found');

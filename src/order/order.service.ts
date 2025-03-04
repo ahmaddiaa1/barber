@@ -37,6 +37,10 @@ export class OrderService {
       const {
         barber,
         date,
+        total,
+        subTotal,
+        discount,
+        points,
         branch: { Translation, ...branchRest },
         ...rest
       } = order;
@@ -44,6 +48,10 @@ export class OrderService {
         ...rest,
         date: format(new Date(date), 'yyyy-MM-dd'),
         barber,
+        total: total.toString(),
+        subTotal: subTotal.toString(),
+        discount: discount.toString(),
+        points: points.toString(),
         branch: {
           ...branchRest,
           name: Translation[0].name,

@@ -1,11 +1,11 @@
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsOptional } from 'class-validator';
+import { translationDto } from 'src/class-type/translation';
 
 export class CreateCategoryDto {
-  @IsNotEmpty()
-  @IsString()
-  name: string;
-
   @IsBoolean()
   @IsOptional()
   available: boolean;
+
+  @IsArray()
+  Translation: translationDto[];
 }

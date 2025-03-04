@@ -4,7 +4,12 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { Category, Language, User } from '@prisma/client';
-import { Translation, translationDes } from '../../src/class-type/translation';
+import {
+  createTranslation,
+  Translation,
+  translationDes,
+  updateTranslation,
+} from '../../src/class-type/translation';
 
 @Injectable()
 export class CategoryService {
@@ -104,6 +109,7 @@ export class CategoryService {
     const newCategory = await this.prisma.category.create({
       data: {
         ...createCategoryDto,
+        Translation: createTranslation(createCategoryDto),
       },
       include: Translation(language),
     });
@@ -127,7 +133,10 @@ export class CategoryService {
 
     const updatedCategory = await this.prisma.category.update({
       where: { id },
-      data: updateCategoryDto,
+      data: {
+        ...updateCategoryDto,
+        Translation: updateTranslation(updateCategoryDto),
+      },
       include: Translation(language),
     });
 

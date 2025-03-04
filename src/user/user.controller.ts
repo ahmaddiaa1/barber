@@ -17,6 +17,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { UserUpdateDto } from './dto/user-update-dto';
 import { UserData } from 'decorators/user.decorator';
 import { Role, User } from '@prisma/client';
+import { multerConfig } from 'src/config/multer.config';
 
 @Controller('user')
 @UseGuards(AuthGuard)
@@ -49,7 +50,7 @@ export class UserController {
   }
 
   @Put(':id')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', multerConfig('avatars')))
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() user: UserUpdateDto,

@@ -13,7 +13,6 @@ import { LoginDto } from './dto/auth-login-dto';
 import * as jwt from 'jsonwebtoken';
 import { AppSuccess } from '../utils/AppSuccess';
 import { Role, User } from '@prisma/client';
-import { AwsService } from 'src/aws/aws.service';
 import { Random } from '../utils/generate';
 
 @Global()
@@ -21,10 +20,7 @@ import { Random } from '../utils/generate';
 export class AuthService {
   private readonly jwtSecret = process.env.JWT_SECRET;
 
-  constructor(
-    private prisma: PrismaService,
-    private awsService: AwsService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   public async signup(createAuthDto: RegisterDto, file: Express.Multer.File) {
     const { phone, password, role = Role.USER, branchId } = createAuthDto;
@@ -53,7 +49,7 @@ export class AuthService {
             role: Role.ADMIN,
             admin: { create: {} },
           },
-          file,
+          file.path,
         );
 
         break;
@@ -77,7 +73,7 @@ export class AuthService {
               create: { referralCode },
             },
           },
-          file,
+          file.path,
         );
 
         break;
@@ -92,7 +88,7 @@ export class AuthService {
             role: Role.BARBER,
             barber: { create: { branchId } },
           },
-          file,
+          file.path,
         );
 
         break;
@@ -107,7 +103,7 @@ export class AuthService {
             role: Role.CASHIER,
             cashier: { create: { branchId } },
           },
-          file,
+          file.path,
         );
 
         break;
@@ -188,7 +184,7 @@ export class AuthService {
     createAuthDto: RegisterDto,
     hashedPassword: string,
     data: any,
-    file?: Express.Multer.File,
+    avatar?: string,
   ) {
     const { branchId, role: roles = 'user', ...rest } = createAuthDto;
     const role = roles.toUpperCase() as Role;
@@ -203,9 +199,6 @@ export class AuthService {
 
     try {
       return this.prisma.$transaction(async (prisma) => {
-        const avatar =
-          file && (await this.awsService.uploadFile(file, id, 'avatars'));
-
         const user = await prisma.user.create({
           data: {
             ...rest,

@@ -13,87 +13,87 @@ export class MockService {
 
   private readonly clients = [
     {
-      firstName: 'client',
-      lastName: 'no.1',
+      firstName: 'Ahmed',
+      lastName: 'Ali',
       phone: '1234567891',
       password: '1234',
       role: 'user',
       referralCode: 'AK3dm3cs',
     },
     {
-      firstName: 'client',
-      lastName: 'no.2',
+      firstName: 'Mohamed',
+      lastName: 'Hassan',
       phone: '1234567892',
       password: '1234',
       role: 'user',
       referralCode: 'K2skn2nl1',
     },
     {
-      firstName: 'client',
-      lastName: 'no.3',
+      firstName: 'Youssef',
+      lastName: 'Mahmoud',
       phone: '1234567893',
       password: '1234',
       role: 'user',
       referralCode: 'ak5fn3fs',
     },
     {
-      firstName: 'client',
-      lastName: 'no.4',
+      firstName: 'Khaled',
+      lastName: 'Mostafa',
       phone: '1234567894',
       password: '1234',
       role: 'user',
       referralCode: 'Af0gn3m2',
     },
     {
-      firstName: 'client',
-      lastName: 'no.5',
+      firstName: 'Omar',
+      lastName: 'Ibrahim',
       phone: '1234567895',
       password: '1234',
       role: 'user',
       referralCode: 'mASd932j',
     },
     {
-      firstName: 'client',
-      lastName: 'no.6',
+      firstName: 'Hossam',
+      lastName: 'Adel',
       phone: '1234567896',
       password: '1234',
       role: 'user',
       referralCode: 'ASD9dw2d,',
     },
     {
-      firstName: 'client',
-      lastName: 'no.7',
+      firstName: 'Tarek',
+      lastName: 'Nasser',
       phone: '1234567897',
       password: '1234',
       role: 'user',
       referralCode: 'ALKSb23da',
     },
     {
-      firstName: 'client',
-      lastName: 'no.8',
+      firstName: 'Amr',
+      lastName: 'Salem',
       phone: '1234567898',
       password: '1234',
       role: 'user',
       referralCode: '3ffe33',
     },
     {
-      firstName: 'client',
-      lastName: 'no.9',
+      firstName: 'Wael',
+      lastName: 'Fahmy',
       phone: '1234567899',
       password: '1234',
       role: 'user',
       referralCode: '3Fad3',
     },
     {
-      firstName: 'client',
-      lastName: 'no.10',
+      firstName: 'Moustafa',
+      lastName: 'Hamed',
       phone: '1234567890',
       password: '1234',
       role: 'user',
       referralCode: 'Fas3gad3',
     },
     {
-      firstName: 'Abdaelrahman',
+      firstName: 'Abdelrahman',
       lastName: 'Abdelfattah',
       phone: '01000262238',
       password: '1234',
@@ -104,22 +104,22 @@ export class MockService {
 
   private readonly admin = [
     {
-      firstName: 'admin',
-      lastName: 'no.1',
+      firstName: 'Ahmad',
+      lastName: 'Hassan',
       phone: '01234567890',
       password: '1234',
       role: 'admin',
     },
     {
-      firstName: 'admin',
-      lastName: 'no.2',
+      firstName: 'Mohamed',
+      lastName: 'Ali',
       phone: '01234567891',
       password: '1234',
       role: 'admin',
     },
     {
-      firstName: 'admin',
-      lastName: 'no.3',
+      firstName: 'Omar',
+      lastName: 'Farouk',
       phone: '01234567892',
       password: '1234',
       role: 'admin',
@@ -128,29 +128,29 @@ export class MockService {
 
   private readonly barbers1 = [
     {
-      firstName: 'barber',
-      lastName: 'no.1',
+      firstName: 'Khaled',
+      lastName: 'Youssef',
       phone: '11234567891',
       avatar:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/avatars/OVt169-1739648179879-freepik__the-style-is-candid-image-photography-with-natural__47103.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063667/barber/barbers/whl07h8d9qt5dugpmmtj.webp',
       password: '1234',
       role: 'barber',
     },
     {
-      firstName: 'barber',
-      lastName: 'no.2',
+      firstName: 'Hassan',
+      lastName: 'Saad',
       phone: '11234567892',
       avatar:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/avatars/OVt169-1739648179879-freepik__the-style-is-candid-image-photography-with-natural__47103.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063667/barber/barbers/d2mfbxmvcqdzvmbe83gm.jpg',
       password: '1234',
       role: 'barber',
     },
     {
-      firstName: 'barber',
-      lastName: 'no.3',
+      firstName: 'Ali',
+      lastName: 'Mahmoud',
       phone: '11234567893',
       avatar:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/avatars/OVt169-1739648179879-freepik__the-style-is-candid-image-photography-with-natural__47103.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063667/barber/barbers/ung59agowqpun0flfcjd.jpg',
       password: '1234',
       role: 'barber',
     },
@@ -158,29 +158,29 @@ export class MockService {
 
   private readonly barbers2 = [
     {
-      firstName: 'barber',
-      lastName: 'no.1',
+      firstName: 'Tarek',
+      lastName: 'Hussein',
       phone: '21234567891',
       avatar:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/branches/branch-3.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063667/barber/barbers/ritnqmm7cvvfzpsnkr5o.jpg',
       password: '1234',
       role: 'barber',
     },
     {
-      firstName: 'barber',
-      lastName: 'no.2',
+      firstName: 'Mina',
+      lastName: 'Fouad',
       phone: '21234567892',
       avatar:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/branches/branch-3.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063667/barber/barbers/jnoy5783pnultmb0n8dl.jpg',
       password: '1234',
       role: 'barber',
     },
     {
-      firstName: 'barber',
-      lastName: 'no.3',
+      firstName: 'Sameh',
+      lastName: 'Naguib',
       phone: '21234567893',
       avatar:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/branches/branch-3.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063666/barber/barbers/wj2n979pvgbihi2iskut.jpg',
       password: '1234',
       role: 'barber',
     },
@@ -188,29 +188,29 @@ export class MockService {
 
   private readonly barbers3 = [
     {
-      firstName: 'barber',
-      lastName: 'no.1',
+      firstName: 'Ibrahim',
+      lastName: 'Kamel',
       phone: '31234567891',
       avatar:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/branches/branch-3.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063666/barber/barbers/tdbdaamjh9dpztl0vg5w.webp',
       password: '1234',
       role: 'barber',
     },
     {
-      firstName: 'barber',
-      lastName: 'no.2',
+      firstName: 'Mostafa',
+      lastName: 'Gamal',
       phone: '31234567892',
       avatar:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/branches/branch-3.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063666/barber/barbers/hvxayxuzelfztf5xc4eo.jpg',
       password: '1234',
       role: 'barber',
     },
     {
-      firstName: 'barber',
-      lastName: 'no.3',
+      firstName: 'Yasser',
+      lastName: 'Reda',
       phone: '31234567893',
       avatar:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/branches/branch-3.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063666/barber/barbers/p0vvb10opdwxmov0d6yb.jpg',
       password: '1234',
       role: 'barber',
     },
@@ -225,7 +225,7 @@ export class MockService {
       location: 'Al Rehab',
       phone: '1234567890',
       branchImg:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/branches/branch-1.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063015/barber/branches/lwxwydlekw5z4g5smodb.jpg',
     },
     {
       translations: [
@@ -235,7 +235,7 @@ export class MockService {
       location: 'Madinaty',
       phone: '1234567891',
       branchImg:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/branches/branch-2.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063013/barber/branches/s17xflyrpae9zxppb5ki.jpg',
     },
     {
       translations: [
@@ -245,7 +245,7 @@ export class MockService {
       location: 'Future City',
       phone: '1234567892',
       branchImg:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/branches/branch-3.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063006/barber/branches/cclrcpu45yu2labio03m.jpg',
     },
   ];
 
@@ -285,7 +285,7 @@ export class MockService {
       price: 100,
       duration: 1,
       serviceImg:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/services/Beard-Extra.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063090/barber/services/xddqtjomejieeehpq0nk.jpg',
     },
     {
       Translation: [
@@ -301,7 +301,7 @@ export class MockService {
       price: 200,
       duration: 2,
       serviceImg:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/services/Beard-Razor.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063090/barber/services/selqadltziifcfahp1pl.jpg',
     },
     {
       Translation: [
@@ -317,7 +317,7 @@ export class MockService {
       price: 300,
       duration: 3,
       serviceImg:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/services/Beard-Straighteing.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063090/barber/services/hgc9mymn9mlrwrvd8mxg.jpg',
     },
   ];
 
@@ -336,7 +336,7 @@ export class MockService {
       price: 100,
       duration: 1,
       serviceImg:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/services/Hair-Cut.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063097/barber/services/lwwkcaptr1dnjtgkkfyk.jpg',
     },
     {
       Translation: [
@@ -352,7 +352,7 @@ export class MockService {
       price: 200,
       duration: 2,
       serviceImg:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/services/Zero-Cut.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063098/barber/services/vqypiatj8twlnogeydva.jpg',
     },
     {
       Translation: [
@@ -368,7 +368,7 @@ export class MockService {
       price: 300,
       duration: 3,
       serviceImg:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/services/Long-Hair.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063098/barber/services/xtgeqtg39opn8pannpon.jpg',
     },
   ];
 
@@ -387,7 +387,7 @@ export class MockService {
       price: 100,
       duration: 1,
       serviceImg:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/services/Hair-Dye.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063093/barber/services/enmuo5n0ywahae52gcms.jpg',
     },
     {
       Translation: [
@@ -403,7 +403,7 @@ export class MockService {
       price: 200,
       duration: 2,
       serviceImg:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/services/Hair-Relaxer.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063094/barber/services/ljpykqyiixcon4ctwl5g.jpg',
     },
     {
       Translation: [
@@ -419,7 +419,7 @@ export class MockService {
       price: 300,
       duration: 3,
       serviceImg:
-        'https://barber-bucket-image.s3.eu-north-1.amazonaws.com/services/Protein.jpg',
+        'https://res.cloudinary.com/unknowndev/image/upload/v1741063093/barber/services/ehnshculshnphhzsefsq.jpg',
     },
   ];
 
@@ -498,7 +498,7 @@ export class MockService {
           password: await hash(barber.password, 10),
           phone: barber.phone,
           role: Role[barber.role.toUpperCase()],
-          avatar: `https://avatar.iran.liara.run/public/job/barber/male`,
+          avatar: barber.avatar,
           barber: {
             create: {
               branchId: createdBranches[0].id,
@@ -515,7 +515,7 @@ export class MockService {
           password: await hash(barber.password, 10),
           phone: barber.phone,
           role: Role[barber.role.toUpperCase()],
-          avatar: `https://avatar.iran.liara.run/public/job/barber/male`,
+          avatar: barber.avatar,
           barber: {
             create: {
               branchId: createdBranches[1].id,
@@ -532,7 +532,7 @@ export class MockService {
           password: await hash(barber.password, 10),
           phone: barber.phone,
           role: Role[barber.role.toUpperCase()],
-          avatar: `https://avatar.iran.liara.run/public/job/barber/male`,
+          avatar: barber.avatar,
           barber: {
             create: {
               branchId: createdBranches[2].id,
@@ -588,16 +588,7 @@ export class MockService {
       });
     });
 
-    const promise = await Promise.all([
-      ...client,
-      ...admins,
-      ...barber1,
-      ...barber3,
-      ...barber2,
-    ]);
-
     return {
-      promise,
       client,
       admins,
       barber1,

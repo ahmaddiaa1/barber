@@ -14,11 +14,12 @@ import { BranchService } from './branch.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { multerConfig } from '../../src/config/multer.config';
 
 import { Lang } from '../../decorators/accept.language';
 import { Language } from '@prisma/client';
 
-@UseInterceptors(FileInterceptor('file'))
+@UseInterceptors(FileInterceptor('file', multerConfig('branches')))
 @Controller('branch')
 export class BranchController {
   constructor(private readonly branchService: BranchService) {}

@@ -3,8 +3,11 @@ import { CreatePointDto } from './dto/create-point.dto';
 import { UpdatePointDto } from './dto/update-point.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
-import { User } from '@prisma/client';
-import { createTranslation } from '../../src/class-type/translation';
+import { Language, User } from '@prisma/client';
+import {
+  createTranslation,
+  Translation,
+} from '../../src/class-type/translation';
 
 @Injectable()
 export class PointsService {
@@ -39,7 +42,10 @@ export class PointsService {
     return new AppSuccess(updateUser, 'Points added successfully');
   }
 
-  async createPoints(createPointDto: CreatePointDto) {
+  async createPoints(
+    createPointDto: CreatePointDto,
+    file: Express.Multer.File,
+  ) {
     const { title, price, points } = createPointDto;
 
     const offer = await this.prisma.offers.create({
@@ -49,7 +55,7 @@ export class PointsService {
       },
     });
 
-    const point = await this.prisma.offers.update({
+    const updatePoint = await this.prisma.offers.update({
       where: { id: offer.id },
       data: {
         points: {
@@ -57,30 +63,61 @@ export class PointsService {
             Translation: createTranslation(createPointDto),
             price,
             points,
-            image: '',
+            image: file.path,
           },
         },
       },
+      include: {
+        points: { include: { Translation: true } },
+      },
     });
+
+    const {
+      points: { Translation },
+      ...rest
+    } = updatePoint;
+
+    const point = {
+      ...rest,
+      name: Translation[0]?.name,
+    };
 
     return new AppSuccess(point, 'Point created successfully');
   }
-  async findAll() {
-    const points = await this.prisma.points.findMany({});
+
+  async findAll(language: Language) {
+    const fetchedPoints = await this.prisma.points.findMany({
+      include: Translation(language),
+    });
+
+    const points = fetchedPoints.map((point) => {
+      const { Translation, ...rest } = point;
+      return {
+        ...rest,
+        name: Translation[0]?.name,
+      };
+    });
 
     return new AppSuccess({ points }, 'Points fetched successfully');
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, lang: Language) {
     if (!id) {
       return new AppSuccess(null, 'Point not found');
     }
 
-    const point = await this.prisma.points.findUnique({
+    const fetchedPoint = await this.prisma.points.findUnique({
       where: {
         id: id,
       },
+      include: Translation(lang),
     });
+
+    const { Translation: translation, ...rest } = fetchedPoint;
+    const point = {
+      ...rest,
+      name: translation[0]?.name,
+    };
 
     return new AppSuccess(point, 'Point fetched successfully');
   }
@@ -111,14 +148,16 @@ export class PointsService {
         id: user.id,
       },
       data: {
-        points: client.points + point.points,
+        points: {
+          increment: point.points,
+        },
       },
     });
 
     return new AppSuccess(clientPoint, 'Point purchased successfully');
   }
 
-  update(id: number, updatePointDto: UpdatePointDto) {
+  update(id: string, updatePointDto: UpdatePointDto, lang: Language) {
     return `This action updates a #${id} point`;
   }
 

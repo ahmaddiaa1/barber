@@ -10,6 +10,8 @@ import { AppSuccess } from 'src/utils/AppSuccess';
 import { AwsService } from 'src/aws/aws.service';
 import { Random } from 'src/utils/generate';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { createTranslation, Translation } from 'src/class-type/translation';
+import { Language } from '@prisma/client';
 
 @Injectable()
 export class PackageService {
@@ -44,19 +46,12 @@ export class PackageService {
       );
     }
 
-    const image =
-      file && (await this.awsService.uploadFile(file, Random(10), 'packages'));
+    const image = file.path;
 
     const offer = await this.prisma.offers.create({
       data: {
         offerType: 'PACKAGES',
         expiresAt: rest.expiresAt,
-      },
-    });
-
-    const packages = await this.prisma.offers.update({
-      where: { id: offer.id },
-      data: {
         packages: {
           create: {
             ...rest,
@@ -64,45 +59,94 @@ export class PackageService {
             count,
             services: { connect: serviceIds.map((id) => ({ id })) },
             ...(image && { image }),
+            Translation: createTranslation(createPackageDto),
           },
         },
       },
     });
 
-    return new AppSuccess(packages, 'Package created successfully', 201);
+    // const packages = await this.prisma.offers.update({
+    //   where: { id: offer.id },
+    //   data: {
+    //     packages: {
+    //       create: {
+    //         ...rest,
+    //         type,
+    //         count,
+    //         services: { connect: serviceIds.map((id) => ({ id })) },
+    //         ...(image && { image }),
+    //       },
+    //     },
+    //   },
+    // });
+
+    return new AppSuccess(offer, 'Package created successfully', 201);
   }
 
-  async findAll() {
-    const packages = await this.prisma.packages.findMany({
+  async findAll(language: Language) {
+    const fetchedPackages = await this.prisma.packages.findMany({
       include: {
+        ...Translation(language),
         services: {
           select: {
             id: true,
-            Translation: true,
+            ...Translation(language),
             serviceImg: true,
           },
         },
       },
+    });
+
+    const packages = fetchedPackages.map((packageData) => {
+      const { Translation, services: s, ...rest } = packageData;
+      const services = s.map((s) => {
+        const { Translation, ...rest } = s;
+        return {
+          ...rest,
+          name: Translation[0].name,
+        };
+      });
+      return {
+        ...rest,
+        name: Translation[0].name,
+        services,
+      };
     });
 
     return new AppSuccess({ packages }, 'packages fetched successfully', 200);
   }
 
-  async findOne(id: string) {
-    const packageData = await this.prisma.packages.findUnique({
+  async findOne(id: string, language: Language) {
+    const fetchedPackage = await this.prisma.packages.findUnique({
       where: { id },
       include: {
+        ...Translation(language),
         services: {
           select: {
             id: true,
-            Translation: true,
+            ...Translation(language),
             serviceImg: true,
           },
         },
       },
     });
 
-    if (!packageData) new NotFoundException('Package not found');
+    if (!fetchedPackage) new NotFoundException('Package not found');
+
+    const { Translation: t, services: s, ...rest } = fetchedPackage;
+    const services = s.map((s) => {
+      const { Translation, ...rest } = s;
+      return {
+        ...rest,
+        name: Translation[0].name,
+      };
+    });
+
+    const packageData = {
+      ...rest,
+      name: t[0].name,
+      services,
+    };
 
     return new AppSuccess(packageData, 'Package fetched successfully');
   }

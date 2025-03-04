@@ -13,13 +13,13 @@ import { RegisterDto } from './dto/auth-register-dto';
 import { AuthGuard } from 'guard/auth.guard';
 import { UserData } from 'decorators/user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
-// import { multerConfig } from 'src/config/multer.config';
+import { multerConfig } from '../../src/config/multer.config';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('/signup')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', multerConfig('avatars')))
   signup(
     @Body() createAuthDto: RegisterDto,
     @UploadedFile() file: Express.Multer.File,

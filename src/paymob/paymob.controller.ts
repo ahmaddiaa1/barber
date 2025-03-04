@@ -7,6 +7,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import * as fs from 'fs';
 
 import { PaymobService } from './paymob.service';
 import { Response } from 'express';
@@ -16,6 +17,7 @@ import { AuthGuard } from 'guard/auth.guard';
 import { UserData } from 'decorators/user.decorator';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePaymobDto } from './dto/create-paymob.dto';
+import { join } from 'path';
 
 config();
 
@@ -49,6 +51,7 @@ export class PaymobController {
         offerType: true,
         packages: {
           select: {
+            Translation: { where: { language: 'EN' }, select: { name: true } },
             price: true,
           },
         },
@@ -64,9 +67,10 @@ export class PaymobController {
 
     const item = [
       {
-        name: offers[type].title as string,
-        amount: +offers[type].price * 100,
-        description: (offers[type].description ?? offers[type].title) as string,
+        name: offers[type].translation[0].name as string,
+        amount: +offers[type].translation[0].price * 100,
+        description: (offers[type].translation[0].description ??
+          offers[type].translation[0].name) as string,
         quantity: 1,
       },
     ];
@@ -81,7 +85,7 @@ export class PaymobController {
       billing_data,
       item,
       id,
-      offers[type].price,
+      offers[type].translation[0].price,
     );
 
     return res.redirect(paymentKey);
@@ -102,35 +106,24 @@ export class PaymobController {
       res,
     );
 
-    res.send(`
-      <html>
-        <head>
-          <title>Payment Status</title>
-          <script>
-            setTimeout(() => {
-              window.top.location.href = "https://www.google.com/";
-            }, 5000);
-          </script>
-          <style>
-            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-            .status { font-size: 24px; font-weight: bold; margin-top: 20px; }
-            .success { color: green; }
-            .failed { color: red; }
-          </style>
-        </head>
-        <body>
-          <h1>Payment ${isSuccess ? 'Successful ✅' : 'Failed ❌'}</h1>
-          <p class="status ${isSuccess ? 'success' : 'failed'}">
-            Your transaction was ${isSuccess ? 'approved' : 'declined'}.
-          </p>
-          <p>Redirecting in 5 seconds...</p>
-        </body>
-      </html>
-    `);
+    res.redirect('api/paymob/config/transaction-status');
+
+    // let page = fs.readFileSync('config/transaction-status.html', 'utf-8');
+    // page = page.replace(
+    //   `{{ isSuccess }}`,
+    //   JSON.stringify(isSuccess.toString()),
+    // );
+    // res.send(page);
   }
 
-  @Get('test')
+  @Get('config/transaction-status')
   test(@Res() res: Response) {
-    this.paymobService.return(res);
+    const isSuccess = false;
+
+    // res.redirect('/config/transaction-status.html');
+
+    let page = fs.readFileSync('config/transaction-status.html', 'utf-8');
+    // page = page.replace('{{ .Success }}', isSuccess.toString());
+    res.send(page);
   }
 }

@@ -264,7 +264,7 @@ model Packages {
   expiresAt   DateTime
   offers      Offers           @relation(fields: [id], references: [id])
   services    Service[]        @relation("PackagesToServices")
-  translation TranslationDes[] @relation("packages")
+  Translation TranslationDes[] @relation("packages")
 }
 
 model Points {

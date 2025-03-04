@@ -24,7 +24,7 @@ export class CategoryService {
               include: {
                 Translation: {
                   where: { language },
-                  ...translationDes.Translation,
+                  ...translationDes().Translation,
                 },
                 packageService: {
                   select: {

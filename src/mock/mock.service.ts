@@ -216,8 +216,8 @@ export class MockService {
   private readonly branches = [
     {
       translations: [
-        { name: 'Al Rehab', lang: 'EN' },
-        { name: 'الرحاب', lang: 'AR' },
+        { name: 'Al Rehab', language: 'EN' },
+        { name: 'الرحاب', language: 'AR' },
       ],
       location: 'Al Rehab',
       phone: '1234567890',
@@ -226,8 +226,8 @@ export class MockService {
     },
     {
       translations: [
-        { name: 'Nasr city', lang: 'EN' },
-        { name: 'مدينة نصر', lang: 'AR' },
+        { name: 'Nasr city', language: 'EN' },
+        { name: 'مدينة نصر', language: 'AR' },
       ],
       location: 'Madinaty',
       phone: '1234567891',
@@ -236,8 +236,8 @@ export class MockService {
     },
     {
       translations: [
-        { name: 'Sheraton', lang: 'EN' },
-        { name: 'شيراتون', lang: 'AR' },
+        { name: 'Sheraton', language: 'EN' },
+        { name: 'شيراتون', language: 'AR' },
       ],
       location: 'Future City',
       phone: '1234567892',
@@ -249,20 +249,20 @@ export class MockService {
   private readonly categories = [
     {
       Translations: [
-        { name: 'Hair Care', lang: 'EN' },
-        { name: 'عناية بالشعر', lang: 'AR' },
+        { name: 'Hair Care', language: 'EN' },
+        { name: 'عناية بالشعر', language: 'AR' },
       ],
     },
     {
       Translations: [
-        { name: 'Hair Care', lang: 'EN' },
-        { name: 'عناية بالشعر', lang: 'AR' },
+        { name: 'Hair Care', language: 'EN' },
+        { name: 'عناية بالشعر', language: 'AR' },
       ],
     },
     {
       Translations: [
-        { name: 'Hair Care', lang: 'EN' },
-        { name: 'عناية بالشعر', lang: 'AR' },
+        { name: 'Hair Care', language: 'EN' },
+        { name: 'عناية بالشعر', language: 'AR' },
       ],
     },
   ];
@@ -272,11 +272,11 @@ export class MockService {
       Translation: [
         {
           name: 'Beard Extra',
-          lang: 'EN',
+          language: 'EN',
         },
         {
           name: 'لحية اضافية',
-          lang: 'AR',
+          language: 'AR',
         },
       ],
       price: 100,
@@ -288,11 +288,11 @@ export class MockService {
       Translation: [
         {
           name: 'Beard Razor',
-          lang: 'EN',
+          language: 'EN',
         },
         {
           name: 'حلاقة لحية',
-          lang: 'AR',
+          language: 'AR',
         },
       ],
       price: 200,
@@ -304,11 +304,11 @@ export class MockService {
       Translation: [
         {
           name: 'Beard Straightening',
-          lang: 'EN',
+          language: 'EN',
         },
         {
           name: 'تسريح لحية',
-          lang: 'AR',
+          language: 'AR',
         },
       ],
       price: 300,
@@ -323,11 +323,11 @@ export class MockService {
       Translation: [
         {
           name: 'Hair Cut',
-          lang: 'EN',
+          language: 'EN',
         },
         {
           name: 'قص شعر',
-          lang: 'AR',
+          language: 'AR',
         },
       ],
       price: 100,
@@ -339,11 +339,11 @@ export class MockService {
       Translation: [
         {
           name: 'Zero Cut',
-          lang: 'EN',
+          language: 'EN',
         },
         {
           name: 'قص شعر صفر',
-          lang: 'AR',
+          language: 'AR',
         },
       ],
       price: 200,
@@ -355,11 +355,11 @@ export class MockService {
       Translation: [
         {
           name: 'Long Hair',
-          lang: 'EN',
+          language: 'EN',
         },
         {
           name: 'تسريح شعر طويل',
-          lang: 'AR',
+          language: 'AR',
         },
       ],
       price: 300,
@@ -374,11 +374,11 @@ export class MockService {
       Translation: [
         {
           name: 'Hair Dye',
-          lang: 'EN',
+          language: 'EN',
         },
         {
           name: 'صبغة شعر',
-          lang: 'AR',
+          language: 'AR',
         },
       ],
       price: 100,
@@ -390,11 +390,11 @@ export class MockService {
       Translation: [
         {
           name: 'Hair Relaxer',
-          lang: 'EN',
+          language: 'EN',
         },
         {
           name: 'تنعيم شعر',
-          lang: 'AR',
+          language: 'AR',
         },
       ],
       price: 200,
@@ -406,11 +406,11 @@ export class MockService {
       Translation: [
         {
           name: 'Protein',
-          lang: 'EN',
+          language: 'EN',
         },
         {
           name: 'بروتين',
-          lang: 'AR',
+          language: 'AR',
         },
       ],
       price: 300,

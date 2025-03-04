@@ -48,6 +48,8 @@ export class ServiceService {
     const serviceImg =
       file && (await this.awsService.uploadFile(file, Random(11), 'service'));
 
+    console.log(createServiceDto);
+
     const service = await this.prisma.service.create({
       data: {
         ...createServiceDto,

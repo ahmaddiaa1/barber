@@ -12,14 +12,5 @@
       "dest": "src/main.ts"
     }
     
-  ],
-  "env": {
-    "DATABASE_URL": "postgresql://neondb_owner:npg_jcrLab39fAiC@ep-damp-night-a9y9g82b-pooler.gwc.azure.neon.tech/neondb?sslmode=require",
-    "DIRECT_URL": "postgresql://neondb_owner:npg_jcrLab39fAiC@ep-damp-night-a9y9g82b-pooler.gwc.azure.neon.tech/neondb?sslmode=require",
-    "JWT_SECRET": "a9a6327558d4abc40861073254010cfc005fd2986af24ce0e53d6885a8a6a156",
-    "PORT": "3000",
-    "key":"key",
-    "AWS_BUCKET_NAME": "barber-bucket-image",
-    "NODE_ENV": "production"
-  }
+  ]
 }

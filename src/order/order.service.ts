@@ -10,7 +10,10 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
 import { Service } from '@prisma/client';
-import dateFormat from 'dateformat';
+let dateFormat: any;
+(async () => {
+  dateFormat = await import('dateformat').then((mod) => mod.default);
+})();
 
 interface PrismaServiceType extends Service {
   isFree: boolean;

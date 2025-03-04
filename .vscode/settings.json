@@ -7,9 +7,12 @@
         "fbsvc",
         "flushall",
         "Madinaty",
+        "neondb",
         "occured",
         "PAYMOB",
+        "pooler",
         "setex",
+        "sslmode",
         "supabase"
     ]
 }

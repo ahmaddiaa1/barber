@@ -11,6 +11,7 @@ import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
 import { Language, Service } from '@prisma/client';
 import { format } from 'date-fns';
+import { Translation } from 'src/class-type/translation';
 
 interface PrismaServiceType extends Service {
   isFree: boolean;
@@ -23,22 +24,30 @@ export class OrderService {
     private readonly promoCodeService: PromoCodeService,
   ) {}
 
-  async getAllOrders(userId: string) {
+  async getAllOrders(userId: string, lang: Language) {
     const fetchedOrders = await this.prisma.order.findMany({
       where: { userId: userId },
       include: {
         barber: true,
-        branch: true,
+        branch: { include: Translation(lang) },
       },
     });
 
     const orders = fetchedOrders.map((order) => {
-      const { barber, date, branch, ...rest } = order;
+      const {
+        barber,
+        date,
+        branch: { Translation, ...branchRest },
+        ...rest
+      } = order;
       return {
         ...rest,
         date: format(new Date(date), 'yyyy-MM-dd'),
         barber,
-        branch,
+        branch: {
+          ...branchRest,
+          name: Translation[0].name,
+        },
       };
     });
 

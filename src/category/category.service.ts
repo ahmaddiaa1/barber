@@ -53,11 +53,33 @@ export class CategoryService {
         }));
       }).flat();
 
-    const categories = await this.prisma.category.findMany({
+    const fetchedCategories = await this.prisma.category.findMany({
       include: {
-        services: true,
+        services: {
+          include: Translation(language),
+        },
         ...Translation(language),
       },
+    });
+
+    const categories = fetchedCategories.map((category) => {
+      const { Translation: categoryTranslation, services, ...rest } = category;
+
+      console.log(services);
+
+      const service = services.map((service) => {
+        const { Translation: serviceTranslation, ...rest } = service;
+        return {
+          ...rest,
+          name: serviceTranslation[0].name,
+        };
+      });
+
+      return {
+        ...rest,
+        services: service,
+        name: categoryTranslation[0].name,
+      };
     });
 
     return new AppSuccess(
@@ -66,20 +88,32 @@ export class CategoryService {
     );
   }
 
-  public async findCategoryById(id: string): Promise<AppSuccess<Category>> {
-    const category = await this.findOneOrFail(id);
+  public async findCategoryById(
+    id: string,
+    language: Language,
+  ): Promise<AppSuccess<Category>> {
+    const category = await this.findOneOrFail(id, language);
 
     return new AppSuccess(category, 'Category found successfully');
   }
 
   public async createCategory(
     createCategoryDto: CreateCategoryDto,
+    language: Language,
   ): Promise<AppSuccess<Category>> {
-    const category = await this.prisma.category.create({
+    const newCategory = await this.prisma.category.create({
       data: {
         ...createCategoryDto,
       },
+      include: Translation(language),
     });
+
+    const { Translation: categoryTranslation, ...rest } = newCategory;
+
+    const category = {
+      ...rest,
+      name: categoryTranslation[0].name,
+    };
 
     return new AppSuccess(category, 'Category created successfully');
   }
@@ -87,18 +121,24 @@ export class CategoryService {
   public async updateCategory(
     id: string,
     updateCategoryDto: UpdateCategoryDto,
+    language: Language,
   ): Promise<AppSuccess<Category>> {
     await this.findOneOrFail(id);
 
     const updatedCategory = await this.prisma.category.update({
       where: { id },
       data: updateCategoryDto,
-      include: {
-        services: true,
-      },
+      include: Translation(language),
     });
 
-    return new AppSuccess(updatedCategory, 'Category updated successfully');
+    const { Translation: categoryTranslation, ...rest } = updatedCategory;
+
+    const category = {
+      ...rest,
+      name: categoryTranslation[0].name,
+    };
+
+    return new AppSuccess(category, 'Category updated successfully');
   }
 
   public async delete(id: string): Promise<AppSuccess<Category>> {
@@ -111,10 +151,36 @@ export class CategoryService {
     return new AppSuccess(deleteCategory, 'Category updated successfully');
   }
 
-  private async findOneOrFail(id: string) {
-    const category = await this.prisma.category.findUnique({
+  private async findOneOrFail(id: string, language?: Language) {
+    const fetchedCategory = await this.prisma.category.findUnique({
       where: { id },
+      include: {
+        services: {
+          include: Translation(language),
+        },
+        ...Translation(language),
+      },
     });
+
+    const {
+      Translation: categoryTranslation,
+      services,
+      ...rest
+    } = fetchedCategory;
+
+    const service = services.map((service) => {
+      const { Translation: serviceTranslation, ...rest } = service;
+      return {
+        ...rest,
+        name: serviceTranslation[0].name,
+      };
+    });
+
+    const category = {
+      ...rest,
+      services: service,
+      name: categoryTranslation[0].name,
+    };
 
     if (!category) throw new NotFoundException('Category not found');
 

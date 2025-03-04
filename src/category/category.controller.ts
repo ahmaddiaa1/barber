@@ -36,16 +36,21 @@ export class CategoryController {
   @Get(':id')
   public async findCategoryById(
     @Param('id', ParseUUIDPipe) id: string,
+    @Lang() language: Language,
   ): Promise<AppSuccess<Category>> {
-    return await this.categoryService.findCategoryById(id);
+    return await this.categoryService.findCategoryById(id, language);
   }
 
   @Roles(['ADMIN'])
   @Post()
   public async createCategory(
     @Body() createCategoryDto: CreateCategoryDto,
+    @Lang() language: Language,
   ): Promise<AppSuccess<Category>> {
-    return await this.categoryService.createCategory(createCategoryDto);
+    return await this.categoryService.createCategory(
+      createCategoryDto,
+      language,
+    );
   }
 
   @Roles(['ADMIN'])
@@ -53,8 +58,13 @@ export class CategoryController {
   public async updateCategory(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
+    @Lang() language: Language,
   ): Promise<AppSuccess<Category>> {
-    return await this.categoryService.updateCategory(id, updateCategoryDto);
+    return await this.categoryService.updateCategory(
+      id,
+      updateCategoryDto,
+      language,
+    );
   }
 
   @Roles(['ADMIN'])

@@ -9,7 +9,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
-import { Service } from '@prisma/client';
+import { Language, Service } from '@prisma/client';
+import { format } from 'date-fns';
 
 interface PrismaServiceType extends Service {
   isFree: boolean;
@@ -43,7 +44,11 @@ export class OrderService {
     return new AppSuccess(order, 'Order fetched successfully');
   }
 
-  async GetData(createOrderDto: CreateOrderDto, userId: string) {
+  async GetData(
+    createOrderDto: CreateOrderDto,
+    userId: string,
+    lang: Language,
+  ) {
     const {
       promoCode,
       service,
@@ -171,28 +176,32 @@ export class OrderService {
 
     return new AppSuccess(
       {
-        date: OrderDate,
+        date: format(new Date(OrderDate), 'yyyy-MM-dd'),
         slot,
         barberId,
         branchId,
-        points: points,
+        points: points?.toString(),
         createdAt: new Date(),
         updatedAt: null,
-        duration: `${duration} Minutes`,
+        duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
         promoCode: promoCode ? promoCode : null,
-        subTotal: subTotal,
+        subTotal: subTotal?.toString(),
         discount: promoCode
           ? validPromoCode?.type === 'PERCENTAGE'
             ? `${validPromoCode?.discount}%`
             : `${validPromoCode?.discount}EGP`
           : '0',
-        total: total,
+        total: total?.toString(),
       },
       'Data fetched successfully',
     );
   }
 
-  async createOrder(createOrderDto: CreateOrderDto, userId: string) {
+  async createOrder(
+    createOrderDto: CreateOrderDto,
+    userId: string,
+    lang: Language,
+  ) {
     const {
       slot,
       service,
@@ -434,22 +443,22 @@ export class OrderService {
 
     return new AppSuccess(
       {
-        date: order.date,
+        date: format(order.date, 'yyyy-MM-dd'),
         slot: order.slot,
         barberId: order.barberId,
         branchId: order.branchId,
-        points: order.points,
+        points: order.points?.toString(),
         createdAt: order.createdAt,
         updatedAt: null,
-        duration: `${duration} Minutes`,
+        duration: `${duration} ${lang === 'AR' ? 'دقيقة' : 'minutes'}`,
         promoCode: promoCode ? promoCode : null,
-        subTotal: order.subTotal,
+        subTotal: order.subTotal?.toString(),
         discount: promoCode
           ? validPromoCode?.type === 'PERCENTAGE'
             ? `${validPromoCode?.discount}%`
             : `${validPromoCode?.discount}EGP`
           : '0',
-        total: order.total,
+        total: order.total?.toString(),
       },
       'Order created successfully',
     );

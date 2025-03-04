@@ -11,10 +11,11 @@ import {
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UserData } from '../../decorators/user.decorator';
-import { User } from '@prisma/client';
+import { Language, User } from '@prisma/client';
 import { AuthGuard } from '../../guard/auth.guard';
 import { RolesGuard } from 'guard/role.guard';
 import { Roles } from 'decorators/roles.decorator';
+import { Lang } from 'decorators/accept.language';
 
 @UseGuards(RolesGuard)
 @UseGuards(AuthGuard)
@@ -54,8 +55,9 @@ export class OrderController {
   async getOrderDetails(
     @Body() orderDto: CreateOrderDto,
     @UserData('user') user: User,
+    @Lang() lang: Language,
   ) {
-    return this.orderService.GetData(orderDto, user.id);
+    return this.orderService.GetData(orderDto, user.id, lang);
   }
 
   @Get('/slots')
@@ -72,8 +74,9 @@ export class OrderController {
   async createOrder(
     @Body() createOrderDto: CreateOrderDto,
     @UserData('user') user: User,
+    @Lang() lang: Language,
   ) {
-    return this.orderService.createOrder(createOrderDto, user.id);
+    return this.orderService.createOrder(createOrderDto, user.id, lang);
   }
 
   @Roles(['ADMIN'])

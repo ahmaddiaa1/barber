@@ -10,13 +10,17 @@ import {
   UseInterceptors,
   UploadedFile,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { BranchService } from './branch.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { AcceptLanguage } from 'guard/accept.language';
+import { Lang } from 'decorators/accept.language';
 import { Language } from '@prisma/client';
 
+@UseGuards(AcceptLanguage)
 @UseInterceptors(FileInterceptor('file'))
 @Controller('branch')
 export class BranchController {
@@ -26,16 +30,14 @@ export class BranchController {
   create(
     @Body() createBranchDto: CreateBranchDto,
     @UploadedFile() file: Express.Multer.File,
-    @Res() res: Response,
+    @Lang() language: Language,
   ) {
-    const lang = res['language'] || Language.EN;
-    return this.branchService.create(createBranchDto, file, lang);
+    return this.branchService.create(createBranchDto, file, language);
   }
 
   @Get()
-  findAll(@Res() res: Response) {
-    const lang = res['language'] || Language.EN;
-    return this.branchService.findAll(lang);
+  findAll(@Lang() language: Language) {
+    return this.branchService.findAll(language);
   }
 
   @Get(':id')

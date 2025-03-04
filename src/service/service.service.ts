@@ -29,8 +29,11 @@ export class ServiceService {
     return new AppSuccess({ services }, 'Services found successfully');
   }
 
-  public async getServiceById(id: string): Promise<AppSuccess<Service>> {
-    const service = await this.findOneOrFail(id);
+  public async getServiceById(
+    id: string,
+    language: Language,
+  ): Promise<AppSuccess<Service>> {
+    const service = await this.findOneOrFail(id, language);
 
     return new AppSuccess(service, 'Service found successfully');
   }
@@ -38,6 +41,7 @@ export class ServiceService {
   public async createService(
     createServiceDto: CreateServiceDto,
     file: Express.Multer.File,
+    language: Language,
   ): Promise<AppSuccess<Service>> {
     const serviceImg =
       file && (await this.awsService.uploadFile(file, Random(11), 'service'));
@@ -50,7 +54,7 @@ export class ServiceService {
         ...(serviceImg && { serviceImg }),
         Translation: createTranslation(createServiceDto),
       },
-      include: Translation,
+      include: Translation(language),
     });
 
     return new AppSuccess(service, 'Service created successfully');
@@ -60,8 +64,9 @@ export class ServiceService {
     id: string,
     updateServiceDto: UpdateServiceDto,
     file: Express.Multer.File,
+    language: Language,
   ): Promise<AppSuccess<Service>> {
-    await this.findOneOrFail(id);
+    await this.findOneOrFail(id, language);
     const serviceImg =
       file && (await this.awsService.uploadFile(file, id, 'service'));
 
@@ -74,7 +79,7 @@ export class ServiceService {
           Translation: updateTranslation(updateServiceDto),
         }),
       },
-      include: Translation,
+      include: Translation(language),
     });
 
     return new AppSuccess(service, 'Service updated successfully');
@@ -84,7 +89,7 @@ export class ServiceService {
     id: string,
     available: { available: boolean },
   ): Promise<AppSuccess<Service>> {
-    await this.findOneOrFail(id);
+    // await this.findOneOrFail(id);
     const service = await this.prisma.service.update({
       where: { id },
       data: available,
@@ -93,10 +98,13 @@ export class ServiceService {
     return new AppSuccess(service, 'Service deleted successfully');
   }
 
-  private async findOneOrFail(id: string): Promise<Service> {
+  private async findOneOrFail(
+    id: string,
+    language: Language,
+  ): Promise<Service> {
     const service = await this.prisma.service.findUnique({
       where: { id },
-      include: Translation,
+      include: Translation(language),
     });
 
     if (!service) {

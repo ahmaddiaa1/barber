@@ -33,7 +33,7 @@ export class BranchService {
         ...createBranchDto,
         Translation: createTranslation(createBranchDto),
       },
-      include: Translation(language),
+      // include: Translation,
     });
     return new AppSuccess(newBranch, 'Branch created successfully');
   }
@@ -56,7 +56,6 @@ export class BranchService {
       };
     });
 
-    console.log('branches', branches);
     return new AppSuccess({ branches }, 'Branches found successfully');
   }
 

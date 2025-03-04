@@ -31,8 +31,11 @@ export class ServiceController {
   }
 
   @Get(':id')
-  public async findServiceById(@Param('id', ParseUUIDPipe) id: string) {
-    return await this.serviceService.getServiceById(id);
+  public async findServiceById(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Lang() language: Language,
+  ) {
+    return await this.serviceService.getServiceById(id, language);
   }
 
   @Post()
@@ -40,8 +43,13 @@ export class ServiceController {
   public async createService(
     @Body() createServiceDto: CreateServiceDto,
     @UploadedFile() file: Express.Multer.File,
+    @Lang() language: Language,
   ) {
-    return await this.serviceService.createService(createServiceDto, file);
+    return await this.serviceService.createService(
+      createServiceDto,
+      file,
+      language,
+    );
   }
 
   @Put(':id')
@@ -50,8 +58,14 @@ export class ServiceController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateServiceDto: UpdateServiceDto,
     @UploadedFile() file: Express.Multer.File,
+    @Lang() language: Language,
   ) {
-    return await this.serviceService.updateService(id, updateServiceDto, file);
+    return await this.serviceService.updateService(
+      id,
+      updateServiceDto,
+      file,
+      language,
+    );
   }
 
   @Put(':id/status')

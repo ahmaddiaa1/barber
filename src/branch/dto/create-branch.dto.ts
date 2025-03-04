@@ -13,9 +13,6 @@ import { translation } from '../../../src/class-type/translation';
 
 export class CreateBranchDto {
   @IsString()
-  name: string;
-
-  @IsString()
   location: string;
 
   @IsNotEmpty()
@@ -23,10 +20,10 @@ export class CreateBranchDto {
   @Length(10, 16)
   phone: string;
 
-  @IsString()
-  @IsOptional()
-  @Transform(({ value }) => value ?? null)
-  branchImg: string;
+  // @IsString()
+  // @IsOptional()
+  // @Transform(({ value }) => value ?? null)
+  // branchImg: string;
 
   @IsOptional()
   @Transform(({ value }) => value ?? null)

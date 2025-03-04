@@ -38,8 +38,8 @@ export class BranchController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.branchService.findOne(id);
+  findOne(@Param('id', ParseUUIDPipe) id: string, @Lang() language: Language) {
+    return this.branchService.findOne(id, language);
   }
 
   @Put(':id')

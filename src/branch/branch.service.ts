@@ -35,7 +35,15 @@ export class BranchService {
       },
       include: Translation(),
     });
-    return new AppSuccess(newBranch, 'Branch created successfully');
+
+    const { Translation: branchTranslation, ...rest } = newBranch;
+
+    const branch = {
+      ...rest,
+      name: branchTranslation[0].name,
+    };
+
+    return new AppSuccess(branch, 'Branch created successfully');
   }
 
   async findAll(
@@ -59,11 +67,11 @@ export class BranchService {
     return new AppSuccess({ branches }, 'Branches found successfully');
   }
 
-  async findOne(id: string): Promise<AppSuccess<Branch>> {
-    const branch = await this.prisma.branch.findUnique({
+  async findOne(id: string, language?: Language): Promise<AppSuccess<Branch>> {
+    const fetchedBranch = await this.prisma.branch.findUnique({
       where: { id },
       include: {
-        ...Translation,
+        ...Translation(language),
         barber: {
           select: {
             id: true,
@@ -96,7 +104,15 @@ export class BranchService {
       },
     });
 
-    if (!branch) throw new NotFoundException(`Branch with ID ${id} not found`);
+    if (!fetchedBranch)
+      throw new NotFoundException(`Branch with ID ${id} not found`);
+
+    const { Translation: branchTranslation, ...rest } = fetchedBranch;
+
+    const branch = {
+      ...rest,
+      name: branchTranslation[0].name,
+    };
 
     return new AppSuccess(branch, 'Branch found successfully');
   }

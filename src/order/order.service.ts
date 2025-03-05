@@ -29,7 +29,7 @@ export class OrderService {
     const fetchedOrders = await this.prisma.order.findMany({
       where: { userId: userId },
       include: {
-        barber: true,
+        barber: { include: { barber: { include: { user: true } } } },
         branch: { include: Translation(lang) },
         service: true,
       },
@@ -68,7 +68,7 @@ export class OrderService {
           ...rest,
           booking,
           date,
-          barber,
+          barber: barber.barber,
           total: total.toString(),
           subTotal: subTotal.toString(),
           discount: discount.toString(),

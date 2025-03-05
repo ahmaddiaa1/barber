@@ -44,12 +44,13 @@ export const updateTranslation = <
   return updates.length ? { updateMany: updates } : {};
 };
 
-export const Translation = (language?: Language) => {
+export const Translation = (language?: Language, des?: boolean) => {
   return {
     Translation: {
       ...(language && { where: { language: Language[language] } }),
       select: {
         name: true,
+        ...(des && { description: true }),
       },
     },
   };

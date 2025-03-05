@@ -99,14 +99,13 @@ export class PackageService {
     const packages = fetchedPackages.map((packageData) => {
       const { Translation, services: s, ...rest } = packageData;
       const services = s.map((s) => {
-        const { Translation, ...rest } = s;
+        const { Translation, id } = s;
         return {
           ...rest,
           name: Translation[0].name,
         };
       });
       return {
-        ...rest,
         name: Translation[0].name,
         services,
       };

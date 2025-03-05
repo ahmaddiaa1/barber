@@ -135,6 +135,8 @@ model Translation {
   category   Category? @relation("category", fields: [categoryId], references: [id], map: "Translation_category_key")
   service    Service?  @relation("service", fields: [serviceId], references: [id], map: "Translation_service_key")
   pointsId   String?
+  Product    Product?  @relation(fields: [productId], references: [id])
+  productId  String?
 
   @@index([name])
 }
@@ -188,13 +190,15 @@ model Service {
 }
 
 model Product {
-  id         String   @id @default(uuid())
-  name       String
+  id String @id @default(uuid())
+
   productImg String
   price      Int
   available  Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  Translation Translation[]
 }
 
 model Slot {

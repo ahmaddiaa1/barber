@@ -73,21 +73,45 @@ export class ClientPackagesService {
     );
   }
 
-  async findAll() {
-    const clientPackages = await this.prisma.clientPackages.findMany({
+  async findAll(language: Language) {
+    const fetchedClientPackages = await this.prisma.clientPackages.findMany({
       include: {
+        Translation: {
+          where: { language },
+          ...translationDes().Translation,
+        },
         packageService: {
           include: {
             service: {
               select: {
                 id: true,
-                Translation: true,
+                Translation: {
+                  where: { language },
+                  ...Translation().Translation,
+                },
                 serviceImg: true,
               },
             },
           },
         },
       },
+    });
+
+    const clientPackages = fetchedClientPackages.map((clientPackage) => {
+      const { Translation, packageService, ...rest } = clientPackage;
+      return {
+        ...rest,
+        name: Translation[0].name,
+        description: Translation[0].description,
+        services: packageService.map((service) => {
+          const { serviceImg, Translation, ...rest } = service.service;
+          return {
+            ...rest,
+            name: Translation[0].name,
+            serviceImg,
+          };
+        }),
+      };
     });
 
     return new AppSuccess(
@@ -97,16 +121,23 @@ export class ClientPackagesService {
     );
   }
 
-  async findOne(id: string) {
-    const clientPackage = await this.prisma.clientPackages.findUnique({
+  async findOne(id: string, language: Language) {
+    const fetchedClientPackage = await this.prisma.clientPackages.findUnique({
       where: { id: id },
       include: {
+        Translation: {
+          where: { language },
+          ...translationDes().Translation,
+        },
         packageService: {
           include: {
             service: {
               select: {
                 id: true,
-                Translation: true,
+                Translation: {
+                  where: { language },
+                  ...Translation().Translation,
+                },
                 serviceImg: true,
               },
             },
@@ -114,6 +145,26 @@ export class ClientPackagesService {
         },
       },
     });
+
+    const {
+      Translation: clientPackageTranslation,
+      packageService,
+      ...rest
+    } = fetchedClientPackage;
+
+    const clientPackage = {
+      ...rest,
+      name: clientPackageTranslation[0].name,
+      description: clientPackageTranslation[0].description,
+      services: packageService.map((service) => {
+        const { serviceImg, Translation, ...rest } = service.service;
+        return {
+          ...rest,
+          name: Translation[0].name,
+          serviceImg,
+        };
+      }),
+    };
 
     if (!clientPackage) {
       throw new NotFoundException('Client package not found');

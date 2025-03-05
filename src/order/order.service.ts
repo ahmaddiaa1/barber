@@ -25,69 +25,68 @@ export class OrderService {
   ) {}
 
   async getAllOrders(userId: string, lang: Language) {
+    // Fetch all orders with related data
     const fetchedOrders = await this.prisma.order.findMany({
       where: { userId: userId },
       include: {
-        barber: true,
+        barber: { include: { barber: { include: { user: true } } } },
         branch: { include: Translation(lang) },
         service: true,
       },
     });
 
-    const orders = await fetchedOrders.map(async (order) => {
-      const {
-        barber,
-        date,
-        total,
-        subTotal,
-        discount,
-        points,
-        service,
-        branch: { Translation, ...branchRest },
-        booking,
-        ...rest
-      } = order;
+    // Map and resolve promises concurrently
+    const orders = await Promise.all(
+      fetchedOrders.map(async (order) => {
+        const {
+          barber,
+          date,
+          total,
+          subTotal,
+          discount,
+          points,
+          service,
+          branch: { Translation, ...branchRest },
+          booking,
+          ...rest
+        } = order;
 
-      const usedPackage = await this.prisma.clientPackages.findMany({
-        where: { id: { in: order.usedPackage } },
-      });
+        // Fetch used packages and related services
+        const usedPackage = await this.prisma.clientPackages.findMany({
+          where: { id: { in: order.usedPackage } },
+        });
 
-      const usedPackageIds = usedPackage.flatMap((u) => u.packageId);
+        const usedPackageIds = usedPackage.flatMap((u) => u.packageId);
 
-      const packageServices = await this.prisma.packages.findMany({
-        where: { id: { in: usedPackageIds } },
-        include: { services: true },
-      });
+        const packageServices = await this.prisma.packages.findMany({
+          where: { id: { in: usedPackageIds } },
+          include: { services: true },
+        });
 
-      return {
-        ...rest,
-        booking,
-        date,
-        barber,
-        total: total.toString(),
-        subTotal: subTotal.toString(),
-        discount: discount.toString(),
-        points: points.toString(),
-        usedPackage: packageServices,
-        service,
-        branch: {
-          ...branchRest,
-          name: Translation[0].name,
-        },
-      };
-    });
-
-    console.log(orders);
-
-    const upcoming = orders.filter(
-      async (order) => (await order).booking === 'UPCOMING',
+        // Return the structured order object
+        return {
+          ...rest,
+          booking,
+          date,
+          barber: barber.barber,
+          total: total.toString(),
+          subTotal: subTotal.toString(),
+          discount: discount.toString(),
+          points: points.toString(),
+          usedPackage: packageServices,
+          service,
+          branch: {
+            ...branchRest,
+            name: Translation[0].name,
+          },
+        };
+      }),
     );
-    const completed = orders.filter(
-      async (order) => (await order).booking === 'PAST',
-    );
-    const cancelled = orders.filter(
-      async (order) => (await order).booking === 'CANCELLED',
-    );
+
+    // Filter the resolved orders based on booking status
+    const upcoming = orders.filter((order) => order.booking === 'UPCOMING');
+    const completed = orders.filter((order) => order.booking === 'PAST');
+    const cancelled = orders.filter((order) => order.booking === 'CANCELLED');
 
     return new AppSuccess(
       { upcoming, completed, cancelled },

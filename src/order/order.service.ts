@@ -34,7 +34,7 @@ export class OrderService {
       },
     });
 
-    const orders = fetchedOrders.map(async (order) => {
+    const orders = await fetchedOrders.map(async (order) => {
       const {
         barber,
         date,
@@ -76,6 +76,8 @@ export class OrderService {
         },
       };
     });
+
+    console.log(orders);
 
     const upcoming = orders.filter(
       async (order) => (await order).booking === 'UPCOMING',

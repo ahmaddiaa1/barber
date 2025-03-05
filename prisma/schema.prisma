@@ -86,7 +86,7 @@ model about {
 }
 
 model questions {
-  id       String  @id
+  id       String  @id @default(uuid())
   question String
   answer   String
   staticId String

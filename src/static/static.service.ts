@@ -49,7 +49,7 @@ export class StaticService {
     if (!staticData) {
       const questionss = await this.prisma.static.create({
         data: {
-          questions: { create: questions },
+          questions: { createMany: { data: questions } },
         },
       });
       return new AppSuccess(questionss, 'Static data created successfully');

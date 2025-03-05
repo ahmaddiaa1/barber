@@ -29,14 +29,13 @@ export class StaticService {
       return new AppSuccess(abouts, 'Static data created successfully');
     }
 
-    const abouts = await this.prisma.static.update({
+    const abouts = await this.prisma.about.update({
       where: { id: staticData.id },
       data: {
-        about: {
-          update: about,
-        },
+        content: about.content,
+        location: about.location,
+        time: about.time,
       },
-      include: { about: true },
     });
     return new AppSuccess(abouts, 'Static data created successfully');
   }

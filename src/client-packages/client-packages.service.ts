@@ -165,7 +165,7 @@ export class ClientPackagesService {
     };
 
     if (!clientPackage) {
-      throw new NotFoundException('Client package not found');
+      throw new NotFoundException(`Client package with ID ${id} not found`);
     }
 
     return new AppSuccess(

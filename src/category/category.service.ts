@@ -59,6 +59,7 @@ export class CategoryService {
           updatedAt,
           description,
         } = item;
+
         return Translation.map((translate) => ({
           id,
           createdAt,
@@ -66,7 +67,7 @@ export class CategoryService {
           type,
           name: translate.name,
           description: translate.description,
-          service: packageService.flatMap((service) => service.service),
+          services: packageService.flatMap((service) => service.service),
         }));
       }).flat();
 

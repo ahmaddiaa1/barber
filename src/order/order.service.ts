@@ -77,7 +77,7 @@ export class OrderService {
         return {
           ...rest,
           booking,
-          date,
+          date: format(new Date(date), 'yyyy-MM-dd'),
           duration,
           barber: barber.barber,
           total: total.toString(),

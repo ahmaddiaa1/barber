@@ -42,7 +42,7 @@ export const multerConfig = (folder: string): multer.Options => {
     ) => {
       const mimeType = file.mimetype;
       const ext = extname(file.originalname).toLowerCase().replace('.', '');
-
+      console.log(mimeType, ext);
       if (!mimeType.startsWith('image/') || !formats.includes(ext)) {
         return callback(
           new UnsupportedMediaTypeException('Only image files are allowed!'),

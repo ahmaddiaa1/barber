@@ -25,7 +25,7 @@ export class BranchService {
     language: Language,
   ): Promise<AppSuccess<Branch>> {
     const branchImg = file?.path;
-    console.log(branchImg);
+    console.log('file', file);
 
     const newBranch = await this.prisma.branch.create({
       data: {

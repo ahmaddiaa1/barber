@@ -63,15 +63,26 @@ export class OrderService {
           include: { services: true },
         });
 
+        const allServices = [
+          ...service,
+          ...packageServices.flatMap((p) => p.services),
+        ];
+
+        const duration = (
+          allServices.reduce((total, service) => total + service.duration, 0) *
+          30
+        ).toString();
+
         // Return the structured order object
         return {
           ...rest,
           booking,
           date,
+          duration,
           barber: barber.barber,
           total: total.toString(),
           subTotal: subTotal.toString(),
-          discount: discount.toString(),
+          discount: (total - subTotal).toString(),
           points: points.toString(),
           usedPackage: packageServices,
           service,

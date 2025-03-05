@@ -36,12 +36,12 @@ export const multerConfig = (folder: string): multer.Options => {
       file,
       callback: (error: Error | null, acceptFile: boolean) => void,
     ) => {
-      if (!file.mimetype || !file.mimetype.match(/image\/(jpg|jpeg|png|gif)/)) {
-        return callback(
-          new UnsupportedMediaTypeException('Only image files are allowed!'),
-          false,
-        );
-      }
+      // if (!file.mimetype || !file.mimetype.match(/image\/(jpg|jpeg|png|gif)/)) {
+      //   return callback(
+      //     new UnsupportedMediaTypeException('Only image files are allowed!'),
+      //     false,
+      //   );
+      // }
       callback(null, true);
     },
 

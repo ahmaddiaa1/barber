@@ -23,7 +23,7 @@ export const multerConfig = (folder: string): multer.Options => {
           folder: 'barber',
           format: file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)[1],
           public_id: `${folder}/${Date.now()}-${file.originalname.split(/\.(?=[^\.]+$)/)[0]}`,
-          // transformation: [{ width: 500, height: 500, crop: 'limit' }],
+          transformation: [{ width: 500, height: 500, crop: 'limit' }],
         };
       },
     }),
@@ -40,8 +40,8 @@ export const multerConfig = (folder: string): multer.Options => {
       }
       callback(null, true);
     },
-    limits: {
-      fileSize: 1024 * 1024 * 5, // 5 MB
-    },
+    // limits: {
+    //   fileSize: 1024 * 1024 * 5, // 5 MB
+    // },
   };
 };

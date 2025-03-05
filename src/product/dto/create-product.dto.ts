@@ -1,4 +1,3 @@
-import { Translation } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
   IsArray,
@@ -7,6 +6,7 @@ import {
   IsNumber,
   IsString,
 } from 'class-validator';
+import { translationDto } from 'src/class-type/translation';
 
 export class CreateProductDto {
   @IsNotEmpty()
@@ -24,5 +24,5 @@ export class CreateProductDto {
   available: boolean;
 
   @IsArray()
-  Translation: Translation[];
+  Translation: translationDto[];
 }

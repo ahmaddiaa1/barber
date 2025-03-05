@@ -22,7 +22,7 @@ export const multerConfig = (folder: string): multer.Options => {
       params: async (req, file) => {
         return {
           folder: 'barber',
-          format: file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)[1],
+          format: extname(file.originalname).toLowerCase().replace('.', ''),
           public_id: `${folder}/${Date.now()}-${file.originalname.split(/\.(?=[^\.]+$)/)[0]}`,
           transformation: [{ width: 500, height: 500, crop: 'limit' }],
         };

@@ -75,7 +75,10 @@ export class ClientPackagesService {
 
   async findAll(language: Language) {
     const fetchedClientPackages = await this.prisma.clientPackages.findMany({
-      include: {
+      select: {
+        id: true,
+        createdAt: true,
+        updatedAt: true,
         Translation: {
           where: { language },
           ...translationDes().Translation,
@@ -122,7 +125,10 @@ export class ClientPackagesService {
   async findOne(id: string, language: Language) {
     const fetchedClientPackage = await this.prisma.clientPackages.findUnique({
       where: { id: id },
-      include: {
+      select: {
+        id: true,
+        createdAt: true,
+        updatedAt: true,
         Translation: {
           where: { language },
           ...translationDes().Translation,

@@ -31,13 +31,13 @@ export class ClientPackagesController {
   }
 
   @Get()
-  findAll() {
-    return this.clientPackagesService.findAll();
+  findAll(@Lang() language: Language) {
+    return this.clientPackagesService.findAll(language);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.clientPackagesService.findOne(id);
+  findOne(@Param('id') id: string, @Lang() language: Language) {
+    return this.clientPackagesService.findOne(id, language);
   }
 
   @Patch(':id')

@@ -83,13 +83,11 @@ export class ClientPackagesService {
         packageService: {
           include: {
             service: {
-              select: {
-                id: true,
+              include: {
                 Translation: {
                   where: { language },
                   ...Translation().Translation,
                 },
-                serviceImg: true,
               },
             },
           },

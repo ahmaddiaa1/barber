@@ -48,10 +48,20 @@ export class CategoryService {
     const client =
       CurrUser.role === 'USER' &&
       CurrUser.client.ClientPackages.map((item) => {
-        const { packageService, clientId, Translation, isActive, ...rest } =
-          item;
+        const {
+          packageService,
+          clientId,
+          Translation,
+          isActive,
+          id,
+          createdAt,
+          updatedAt,
+          description,
+        } = item;
         return Translation.map((translate) => ({
-          ...rest,
+          id,
+          createdAt,
+          updatedAt,
           name: translate.name,
           description: translate.description,
           service: packageService.flatMap((service) => service.service),

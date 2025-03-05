@@ -25,7 +25,6 @@ export class OrderService {
   ) {}
 
   async getAllOrders(userId: string, lang: Language) {
-    // Fetch all orders with related data
     const fetchedOrders = await this.prisma.order.findMany({
       where: { userId: userId },
       include: {
@@ -35,7 +34,6 @@ export class OrderService {
       },
     });
 
-    // Map and resolve promises concurrently
     const orders = await Promise.all(
       fetchedOrders.map(async (order) => {
         const {
@@ -51,7 +49,6 @@ export class OrderService {
           ...rest
         } = order;
 
-        // Fetch used packages and related services
         const usedPackage = await this.prisma.clientPackages.findMany({
           where: { id: { in: order.usedPackage } },
         });
@@ -73,12 +70,11 @@ export class OrderService {
           30
         ).toString();
 
-        // Return the structured order object
         return {
           ...rest,
           booking,
           date: format(new Date(date), 'yyyy-MM-dd'),
-          duration,
+          duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
           barber: barber.barber,
           total: total.toString(),
           subTotal: subTotal.toString(),
@@ -94,7 +90,6 @@ export class OrderService {
       }),
     );
 
-    // Filter the resolved orders based on booking status
     const upcoming = orders.filter((order) => order.booking === 'UPCOMING');
     const completed = orders.filter((order) => order.booking === 'PAST');
     const cancelled = orders.filter((order) => order.booking === 'CANCELLED');
@@ -731,7 +726,6 @@ export class OrderService {
       );
     }
 
-    // Ensure start is less than end
     if (start >= end) {
       throw new ConflictException('Start time must be less than end time.');
     }

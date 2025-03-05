@@ -3,6 +3,7 @@ import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import * as multer from 'multer';
 import * as dotenv from 'dotenv';
 import { UnsupportedMediaTypeException } from '@nestjs/common';
+import { extname } from 'path';
 
 dotenv.config();
 
@@ -23,7 +24,7 @@ export const multerConfig = (folder: string): multer.Options => {
           folder: 'barber',
           format: file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)[1],
           public_id: `${folder}/${Date.now()}-${file.originalname.split(/\.(?=[^\.]+$)/)[0]}`,
-          // transformation: [{ width: 500, height: 500, crop: 'limit' }],
+          transformation: [{ width: 500, height: 500, crop: 'limit' }],
         };
       },
     }),
@@ -32,6 +33,10 @@ export const multerConfig = (folder: string): multer.Options => {
       file,
       callback: (error: Error | null, acceptFile: boolean) => void,
     ) => {
+      const mimeType = file.mimetype;
+      const ext = extname(file.originalname).toLowerCase().replace('.', '');
+
+      console.log(mimeType, ext);
       if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
         return callback(
           new UnsupportedMediaTypeException('Only image files are allowed!'),
@@ -40,8 +45,8 @@ export const multerConfig = (folder: string): multer.Options => {
       }
       callback(null, true);
     },
-    // limits: {
-    //   fileSize: 1024 * 1024 * 5, // 5 MB
-    // },
+    limits: {
+      fileSize: 1024 * 1024 * 5, // 5 MB
+    },
   };
 };

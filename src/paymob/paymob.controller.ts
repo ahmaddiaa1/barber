@@ -69,12 +69,15 @@ export class PaymobController {
 
     const type = offers.offerType.toLocaleLowerCase();
 
+    console.log('offers', offers);
+
     const item = [
       {
-        name: offers[type].translation[0].name as string,
-        amount: +offers[type].translation[0].price * 100,
-        description: (offers[type].translation[0].description ??
-          offers[type].translation[0].name) as string,
+        name: offers[type].Translation[0].name,
+        amount: offers[type].price * 100,
+        description:
+          offers[type].Translation[0].description ??
+          offers[type].Translation[0].name,
         quantity: 1,
       },
     ];
@@ -89,9 +92,9 @@ export class PaymobController {
       billing_data,
       item,
       id,
-      offers[type].translation[0].price,
+      offers[type].price,
     );
-
+    console.log('paymentKey', paymentKey);
     return res.redirect(paymentKey);
   }
 
@@ -103,7 +106,7 @@ export class PaymobController {
     @Lang() lang: Language,
   ) {
     const authToken = await this.paymobService.getAuthToken();
-    const user = { id: 'ac6e9814-b83a-43f4-90ff-aa6b47ede2ab' } as User;
+    const user = { id: 'c1b8c002-0a74-455e-be5d-bd3aca12ab3b' } as User;
     const isSuccess = this.paymobService.verifyPaymobQuery(
       query,
       authToken,

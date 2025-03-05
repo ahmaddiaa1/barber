@@ -42,7 +42,7 @@ export class PaymobService {
     id: string,
     amount: number,
   ) {
-    console.log(billing_data, items);
+    console.log('dataaaaaaaa', billing_data, items);
 
     const { first_name, last_name, phone_number } = billing_data;
 
@@ -84,6 +84,8 @@ export class PaymobService {
           },
         },
       );
+      console.log(response.data);
+
       const clientSecret = response.data.client_secret;
 
       return `https://uae.paymob.com/unifiedcheckout/?publicKey=${process.env.PAYMOB_PUBLIC_KEY}&clientSecret=${clientSecret}`;
@@ -169,7 +171,8 @@ export class PaymobService {
       if (type === 'packages') {
         await this.packages.create(packageId, user, lang);
       } else if (type === 'points') {
-        await this.points.create(packageId, user, lang);
+        const a = await this.points.create(packageId, user, lang);
+        console.log('a', a);
       }
       console.log('Package purchased successfully');
     }

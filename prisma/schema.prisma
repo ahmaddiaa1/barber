@@ -89,7 +89,8 @@ model questions {
   id       String  @id
   question String
   answer   String
-  Static   Static? @relation(fields: [id], references: [id])
+  staticId String
+  Static   Static? @relation(fields: [staticId], references: [id])
 
   @@map("questions")
 }

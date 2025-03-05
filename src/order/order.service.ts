@@ -30,10 +30,11 @@ export class OrderService {
       include: {
         barber: true,
         branch: { include: Translation(lang) },
+        service: true,
       },
     });
 
-    const orders = fetchedOrders.map((order) => {
+    const orders = fetchedOrders.map(async (order) => {
       const {
         barber,
         date,
@@ -41,17 +42,34 @@ export class OrderService {
         subTotal,
         discount,
         points,
+        service,
         branch: { Translation, ...branchRest },
+        booking,
         ...rest
       } = order;
+
+      const usedPackage = await this.prisma.clientPackages.findMany({
+        where: { id: { in: order.usedPackage } },
+      });
+
+      const usedPackageIds = usedPackage.flatMap((u) => u.packageId);
+
+      const packageServices = await this.prisma.packages.findMany({
+        where: { id: { in: usedPackageIds } },
+        include: { services: true },
+      });
+
       return {
         ...rest,
-        date: format(new Date(date), 'yyyy-MM-dd'),
+        booking,
+        date,
         barber,
         total: total.toString(),
         subTotal: subTotal.toString(),
         discount: discount.toString(),
         points: points.toString(),
+        usedPackage: packageServices,
+        service,
         branch: {
           ...branchRest,
           name: Translation[0].name,
@@ -59,9 +77,15 @@ export class OrderService {
       };
     });
 
-    const upcoming = orders.filter((order) => order.booking === 'UPCOMING');
-    const completed = orders.filter((order) => order.booking === 'PAST');
-    const cancelled = orders.filter((order) => order.booking === 'CANCELLED');
+    const upcoming = orders.filter(
+      async (order) => (await order).booking === 'UPCOMING',
+    );
+    const completed = orders.filter(
+      async (order) => (await order).booking === 'PAST',
+    );
+    const cancelled = orders.filter(
+      async (order) => (await order).booking === 'CANCELLED',
+    );
 
     return new AppSuccess(
       { upcoming, completed, cancelled },

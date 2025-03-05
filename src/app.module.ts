@@ -20,6 +20,7 @@ import { ClientPackagesModule } from './client-packages/client-packages.module';
 import { PaymobModule } from './paymob/paymob.module';
 import { NotificationModule } from './notification/notification.module';
 import { ProductModule } from './product/product.module';
+import { StaticModule } from './static/static.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { ProductModule } from './product/product.module';
     NotificationModule,
     MockModule,
     ProductModule,
+    StaticModule,
   ],
   controllers: [],
   providers: [TokenService],

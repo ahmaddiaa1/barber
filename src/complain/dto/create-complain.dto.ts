@@ -1,9 +1,10 @@
-import { IsNotEmpty, IsString, IsUUID } from "class-validator";
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateComplainDto {
-    // @IsNotEmpty()
-    // userId: string;
+  // @IsNotEmpty()
+  // userId: string;
 
-    @IsString()
-    message: string;
+  @IsString()
+  @IsNotEmpty()
+  message: string;
 }

@@ -102,13 +102,18 @@ export class ClientPackagesService {
       const { Translation, packageService, ...rest } = clientPackage;
       return {
         ...rest,
-        name: Translation[0].name,
-        description: Translation[0].description,
+        nameEN: Translation.find((t) => t.language === 'EN')?.name,
+        nameAR: Translation.find((t) => t.language === 'AR')?.name,
+        name: Translation.find((t) => t.language === language)?.name,
+        description: Translation.find((t) => t.language === language)
+          .description,
         services: packageService.map((service) => {
           const { serviceImg, Translation, ...rest } = service.service;
           return {
             ...rest,
-            name: Translation[0].name,
+            nameEN: Translation.find((t) => t.language === 'EN')?.name,
+            nameAR: Translation.find((t) => t.language === 'AR')?.name,
+            name: Translation.find((t) => t.language === language)?.name,
             serviceImg,
           };
         }),

@@ -23,17 +23,17 @@ export class ServiceService {
     language: Language,
   ): Promise<AppSuccess<{ services: Service[] }>> {
     const fetchedServices = await this.prisma.service.findMany({
-      include: serviceTranslation(language),
+      include: serviceTranslation(),
     });
 
     const services = fetchedServices.map((service) => {
       const { Translation, ...rest } = service;
-      console.log(Translation);
 
       return {
         ...rest,
-        Translation: Translation,
-        name: Translation[0]?.name,
+        nameEN: Translation.find((t) => t.language === 'EN')?.name,
+        nameAR: Translation.find((t) => t.language === 'AR')?.name,
+        name: Translation.find((t) => t.language === language)?.name,
       };
     });
 

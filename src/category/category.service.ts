@@ -74,9 +74,9 @@ export class CategoryService {
     const fetchedCategories = await this.prisma.category.findMany({
       include: {
         services: {
-          include: Translation(language),
+          include: Translation(),
         },
-        ...Translation(language),
+        ...Translation(),
       },
     });
 
@@ -89,14 +89,18 @@ export class CategoryService {
         const { Translation: serviceTranslation, ...rest } = service;
         return {
           ...rest,
-          name: serviceTranslation[0].name,
+          nameEN: serviceTranslation.find((t) => t.language === 'EN')?.name,
+          nameAR: serviceTranslation.find((t) => t.language === 'AR')?.name,
+          name: serviceTranslation.find((t) => t.language === language)?.name,
         };
       });
 
       return {
         ...rest,
+        nameEN: categoryTranslation.find((t) => t.language === 'EN')?.name,
+        nameAR: categoryTranslation.find((t) => t.language === 'AR')?.name,
+        name: categoryTranslation.find((t) => t.language === language)?.name,
         services: service,
-        name: categoryTranslation[0].name,
       };
     });
 

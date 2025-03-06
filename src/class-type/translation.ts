@@ -50,6 +50,7 @@ export const Translation = (language?: Language, des?: boolean) => {
       ...(language && { where: { language: Language[language] } }),
       select: {
         name: true,
+        language: true,
         ...(des && { description: true }),
       },
     },

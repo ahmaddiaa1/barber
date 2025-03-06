@@ -22,7 +22,7 @@ export const multerConfig = (folder: string): multer.Options => {
       params: async (req, file) => {
         return {
           folder: 'barber',
-          format: extname(file.originalname).toLowerCase().replace('.', ''),
+          // format: extname(file.originalname).toLowerCase().replace('.', ''),
           public_id: `${folder}/${Date.now()}-${file.originalname.split(/\.(?=[^\.]+$)/)[0]}`,
           // transformation: [{ width: 500, height: 500, crop: 'limit' }],
         };

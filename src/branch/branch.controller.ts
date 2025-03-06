@@ -25,7 +25,7 @@ export class BranchController {
   constructor(private readonly branchService: BranchService) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('file', multerConfig('branches')))
+  // @UseInterceptors(FileInterceptor('file', multerConfig('branches')))
   create(
     @Body() createBranchDto: CreateBranchDto,
     @UploadedFile() file: Express.Multer.File,

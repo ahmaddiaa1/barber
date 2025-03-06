@@ -22,8 +22,8 @@ async function bootstrap() {
     new ValidationPipe({
       forbidUnknownValues: false,
       whitelist: true,
-      exceptionFactory: () => {
-        return new BadRequestException('All fields are required');
+      exceptionFactory: (data) => {
+        return new BadRequestException(JSON.stringify(data));
       },
     }),
   );

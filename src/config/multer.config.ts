@@ -44,25 +44,22 @@ export const multerConfig = (folder: string): multer.Options => {
       const ext = extname(file.originalname).toLowerCase().replace('.', '');
       console.log(mimeType, ext);
 
-      console.log(file);
-
-      if (!mimeType)
+      if (
+        !mimeType ||
+        !mimeType.startsWith('image/') ||
+        !formats.includes(ext)
+      ) {
         return callback(
-          new UnsupportedMediaTypeException('please enter a valid Image'),
+          new UnsupportedMediaTypeException('Only image files are allowed!'),
           false,
         );
-
-      if (!mimeType.startsWith('image/') || !formats.includes(ext))
-        return callback(
-          new UnsupportedMediaTypeException('please enter a valid Image'),
-          false,
-        );
+      }
 
       callback(null, true);
     },
 
-    limits: {
-      fileSize: 1024 * 1024 * 5, // 5 MB
-    },
+    // limits: {
+    //   fileSize: 1024 * 1024 * 5, // 5 MB
+    // },
   };
 };

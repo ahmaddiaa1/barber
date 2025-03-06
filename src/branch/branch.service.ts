@@ -124,7 +124,7 @@ export class BranchService {
   ): Promise<AppSuccess<Branch>> {
     await this.findOne(id);
 
-    const branchImg = file.path;
+    const branchImg = file?.path;
 
     const updatedBranch = await this.prisma.branch.update({
       where: { id },

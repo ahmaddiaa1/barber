@@ -23,6 +23,6 @@ export class CreateProductDto {
   @Transform(({ value }) => value === 'true')
   available: boolean;
 
-  @IsArray()
-  Translation: translationDto[];
+  // @IsArray()
+  // Translation: translationDto[];
 }

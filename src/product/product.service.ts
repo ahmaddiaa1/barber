@@ -20,16 +20,15 @@ export class ProductService {
     CreateProductDto: CreateProductDto,
     file: Express.Multer.File,
   ) {
-    const { name, productImg, price, available } = CreateProductDto;
+    // const { name, productImg, price, available } = CreateProductDto;
 
     const productImgUrl = file.path;
 
     const product = await this.prisma.product.create({
       data: {
-        Translation: createTranslation(CreateProductDto),
         ...(productImgUrl && { productImg: productImgUrl }),
-        price,
-        available,
+        ...CreateProductDto,
+        // Translation: createTranslation(CreateProductDto),
       },
     });
 
@@ -59,7 +58,7 @@ export class ProductService {
     const product = await this.prisma.product.update({
       where: { id },
       data: {
-        Translation: updateTranslation(updateProductDto),
+        // Translation: updateTranslation(updateProductDto),
         productImg,
         price,
         available,

@@ -20,9 +20,16 @@ export const multerConfig = (folder: string): multer.Options => {
     storage: new CloudinaryStorage({
       cloudinary,
       params: async (req, file) => {
+        const extension = file.mimetype.split('/')[1].toLowerCase();
+        if (!formats.includes(extension)) {
+          throw new UnsupportedMediaTypeException('Invalid image format!');
+        }
+        if (!formats.includes(extension)) {
+          throw new UnsupportedMediaTypeException('Invalid image format!');
+        }
         return {
           folder: 'barber',
-          format: extname(file.originalname).toLowerCase().replace('.', ''),
+          format: extension,
           public_id: `${folder}/${Date.now()}-${file.originalname.split(/\.(?=[^\.]+$)/)[0]}`,
           transformation: [{ width: 500, height: 500, crop: 'limit' }],
         };
@@ -35,18 +42,19 @@ export const multerConfig = (folder: string): multer.Options => {
     ) => {
       const mimeType = file.mimetype;
       const ext = extname(file.originalname).toLowerCase().replace('.', '');
-
       console.log(mimeType, ext);
-      if (!formats.includes(ext)) {
+      if (!mimeType.startsWith('image/') || !formats.includes(ext)) {
         return callback(
           new UnsupportedMediaTypeException('Only image files are allowed!'),
           false,
         );
       }
+
       callback(null, true);
     },
-    limits: {
-      fileSize: 1024 * 1024 * 5, // 5 MB
-    },
+
+    // limits: {
+    //   fileSize: 1024 * 1024 * 5, // 5 MB
+    // },
   };
 };

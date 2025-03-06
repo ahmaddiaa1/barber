@@ -39,8 +39,9 @@ export class BranchService {
     const { Translation: branchTranslation, ...rest } = newBranch;
 
     const branch = {
-      ...rest,
       name: branchTranslation[0].name,
+      ...rest,
+      Translation: branchTranslation,
     };
 
     return new AppSuccess(branch, 'Branch created successfully');
@@ -138,6 +139,7 @@ export class BranchService {
     });
     return new AppSuccess(updatedBranch, 'Branch updated successfully');
   }
+
   async remove(id: string) {
     return `This action removes a #${id} branch`;
   }

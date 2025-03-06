@@ -33,7 +33,7 @@ export class BranchService {
         ...createBranchDto,
         Translation: createTranslation(createBranchDto),
       },
-      include: Translation(),
+      include: Translation(language),
     });
 
     const { Translation: branchTranslation, ...rest } = newBranch;

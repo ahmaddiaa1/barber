@@ -33,7 +33,7 @@ export class BranchService {
         ...createBranchDto,
         Translation: createTranslation(createBranchDto),
       },
-      include: Translation(language),
+      include: Translation(),
     });
 
     const { Translation: branchTranslation, ...rest } = newBranch;
@@ -41,7 +41,6 @@ export class BranchService {
     const branch = {
       name: branchTranslation[0].name,
       ...rest,
-      Translation: branchTranslation,
     };
 
     return new AppSuccess(branch, 'Branch created successfully');
@@ -54,14 +53,16 @@ export class BranchService {
       orderBy: {
         createdAt: 'desc',
       },
-      include: Translation(language),
+      include: Translation(),
     });
-
+    console.log('fetchBranches', fetchBranches[0].Translation);
     const branches = fetchBranches.map((branch) => {
       const { Translation, ...rest } = branch;
       return {
         ...rest,
-        name: Translation[0].name,
+        nameEN: Translation.find((t) => t.language === 'EN')?.name,
+        nameAR: Translation.find((t) => t.language === 'AR')?.name,
+        name: Translation.find((t) => t.language === language)?.name,
       };
     });
 

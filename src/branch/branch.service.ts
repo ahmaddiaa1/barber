@@ -33,14 +33,15 @@ export class BranchService {
         ...createBranchDto,
         Translation: createTranslation(createBranchDto),
       },
-      include: Translation(),
+      include: Translation(language),
     });
 
     const { Translation: branchTranslation, ...rest } = newBranch;
 
     const branch = {
-      ...rest,
       name: branchTranslation[0].name,
+      ...rest,
+      Translation: branchTranslation,
     };
 
     return new AppSuccess(branch, 'Branch created successfully');
@@ -124,7 +125,7 @@ export class BranchService {
   ): Promise<AppSuccess<Branch>> {
     await this.findOne(id);
 
-    const branchImg = file.path;
+    const branchImg = file?.path;
 
     const updatedBranch = await this.prisma.branch.update({
       where: { id },
@@ -138,6 +139,7 @@ export class BranchService {
     });
     return new AppSuccess(updatedBranch, 'Branch updated successfully');
   }
+
   async remove(id: string) {
     return `This action removes a #${id} branch`;
   }

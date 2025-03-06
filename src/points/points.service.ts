@@ -95,6 +95,7 @@ export class PointsService {
       const { Translation, ...rest } = point;
       return {
         ...rest,
+        Translation: Translation,
         name: Translation[0]?.name,
       };
     });

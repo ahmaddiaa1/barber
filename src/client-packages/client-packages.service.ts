@@ -160,6 +160,7 @@ export class ClientPackagesService {
       ...rest,
       name: clientPackageTranslation[0].name,
       description: clientPackageTranslation[0].description,
+      Translation: clientPackageTranslation,
       services: packageService.map((service) => {
         const { serviceImg, Translation, ...rest } = service.service;
         return {

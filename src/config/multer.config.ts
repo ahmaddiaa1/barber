@@ -44,6 +44,8 @@ export const multerConfig = (folder: string): multer.Options => {
       const ext = extname(file.originalname).toLowerCase().replace('.', '');
       console.log(mimeType, ext);
 
+      console.log(file);
+
       if (!mimeType) {
         return callback(
           new UnsupportedMediaTypeException('please enter a valid Image'),

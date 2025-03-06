@@ -46,25 +46,23 @@ export const multerConfig = (folder: string): multer.Options => {
 
       console.log(file);
 
-      if (!mimeType) {
+      if (!mimeType)
         return callback(
           new UnsupportedMediaTypeException('please enter a valid Image'),
           false,
         );
-      }
 
-      if (!mimeType.startsWith('image/') || !formats.includes(ext)) {
+      if (!mimeType.startsWith('image/') || !formats.includes(ext))
         return callback(
-          new UnsupportedMediaTypeException('Only image files are allowed!'),
+          new UnsupportedMediaTypeException('please enter a valid Image'),
           false,
         );
-      }
 
       callback(null, true);
     },
 
-    // limits: {
-    //   fileSize: 1024 * 1024 * 5, // 5 MB
-    // },
+    limits: {
+      fileSize: 1024 * 1024 * 5, // 5 MB
+    },
   };
 };

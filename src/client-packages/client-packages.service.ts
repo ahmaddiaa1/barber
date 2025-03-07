@@ -187,7 +187,7 @@ export class ClientPackagesService {
     );
   }
 
-  update(id: number, updateClientPackageDto: UpdateClientPackageDto) {
+  update(id: number) {
     return `This action updates a #${id} clientPackage`;
   }
 

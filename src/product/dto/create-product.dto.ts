@@ -9,10 +9,6 @@ import {
 import { translationDto } from 'src/class-type/translation';
 
 export class CreateProductDto {
-  @IsNotEmpty()
-  @IsString()
-  name: string;
-
   @IsString()
   productImg: string;
 
@@ -23,6 +19,6 @@ export class CreateProductDto {
   @Transform(({ value }) => value === 'true')
   available: boolean;
 
-  // @IsArray()
-  // Translation: translationDto[];
+  @IsArray()
+  Translation: translationDto[];
 }

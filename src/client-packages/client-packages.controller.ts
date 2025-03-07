@@ -10,7 +10,6 @@ import {
   Query,
 } from '@nestjs/common';
 import { ClientPackagesService } from './client-packages.service';
-import { CreateClientPackageDto } from './dto/create-client-package.dto';
 import { UpdateClientPackageDto } from './dto/update-client-package.dto';
 import { UserData } from 'decorators/user.decorator';
 import { Language, User } from '@prisma/client';
@@ -21,6 +20,7 @@ import { Lang } from 'decorators/accept.language';
 @Controller('client-packages')
 export class ClientPackagesController {
   constructor(private readonly clientPackagesService: ClientPackagesService) {}
+
   @Post()
   create(
     @UserData('user') user: User,

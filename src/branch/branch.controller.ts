@@ -29,9 +29,8 @@ export class BranchController {
   create(
     @Body() createBranchDto: CreateBranchDto,
     @UploadedFile() file: Express.Multer.File,
-    @Lang() language: Language,
   ) {
-    return this.branchService.create(createBranchDto, file, language);
+    return this.branchService.create(createBranchDto, file);
   }
 
   @Get()

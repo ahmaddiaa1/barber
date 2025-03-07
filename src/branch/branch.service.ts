@@ -3,8 +3,6 @@ import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
-import { AwsService } from 'src/aws/aws.service';
-import { Random } from 'src/utils/generate';
 import { Branch, Language } from '@prisma/client';
 import {
   createTranslation,
@@ -14,15 +12,11 @@ import {
 
 @Injectable()
 export class BranchService {
-  constructor(
-    private prisma: PrismaService,
-    private awsService: AwsService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async create(
     createBranchDto: CreateBranchDto,
     file: Express.Multer.File,
-    language: Language,
   ): Promise<AppSuccess<Branch>> {
     const branchImg = file?.path;
     console.log('file', file);

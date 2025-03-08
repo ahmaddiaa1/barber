@@ -3,22 +3,18 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
 import { CreatePackageDto } from './dto/create-package.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
-import { AwsService } from 'src/aws/aws.service';
-import { Random } from 'src/utils/generate';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { createTranslation, Translation } from 'src/class-type/translation';
 import { Language } from '@prisma/client';
 
 @Injectable()
 export class PackageService {
-  constructor(
-    private prisma: PrismaService,
-    private awsService: AwsService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async create(createPackageDto: CreatePackageDto, file: Express.Multer.File) {
     const { serviceIds, type, count, ...rest } = createPackageDto;
@@ -83,21 +79,31 @@ export class PackageService {
   }
 
   async findAll(language: Language) {
-    const fetchedPackages = await this.prisma.packages.findMany({
-      include: {
-        ...Translation(language),
-        services: {
-          select: {
-            id: true,
+    const fetchedPackages = await this.prisma.offers.findMany({
+      select: {
+        createdAt: true,
+        updatedAt: true,
+        packages: {
+          include: {
             ...Translation(language),
-            serviceImg: true,
+            services: {
+              select: {
+                id: true,
+                ...Translation(language),
+                serviceImg: true,
+              },
+            },
           },
         },
       },
     });
 
     const packages = fetchedPackages.map((packageData) => {
-      const { Translation, services: s, ...rest } = packageData;
+      const {
+        createdAt,
+        updatedAt,
+        packages: { Translation, services: s, ...rest },
+      } = packageData;
       const services = s.map((s) => {
         const { Translation, id } = s;
         return {
@@ -107,9 +113,14 @@ export class PackageService {
       });
       return {
         name: Translation[0].name,
+        description: Translation[0].description,
+        createdAt,
+        updatedAt,
         services,
       };
     });
+
+    console.log(packages);
 
     return new AppSuccess({ packages }, 'packages fetched successfully', 200);
   }

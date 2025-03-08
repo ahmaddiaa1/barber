@@ -84,6 +84,7 @@ export class PackageService {
     const fetchedPackages = await this.prisma.offers.findMany({
       where: { offerType: 'PACKAGES', NOT: { packages: null } },
       select: {
+        id: true,
         createdAt: true,
         updatedAt: true,
         packages: {
@@ -103,6 +104,7 @@ export class PackageService {
       const {
         createdAt,
         updatedAt,
+        id,
         packages: { Translation: packageTrans, services: s, ...rest },
       } = packageData;
       const services = s.map((s) => {
@@ -113,6 +115,7 @@ export class PackageService {
         };
       });
       return {
+        id,
         name: packageTrans[0].name,
         description: packageTrans[0].description,
         createdAt,

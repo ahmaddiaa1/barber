@@ -19,6 +19,8 @@ export class PackageService {
   async create(createPackageDto: CreatePackageDto, file: Express.Multer.File) {
     const { serviceIds, type, count, ...rest } = createPackageDto;
 
+    console.log(createPackageDto);
+
     const existingServiceIds = (
       await this.prisma.service.findMany({
         where: { id: { in: serviceIds } },
@@ -80,40 +82,39 @@ export class PackageService {
 
   async findAll(language: Language) {
     const fetchedPackages = await this.prisma.offers.findMany({
+      where: { offerType: 'PACKAGES', NOT: { packages: null } },
       select: {
         createdAt: true,
         updatedAt: true,
         packages: {
           include: {
-            ...Translation(language),
+            ...Translation(language, true),
             services: {
-              select: {
-                id: true,
+              include: {
                 ...Translation(language),
-                serviceImg: true,
               },
             },
           },
         },
       },
     });
-
+    console.log(fetchedPackages);
     const packages = fetchedPackages.map((packageData) => {
       const {
         createdAt,
         updatedAt,
-        packages: { Translation, services: s, ...rest },
+        packages: { Translation: packageTrans, services: s, ...rest },
       } = packageData;
       const services = s.map((s) => {
-        const { Translation, id } = s;
+        const { Translation: serviceTrans, ...rest } = s;
         return {
           ...rest,
-          name: Translation[0].name,
+          name: serviceTrans[0].name,
         };
       });
       return {
-        name: Translation[0].name,
-        description: Translation[0].description,
+        name: packageTrans[0].name,
+        description: packageTrans[0].description,
         createdAt,
         updatedAt,
         services,
@@ -166,6 +167,7 @@ export class PackageService {
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async removeExpiredPackages() {
+    ``;
     const result = await this.prisma.packages.findMany({
       where: {
         expiresAt: {
@@ -174,8 +176,31 @@ export class PackageService {
       },
     });
 
-    if (result.length > 0) {
+    const point = await this.prisma.points.findMany({
+      where: {
+        expiresAt: {
+          lt: new Date(),
+        },
+      },
+    });
+
+    const resultOffer = await this.prisma.packages.findMany({
+      where: {
+        expiresAt: {
+          lt: new Date(),
+        },
+      },
+    });
+
+    if ((result.length > 0, resultOffer.length > 0)) {
       await this.prisma.packages.deleteMany({
+        where: {
+          expiresAt: {
+            lt: new Date(),
+          },
+        },
+      });
+      await this.prisma.offers.deleteMany({
         where: {
           expiresAt: {
             lt: new Date(),

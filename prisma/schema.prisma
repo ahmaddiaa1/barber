@@ -277,6 +277,7 @@ model Points {
   image       String
   price       Int
   points      Int
+  expiresAt   DateTime
   Offers      Offers           @relation(fields: [id], references: [id])
   Translation TranslationDes[] @relation("points")
 }

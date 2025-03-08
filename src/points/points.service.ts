@@ -64,6 +64,7 @@ export class PointsService {
             Translation: createTranslation(createPointDto),
             price,
             points,
+            expiresAt: new Date(),
             image: file.path,
           },
         },

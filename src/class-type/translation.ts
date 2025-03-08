@@ -79,7 +79,7 @@ export class translationDto {
   name: string;
 
   @IsString()
-  @Transform(({ value }) => Language[value].toUpperCase() ?? null)
+  @Transform(({ value }) => Language[value.toUpperCase()] ?? null)
   language: Language;
 
   @IsString()

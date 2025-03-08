@@ -54,7 +54,7 @@ export class ServiceService {
     file: Express.Multer.File,
     language: Language,
   ): Promise<AppSuccess<Service>> {
-    const serviceImg = file.path;
+    const serviceImg = file?.path;
 
     console.log(createServiceDto);
 
@@ -84,7 +84,7 @@ export class ServiceService {
     language: Language,
   ): Promise<AppSuccess<Service>> {
     await this.findOneOrFail(id);
-    const serviceImg = file.path;
+    const serviceImg = file?.path;
 
     const updatedService = await this.prisma.service.update({
       where: { id },

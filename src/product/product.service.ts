@@ -18,7 +18,7 @@ export class ProductService {
   ) {
     // const { name, productImg, price, available } = CreateProductDto;
 
-    const productImgUrl = file.path;
+    const productImgUrl = file?.path;
 
     const product = await this.prisma.product.create({
       data: {

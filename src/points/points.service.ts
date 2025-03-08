@@ -65,7 +65,7 @@ export class PointsService {
             price,
             points,
             expiresAt: new Date(),
-            image: file.path,
+            image: file?.path,
           },
         },
       },

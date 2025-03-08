@@ -89,10 +89,10 @@ export class PackageService {
         updatedAt: true,
         packages: {
           include: {
-            ...Translation(language, true),
+            ...Translation(),
             services: {
               include: {
-                ...Translation(language),
+                ...Translation(),
               },
             },
           },
@@ -111,13 +111,18 @@ export class PackageService {
         const { Translation: serviceTrans, ...rest } = s;
         return {
           ...rest,
-          name: serviceTrans[0].name,
+          nameEN: serviceTrans.find((t) => t.language === 'EN')?.name,
+          nameAR: serviceTrans.find((t) => t.language === 'AR')?.name,
+          name: serviceTrans.find((t) => t.language === language)?.name,
         };
       });
       return {
         id,
-        name: packageTrans[0].name,
-        description: packageTrans[0].description,
+        nameEN: packageTrans.find((t) => t.language === 'EN')?.name,
+        nameAR: packageTrans.find((t) => t.language === 'AR')?.name,
+        name: packageTrans.find((t) => t.language === language)?.name,
+        description: packageTrans.find((t) => t.language === language)
+          ?.description,
         createdAt,
         updatedAt,
         services,
@@ -133,11 +138,11 @@ export class PackageService {
     const fetchedPackage = await this.prisma.packages.findUnique({
       where: { id },
       include: {
-        ...Translation(language),
+        ...Translation(false, language),
         services: {
           select: {
             id: true,
-            ...Translation(language),
+            ...Translation(false, language),
             serviceImg: true,
           },
         },

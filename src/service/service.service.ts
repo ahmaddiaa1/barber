@@ -64,7 +64,7 @@ export class ServiceService {
         ...(serviceImg && { serviceImg }),
         Translation: createTranslation(createServiceDto),
       },
-      include: serviceTranslation(language),
+      include: serviceTranslation(false, language),
     });
 
     const { Translation, ...rest } = newService;
@@ -95,7 +95,7 @@ export class ServiceService {
           Translation: updateTranslation(updateServiceDto),
         }),
       },
-      include: serviceTranslation(language),
+      include: serviceTranslation(false, language),
     });
 
     const { Translation, ...rest } = updatedService;
@@ -127,7 +127,7 @@ export class ServiceService {
   ): Promise<Service> {
     const fetchedService = await this.prisma.service.findUnique({
       where: { id },
-      include: serviceTranslation(language),
+      include: serviceTranslation(false, language),
     });
 
     const { Translation, ...rest } = fetchedService;

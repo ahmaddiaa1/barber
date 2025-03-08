@@ -29,7 +29,7 @@ export class OrderService {
       where: { userId: userId },
       include: {
         barber: { include: { barber: { include: { user: true } } } },
-        branch: { include: Translation(lang) },
+        branch: { include: Translation(false, lang) },
         service: true,
       },
     });

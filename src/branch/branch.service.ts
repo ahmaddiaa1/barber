@@ -67,7 +67,7 @@ export class BranchService {
     const fetchedBranch = await this.prisma.branch.findUnique({
       where: { id },
       include: {
-        ...Translation(language),
+        ...Translation(false, language),
         barber: {
           select: {
             id: true,

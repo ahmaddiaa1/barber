@@ -22,7 +22,7 @@ export class PointsService {
         offerType: true,
         points: {
           select: {
-            ...Translation(lang),
+            ...Translation(true, lang),
             price: true,
             points: true,
           },
@@ -64,7 +64,8 @@ export class PointsService {
             Translation: createTranslation(createPointDto),
             price,
             points,
-            image: file.path,
+            expiresAt: new Date(),
+            image: file?.path,
           },
         },
       },
@@ -88,7 +89,7 @@ export class PointsService {
 
   async findAll(language: Language) {
     const fetchedPoints = await this.prisma.points.findMany({
-      include: Translation(language),
+      include: Translation(true, language),
     });
 
     const points = fetchedPoints.map((point) => {
@@ -112,7 +113,7 @@ export class PointsService {
       where: {
         id: id,
       },
-      include: Translation(lang),
+      include: Translation(true, lang),
     });
 
     const { Translation: translation, ...rest } = fetchedPoint;

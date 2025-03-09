@@ -54,13 +54,13 @@ export class PaymobController {
         offerType: true,
         packages: {
           select: {
-            ...Translation(lang),
+            ...Translation(true, lang),
             price: true,
           },
         },
         points: {
           select: {
-            ...Translation(lang),
+            ...Translation(true, lang),
             price: true,
           },
         },

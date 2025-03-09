@@ -57,7 +57,7 @@ export class ClientPackagesService {
             packageService: {
               include: {
                 service: {
-                  include: Translation(language),
+                  include: Translation(false, language),
                 },
               },
             },

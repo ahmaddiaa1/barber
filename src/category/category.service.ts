@@ -128,7 +128,7 @@ export class CategoryService {
         ...createCategoryDto,
         Translation: createTranslation(createCategoryDto),
       },
-      include: Translation(language),
+      include: Translation(false, language),
     });
 
     const { Translation: categoryTranslation, ...rest } = newCategory;
@@ -154,7 +154,7 @@ export class CategoryService {
         ...updateCategoryDto,
         Translation: updateTranslation(updateCategoryDto),
       },
-      include: Translation(language),
+      include: Translation(false, language),
     });
 
     const { Translation: categoryTranslation, ...rest } = updatedCategory;
@@ -182,9 +182,9 @@ export class CategoryService {
       where: { id },
       include: {
         services: {
-          include: Translation(language),
+          include: Translation(false, language),
         },
-        ...Translation(language),
+        ...Translation(false, language),
       },
     });
 

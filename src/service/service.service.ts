@@ -54,7 +54,7 @@ export class ServiceService {
     file: Express.Multer.File,
     language: Language,
   ): Promise<AppSuccess<Service>> {
-    const serviceImg = file.path;
+    const serviceImg = file?.path;
 
     console.log(createServiceDto);
 
@@ -64,7 +64,7 @@ export class ServiceService {
         ...(serviceImg && { serviceImg }),
         Translation: createTranslation(createServiceDto),
       },
-      include: serviceTranslation(language),
+      include: serviceTranslation(false, language),
     });
 
     const { Translation, ...rest } = newService;
@@ -84,7 +84,7 @@ export class ServiceService {
     language: Language,
   ): Promise<AppSuccess<Service>> {
     await this.findOneOrFail(id);
-    const serviceImg = file.path;
+    const serviceImg = file?.path;
 
     const updatedService = await this.prisma.service.update({
       where: { id },
@@ -95,7 +95,7 @@ export class ServiceService {
           Translation: updateTranslation(updateServiceDto),
         }),
       },
-      include: serviceTranslation(language),
+      include: serviceTranslation(false, language),
     });
 
     const { Translation, ...rest } = updatedService;
@@ -127,7 +127,7 @@ export class ServiceService {
   ): Promise<Service> {
     const fetchedService = await this.prisma.service.findUnique({
       where: { id },
-      include: serviceTranslation(language),
+      include: serviceTranslation(false, language),
     });
 
     const { Translation, ...rest } = fetchedService;

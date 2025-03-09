@@ -3,14 +3,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Role, User } from '@prisma/client';
 import { UserUpdateDto } from './dto/user-update-dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
-import { AwsService } from 'src/aws/aws.service';
 
 @Injectable()
 export class UserService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly awsService: AwsService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   private user = {
     id: true,
@@ -111,8 +107,7 @@ export class UserService {
     const user = await this.findOne(id);
     if (!user) throw new NotFoundException('User not found');
 
-    const avatar =
-      file && (await this.awsService.uploadFile(file, id, 'avatars'));
+    const avatar = file?.path;
 
     const updateUser = await this.prisma.user.update({
       where: { id },

@@ -29,7 +29,7 @@ export class PromoCodeService {
 
   async getAllPromoCode(): Promise<AppSuccess<PromoCode[]>> {
     const promoCode = await this.prisma.promoCode.findMany();
-    return new AppSuccess(promoCode, 'Promo code list');
+    return new AppSuccess({promoCode}, 'Promo code list');
   }
 
   async validatePromoCode(promoCode: string): Promise<AppSuccess<PromoCode>> {

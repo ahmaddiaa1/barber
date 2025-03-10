@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 
 import { CreatePackageDto } from './dto/create-package.dto';
-import { UpdatePackageDto } from './dto/update-package.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -18,8 +17,6 @@ export class PackageService {
 
   async create(createPackageDto: CreatePackageDto, file: Express.Multer.File) {
     const { serviceIds, type, count, ...rest } = createPackageDto;
-
-    console.log(createPackageDto);
 
     const existingServiceIds = (
       await this.prisma.service.findMany({
@@ -105,7 +102,7 @@ export class PackageService {
         createdAt,
         updatedAt,
         id,
-        packages: { Translation: packageTrans, services: s, ...rest },
+        packages: { Translation: packageTrans, services: s, price },
       } = packageData;
       const services = s.map((s) => {
         const { Translation: serviceTrans, ...rest } = s;
@@ -118,6 +115,7 @@ export class PackageService {
       });
       return {
         id,
+        price,
         nameEN: packageTrans.find((t) => t.language === 'EN')?.name,
         nameAR: packageTrans.find((t) => t.language === 'AR')?.name,
         name: packageTrans.find((t) => t.language === language)?.name,
@@ -169,7 +167,7 @@ export class PackageService {
     return new AppSuccess(packageData, 'Package fetched successfully');
   }
 
-  update(id: string, updatePackageDto: UpdatePackageDto) {
+  update(id: string) {
     return `This action updates a #${id} package`;
   }
 
@@ -177,14 +175,6 @@ export class PackageService {
   async removeExpiredPackages() {
     ``;
     const result = await this.prisma.packages.findMany({
-      where: {
-        expiresAt: {
-          lt: new Date(),
-        },
-      },
-    });
-
-    const point = await this.prisma.points.findMany({
       where: {
         expiresAt: {
           lt: new Date(),
@@ -200,7 +190,7 @@ export class PackageService {
       },
     });
 
-    if ((result.length > 0, resultOffer.length > 0)) {
+    if (result.length > 0 || resultOffer.length > 0) {
       await this.prisma.packages.deleteMany({
         where: {
           expiresAt: {

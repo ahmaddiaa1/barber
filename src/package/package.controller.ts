@@ -49,8 +49,8 @@ export class PackageController {
 
   @Roles(['ADMIN'])
   @Put(':id')
-  update(@Param('id') id: string, @Body() updatePackageDto: UpdatePackageDto) {
-    return this.packageService.update(id, updatePackageDto);
+  update(@Param('id') id: string) {
+    return this.packageService.update(id);
   }
 
   // @Roles(['ADMIN'])

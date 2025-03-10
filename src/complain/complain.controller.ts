@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Put,
 } from '@nestjs/common';
 import { ComplainService } from './complain.service';
 import { CreateComplainDto } from './dto/create-complain.dto';
@@ -21,7 +22,7 @@ import { Roles } from 'decorators/roles.decorator';
 export class ComplainController {
   constructor(private readonly complainService: ComplainService) {}
 
-  @Roles(['USER'])
+  @Roles(['USER', 'ADMIN'])
   @Post()
   create(
     @Body() createComplainDto: CreateComplainDto,
@@ -40,6 +41,12 @@ export class ComplainController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.complainService.findOne(id);
+  }
+
+  @Roles(['ADMIN'])
+  @Put(':id')
+  update(@Param('id') id: string) {
+    return this.complainService.updateComplain(id);
   }
 
   @Roles(['ADMIN'])

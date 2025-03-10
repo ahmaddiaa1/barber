@@ -75,6 +75,20 @@ export class ComplainService {
     return new AppSuccess(complain, 'Complain found successfully');
   }
 
+  async updateComplain(id: string) {
+    // Implement the updateComplain method
+    await this.findOne(id);
+
+    const updatedComplain = await this.prisma.complain.update({
+      where: { id },
+      data: {
+        done: true,
+      },
+    });
+
+    return new AppSuccess(updatedComplain, 'Complain updated successfully');
+  }
+
   async remove(id: string): Promise<AppSuccess<Complain>> {
     const complain = await this.prisma.complain.findUnique({
       where: { id },

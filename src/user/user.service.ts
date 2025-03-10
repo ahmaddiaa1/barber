@@ -1,6 +1,6 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Role, User } from '@prisma/client';
+import { Prisma, Role, User } from '@prisma/client';
 import { UserUpdateDto } from './dto/user-update-dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 
@@ -17,22 +17,19 @@ export class UserService {
     role: true,
     createdAt: true,
     updatedAt: true,
-  };
+  } as Prisma.UserSelect;
 
   private client = {
-    select: {
-      id: false,
-      referralCode: true,
-      points: true,
-    },
-  };
+    id: false,
+    referralCode: true,
+    points: true,
+    ban: true,
+  } as Prisma.ClientSelect;
 
   private barberAndCashier = {
-    select: {
-      id: false,
-      branch: true,
-    },
-  };
+    id: false,
+    branch: true,
+  } as Prisma.BarberSelect;
 
   public async findAllClients(page = 1, pageSize = 10, phone?: string) {
     try {
@@ -43,7 +40,7 @@ export class UserService {
         },
         select: {
           ...this.user,
-          client: this.client,
+          client: { select: this.client },
         },
         skip: (page - 1) * pageSize,
         take: pageSize,
@@ -66,8 +63,8 @@ export class UserService {
         ? { [role?.toLowerCase()]: true }
         : {
             admin: false,
-            barber: this.barberAndCashier,
-            cashier: this.barberAndCashier,
+            barber: { select: this.barberAndCashier },
+            cashier: { select: this.barberAndCashier },
           };
       const fetchedUser = await this.prisma.user.findMany({
         where: { role: Role[role?.toUpperCase()] ?? { not: Role.USER } },
@@ -128,10 +125,9 @@ export class UserService {
       where: { id: user.id },
       select: {
         ...this.user,
-        admin: true,
-        barber: this.barberAndCashier,
-        cashier: this.barberAndCashier,
-        client: this.client,
+        barber: { select: this.barberAndCashier },
+        cashier: { select: this.barberAndCashier },
+        client: { select: this.client },
       },
     });
 
@@ -144,9 +140,19 @@ export class UserService {
     return new AppSuccess(
       {
         ...rest,
-        [userRole]: admin || barber || cashier || client,
+        ...(userRole !== 'admin' && {
+          [userRole]: barber ||
+            cashier || {
+              ...client,
+              ...(userRole === 'client' &&
+                client.ban && {
+                  BanMessage:
+                    "You can't make any Order please get contact with us",
+                }),
+            },
+        }),
       },
-      'User updated successfully',
+      'User fetched successfully',
       200,
     );
   }
@@ -157,9 +163,9 @@ export class UserService {
       select: {
         ...this.user,
         admin: true,
-        barber: this.barberAndCashier,
-        cashier: this.barberAndCashier,
-        client: this.client,
+        barber: { select: this.barberAndCashier },
+        cashier: { select: this.barberAndCashier },
+        client: { select: this.client },
       },
     });
 

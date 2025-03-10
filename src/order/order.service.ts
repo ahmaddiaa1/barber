@@ -157,7 +157,7 @@ export class OrderService {
 
     const settings = await this.prisma.settings.findFirst({});
 
-    if (settings.pointLimiit > points) {
+    if (settings.pointLimit > points) {
       throw new BadRequestException('You have exceeded the points limit');
     }
 
@@ -321,7 +321,7 @@ export class OrderService {
 
     const settings = await this.prisma.settings.findFirst({});
 
-    if (settings.pointLimiit > points) {
+    if (settings.pointLimit > points) {
       throw new BadRequestException('You have exceeded the points limit');
     }
 

@@ -665,7 +665,7 @@ export class MockService {
     const settings = await this.prisma.settings.create({
       data: {
         canceledOrder: 2,
-        pointLimiit: 100,
+        pointLimit: 100,
         PointsPercentage: 10,
         referralPoints: 1000,
       },

@@ -71,7 +71,7 @@ model Settings {
   id               String @id @default(uuid())
   PointsPercentage Int    @default(10)
   referralPoints   Int    @default(1000)
-  pointLimiit      Int    @default(100)
+  pointLimit       Int    @default(100)
   canceledOrder    Int    @default(3)
   slotDuration     Int    @default(30)
 }

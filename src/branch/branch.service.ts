@@ -25,6 +25,8 @@ export class BranchService {
       data: {
         ...(branchImg && { branchImg }),
         ...createBranchDto,
+        latitude: createBranchDto.latitude.toString(),
+        longitude: createBranchDto.longitude.toString(),
         Translation: createTranslation(createBranchDto),
       },
       include: Translation(),

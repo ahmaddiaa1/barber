@@ -1,27 +1,20 @@
 import { Controller, Post, Body } from '@nestjs/common';
-import { NotificationService } from './notification.service';
+import { FirebaseService } from './notification.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 
 @Controller('notification')
 export class NotificationController {
-  constructor(private readonly notificationService: NotificationService) {}
+  constructor(private readonly firebaseService: FirebaseService) {}
 
   @Post('single')
   create(@Body() createNotificationDto: CreateNotificationDto) {
-    return this.notificationService.sendNotification('token', 'title', 'body');
+    return this.firebaseService.sendNotification(['token'], 'title', 'body');
   }
 
   @Post('multiple')
   createMultiple(@Body() createNotificationDto: CreateNotificationDto) {
-    return this.notificationService.sendNotificationToMultiple(
-      ['token1', 'token2'],
-      'title',
-      'body',
-    );
-  }
-
-  @Post('sms')
-  sendSms(@Body() body: any) {
-    return this.notificationService.sendSms('+201141638934', 'message');
+    return this.firebaseService.sendToAllClients('title', 'body', {
+      key: 'value',
+    });
   }
 }

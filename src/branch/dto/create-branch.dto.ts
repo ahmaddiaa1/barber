@@ -25,6 +25,12 @@ export class CreateBranchDto {
   // @Transform(({ value }) => value ?? null)
   // branchImg: string;
 
+  @IsString()
+  latitude: string;
+
+  @IsString()
+  longitude: string;
+
   @IsOptional()
   @Transform(({ value }) => value ?? null)
   @IsInt()

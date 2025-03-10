@@ -12,6 +12,7 @@ import { PromoCodeService } from 'src/promo-code/promo-code.service';
 import { Language, Service } from '@prisma/client';
 import { format } from 'date-fns';
 import { Translation } from 'src/class-type/translation';
+import { UpdateOrderDto } from 'src/order/dto/update-order.dto';
 
 interface PrismaServiceType extends Service {
   isFree: boolean;
@@ -154,9 +155,9 @@ export class OrderService {
         (await this.promoCodeService.validatePromoCode(promoCode)).data,
     ]);
 
-    const settings = await this.prisma.settings.findMany({});
+    const settings = await this.prisma.settings.findFirst({});
 
-    if (settings[0].pointLimiit > points) {
+    if (settings.pointLimiit > points) {
       throw new BadRequestException('You have exceeded the points limit');
     }
 
@@ -318,9 +319,9 @@ export class OrderService {
         }),
       ]);
 
-    const settings = await this.prisma.settings.findMany({});
+    const settings = await this.prisma.settings.findFirst({});
 
-    if (settings[0].pointLimiit > points) {
+    if (settings.pointLimiit > points) {
       throw new BadRequestException('You have exceeded the points limit');
     }
 
@@ -541,6 +542,36 @@ export class OrderService {
     );
   }
 
+  async updateOrder(id: string, updateOrderDto: UpdateOrderDto) {
+    const order = await this.findOneOrFail(id);
+
+    const { add, remove } = updateOrderDto;
+
+    if (order.status !== 'IN_PROGRESS') {
+      throw new ConflictException(
+        'Order cannot be updated, it has already started or completed.',
+      );
+    }
+
+    let allServices = [...order.service.flatMap((o) => o.id), ...add];
+
+    const services = allServices.filter((service) => !remove.includes(service));
+
+    console.log(services);
+    console.log('add', add);
+    console.log('remove', remove);
+
+    // const updatedOrder = await this.prisma.order.update({
+    //   where: { id },
+    //   data: {
+    //     ...updateOrderDto,
+    //     service: {
+    //       set: updateOrderDto.service.map((id) => ({ id })),
+    //     },
+    //   },
+    // });
+  }
+
   async cancelOrder(id: string) {
     await this.findOneOrFail(id);
 
@@ -679,7 +710,7 @@ export class OrderService {
       data: { status: 'PAID', cashierId: userId },
     });
 
-    const settings = await this.prisma.settings.findMany({});
+    const settings = await this.prisma.settings.findFirst({});
 
     await this.prisma.user.update({
       where: { id: updatedOrder.userId },
@@ -709,7 +740,16 @@ export class OrderService {
           service: { select: { duration: true } },
         },
       }),
-      this.prisma.slot.findFirst({ select: { slot: true } }),
+      this.prisma.barber
+        .findUnique({
+          where: {
+            id: barberId,
+          },
+          select: {
+            Slot: true,
+          },
+        })
+        .Slot(),
     ]);
 
     if (!allSlotsData)
@@ -756,6 +796,8 @@ export class OrderService {
     if (start >= end) {
       throw new ConflictException('Start time must be less than end time.');
     }
+
+    const settings = await this.prisma.settings.findFirst({});
 
     for (let hour = start; hour < end; hour++) {
       for (let minute = 0; minute < 60; minute += 15) {

@@ -52,4 +52,24 @@ export class RegisterDto {
   @IsNotEmpty()
   @IsString()
   branchId: string;
+
+  @ValidateIf(
+    (object) =>
+      object?.role?.toUpperCase() === 'CASHIER' ||
+      object?.role?.toUpperCase() === 'BARBER',
+  )
+  @Transform(({ value }) => value ?? null)
+  @IsNotEmpty()
+  @IsString()
+  start: string;
+
+  @ValidateIf(
+    (object) =>
+      object?.role?.toUpperCase() === 'CASHIER' ||
+      object?.role?.toUpperCase() === 'BARBER',
+  )
+  @Transform(({ value }) => value ?? null)
+  @IsNotEmpty()
+  @IsString()
+  end: string;
 }

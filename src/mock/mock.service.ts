@@ -135,6 +135,8 @@ export class MockService {
         'https://res.cloudinary.com/unknowndev/image/upload/v1741063667/barber/barbers/whl07h8d9qt5dugpmmtj.webp',
       password: '1234',
       role: 'barber',
+      start: 8,
+      end: 21,
     },
     {
       firstName: 'Hassan',
@@ -144,6 +146,8 @@ export class MockService {
         'https://res.cloudinary.com/unknowndev/image/upload/v1741063667/barber/barbers/d2mfbxmvcqdzvmbe83gm.jpg',
       password: '1234',
       role: 'barber',
+      start: 8,
+      end: 21,
     },
     {
       firstName: 'Ali',
@@ -153,6 +157,8 @@ export class MockService {
         'https://res.cloudinary.com/unknowndev/image/upload/v1741063667/barber/barbers/ung59agowqpun0flfcjd.jpg',
       password: '1234',
       role: 'barber',
+      start: 8,
+      end: 21,
     },
   ];
 
@@ -165,6 +171,8 @@ export class MockService {
         'https://res.cloudinary.com/unknowndev/image/upload/v1741063667/barber/barbers/ritnqmm7cvvfzpsnkr5o.jpg',
       password: '1234',
       role: 'barber',
+      start: 8,
+      end: 21,
     },
     {
       firstName: 'Mina',
@@ -174,6 +182,8 @@ export class MockService {
         'https://res.cloudinary.com/unknowndev/image/upload/v1741063667/barber/barbers/jnoy5783pnultmb0n8dl.jpg',
       password: '1234',
       role: 'barber',
+      start: 8,
+      end: 21,
     },
     {
       firstName: 'Sameh',
@@ -183,6 +193,8 @@ export class MockService {
         'https://res.cloudinary.com/unknowndev/image/upload/v1741063666/barber/barbers/wj2n979pvgbihi2iskut.jpg',
       password: '1234',
       role: 'barber',
+      start: 8,
+      end: 21,
     },
   ];
 
@@ -195,6 +207,8 @@ export class MockService {
         'https://res.cloudinary.com/unknowndev/image/upload/v1741063666/barber/barbers/tdbdaamjh9dpztl0vg5w.webp',
       password: '1234',
       role: 'barber',
+      start: 8,
+      end: 21,
     },
     {
       firstName: 'Mostafa',
@@ -204,6 +218,8 @@ export class MockService {
         'https://res.cloudinary.com/unknowndev/image/upload/v1741063666/barber/barbers/hvxayxuzelfztf5xc4eo.jpg',
       password: '1234',
       role: 'barber',
+      start: 8,
+      end: 21,
     },
     {
       firstName: 'Yasser',
@@ -213,6 +229,8 @@ export class MockService {
         'https://res.cloudinary.com/unknowndev/image/upload/v1741063666/barber/barbers/p0vvb10opdwxmov0d6yb.jpg',
       password: '1234',
       role: 'barber',
+      start: 8,
+      end: 21,
     },
   ];
 
@@ -226,6 +244,8 @@ export class MockService {
       phone: '1234567890',
       branchImg:
         'https://res.cloudinary.com/unknowndev/image/upload/v1741063015/barber/branches/lwxwydlekw5z4g5smodb.jpg',
+      longitude: '31.311891',
+      latitude: '30.060032',
     },
     {
       translations: [
@@ -236,6 +256,8 @@ export class MockService {
       phone: '1234567891',
       branchImg:
         'https://res.cloudinary.com/unknowndev/image/upload/v1741063013/barber/branches/s17xflyrpae9zxppb5ki.jpg',
+      longitude: '31.311891',
+      latitude: '30.060032',
     },
     {
       translations: [
@@ -246,6 +268,8 @@ export class MockService {
       phone: '1234567892',
       branchImg:
         'https://res.cloudinary.com/unknowndev/image/upload/v1741063006/barber/branches/cclrcpu45yu2labio03m.jpg',
+      longitude: '31.311891',
+      latitude: '30.060032',
     },
   ];
 
@@ -436,6 +460,30 @@ export class MockService {
     await this.prisma.user.deleteMany();
     await this.prisma.category.deleteMany();
 
+    const slot = (start, end) => {
+      const slotsArray = [];
+
+      for (let hour = start; hour < end; hour++) {
+        for (let minute = 0; minute < 60; minute += 15) {
+          const slot = `${hour.toString().padStart(2, '0')}:${minute
+            .toString()
+            .padStart(2, '0')}`;
+          slotsArray.push(
+            +slot.split(':')[0] > 11
+              ? (+slot.split(':')[0] - 12 === 0 ? 12 : +slot.split(':')[0] - 12)
+                  .toString()
+                  .padStart(2, '0') +
+                  ':' +
+                  slot.split(':')[1] +
+                  ' PM'
+              : slot + ' AM',
+          );
+        }
+      }
+
+      return { slotsArray };
+    };
+
     const client = this.clients.map(async (client) => {
       console.log(client);
       await this.prisma.user.create({
@@ -479,6 +527,8 @@ export class MockService {
     const branchPromises = this.branches.map(async (branch) => {
       const createdBranch = await this.prisma.branch.create({
         data: {
+          latitude: branch.latitude,
+          longitude: branch.longitude,
           Translation: createTranslation({ Translation: branch.translations }),
           location: branch.location,
           phone: branch.phone,
@@ -501,6 +551,14 @@ export class MockService {
           avatar: barber.avatar,
           barber: {
             create: {
+              rate: 0,
+              Slot: {
+                create: {
+                  slot: slot(barber.start, barber.end).slotsArray,
+                  end: barber.end,
+                  start: barber.start,
+                },
+              },
               branchId: createdBranches[0].id,
             },
           },
@@ -518,6 +576,14 @@ export class MockService {
           avatar: barber.avatar,
           barber: {
             create: {
+              rate: 0,
+              Slot: {
+                create: {
+                  slot: slot(barber.start, barber.end).slotsArray,
+                  end: barber.end,
+                  start: barber.start,
+                },
+              },
               branchId: createdBranches[1].id,
             },
           },
@@ -535,6 +601,14 @@ export class MockService {
           avatar: barber.avatar,
           barber: {
             create: {
+              rate: 0,
+              Slot: {
+                create: {
+                  slot: slot(barber.start, barber.end).slotsArray,
+                  end: barber.end,
+                  start: barber.start,
+                },
+              },
               branchId: createdBranches[2].id,
             },
           },
@@ -587,6 +661,17 @@ export class MockService {
         },
       });
     });
+
+    // const settings = this.prisma.settings.create({
+    //   data: {
+    //     aboutUs: this.aboutUs,
+    //     terms: this.terms,
+    //     privacy: this.privacy,
+    //     contactUs: this.contactUs,
+    //     faq: this.faq,
+    //     branch: this.branch,
+    //   },
+    // });
 
     return {
       client,

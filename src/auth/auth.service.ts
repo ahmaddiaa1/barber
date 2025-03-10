@@ -23,7 +23,14 @@ export class AuthService {
   constructor(private prisma: PrismaService) {}
 
   public async signup(createAuthDto: RegisterDto, file: Express.Multer.File) {
-    const { phone, password, role = Role.USER, branchId } = createAuthDto;
+    const {
+      phone,
+      password,
+      role = Role.USER,
+      branchId,
+      start,
+      end,
+    } = createAuthDto;
     let user: User;
     const saltOrRounds = 10;
 

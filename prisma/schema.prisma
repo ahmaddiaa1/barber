@@ -73,6 +73,7 @@ model Settings {
   referralPoints   Int    @default(1000)
   pointLimiit      Int    @default(100)
   canceledOrder    Int    @default(3)
+  slotDuration     Int    @default(30)
 }
 
 model Static {

@@ -41,11 +41,16 @@ export class AuthGuard implements CanActivate {
         },
       });
 
+      console.log(user);
+      console.log(fcmToken);
+      console.log(req);
+
       if (!user.fcmToken || user.fcmToken !== fcmToken) {
-        await this.prisma.user.update({
+        const update = await this.prisma.user.update({
           where: { id },
           data: { fcmToken },
         });
+        console.log(update);
       }
 
       req.user = user;

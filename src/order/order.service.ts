@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   ServiceUnavailableException,
@@ -315,7 +316,7 @@ export class OrderService {
           (await this.promoCodeService.validatePromoCode(promoCode)).data,
         await this.prisma.user.findUnique({
           where: { id: userId },
-          select: { client: { select: { points: true } } },
+          select: { client: { select: { points: true, ban: true } } },
         }),
       ]);
 
@@ -425,15 +426,16 @@ export class OrderService {
       total = subTotal - validPromoCode.discount;
     }
 
-    const d = allServices.sort((a, b) => a.price - b.price)[0].price;
-    const point = points >= d ? points : 0;
+    const PointsLimit = allServices.sort((a, b) => a.price - b.price)[0].price;
+    // const PointsLimit = (await this.prisma.settings.findFirst({})).pointLimit;
+    const point = points >= PointsLimit ? points : 0;
 
     points > user.client?.points &&
       new ConflictException('you do not have enough points');
 
-    d > points &&
+    PointsLimit > points &&
       new ConflictException(
-        'Points must be at least equal to the lowest price of the services',
+        'the number of Points must be at least equal to the lowest price of the services',
       );
 
     const order = await this.prisma.order.create({
@@ -518,6 +520,8 @@ export class OrderService {
 
     const duration =
       allServices.reduce((acc, service) => acc + service.duration, 0) * 15;
+
+    if (user.client.ban) throw new ForbiddenException('You are banned');
 
     return new AppSuccess(
       {

@@ -154,6 +154,12 @@ export class OrderService {
         (await this.promoCodeService.validatePromoCode(promoCode)).data,
     ]);
 
+    const settings = await this.prisma.settings.findMany({});
+
+    if (settings[0].pointLimiit > points) {
+      throw new BadRequestException('You have exceeded the points limit');
+    }
+
     if (usedPromoCode.UserOrders.length && promoCode)
       throw new ConflictException(
         `Promo code "${promoCode}" is invalid or expired.`,
@@ -234,11 +240,10 @@ export class OrderService {
     const total = Math.max(subTotal - discount, 0);
     const duration =
       allServices.reduce((acc, service) => acc + service.duration, 0) * 15;
-    const OrderDate = dateWithoutTime;
 
     return new AppSuccess(
       {
-        date: format(new Date(OrderDate), 'yyyy-MM-dd'),
+        date: format(new Date(dateWithoutTime), 'yyyy-MM-dd'),
         slot,
         barberId,
         branchId,
@@ -312,6 +317,12 @@ export class OrderService {
           select: { client: { select: { points: true } } },
         }),
       ]);
+
+    const settings = await this.prisma.settings.findMany({});
+
+    if (settings[0].pointLimiit > points) {
+      throw new BadRequestException('You have exceeded the points limit');
+    }
 
     if (usedPromoCode.UserOrders.length && promoCode)
       throw new ConflictException(
@@ -666,6 +677,22 @@ export class OrderService {
     const updatedOrder = await this.prisma.order.update({
       where: { id },
       data: { status: 'PAID', cashierId: userId },
+    });
+
+    const settings = await this.prisma.settings.findMany({});
+
+    await this.prisma.user.update({
+      where: { id: updatedOrder.userId },
+      data: {
+        client: {
+          update: {
+            points: {
+              increment:
+                updatedOrder.total * (settings[0].PointsPercentage / 100),
+            },
+          },
+        },
+      },
     });
 
     return new AppSuccess(updatedOrder, 'Order marked as paid');

@@ -158,7 +158,7 @@ export class MockService {
       password: '1234',
       role: 'barber',
       start: 16,
-      end: 0,
+      end: 24,
     },
   ];
 

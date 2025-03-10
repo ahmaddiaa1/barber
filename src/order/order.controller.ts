@@ -16,7 +16,7 @@ import { AuthGuard } from '../../guard/auth.guard';
 import { RolesGuard } from 'guard/role.guard';
 import { Roles } from 'decorators/roles.decorator';
 import { Lang } from 'decorators/accept.language';
-import { UpdateOrderDto } from 'src/order/dto/update-order.dto';
+import { UpdateOrderDto } from './dto/update-order.dto';
 
 @UseGuards(RolesGuard)
 @UseGuards(AuthGuard)

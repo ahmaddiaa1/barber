@@ -12,7 +12,7 @@ import { PromoCodeService } from 'src/promo-code/promo-code.service';
 import { Language, Service } from '@prisma/client';
 import { format } from 'date-fns';
 import { Translation } from 'src/class-type/translation';
-import { UpdateOrderDto } from 'src/order/dto/update-order.dto';
+import { UpdateOrderDto } from './dto/update-order.dto';
 
 interface PrismaServiceType extends Service {
   isFree: boolean;

@@ -30,10 +30,12 @@ export class AuthService {
       branchId,
       start,
       end,
+      referralCode,
     } = createAuthDto;
     let user: User;
     const saltOrRounds = 10;
-
+    const settings = await this.prisma.settings.findFirst({});
+    const isReferralCodeExist = this.checkReferralCode(referralCode);
     const isPhoneExist = await this.prisma.user.findUnique({
       where: { phone },
     });
@@ -65,7 +67,7 @@ export class AuthService {
         let referralCode: string;
         do {
           referralCode = Random(6);
-          const isReferralCodeExist = await this.prisma.client.findFirst({
+          const isReferralCodeExist = await this.prisma.client.findUnique({
             where: { referralCode },
           });
           if (!isReferralCodeExist) break;
@@ -77,7 +79,7 @@ export class AuthService {
           {
             role: Role.USER,
             client: {
-              create: { referralCode },
+              create: { referralCode, point: settings.referralPoints },
             },
           },
           file?.path,
@@ -195,7 +197,6 @@ export class AuthService {
   ) {
     const { branchId, role: roles = 'user', ...rest } = createAuthDto;
     const role = roles.toUpperCase() as Role;
-    const id = Random(11);
 
     if (branchId) {
       const isBranchExist = await this.prisma.branch.findUnique({
@@ -232,5 +233,15 @@ export class AuthService {
     const token = jwt.sign({ userId }, this.jwtSecret, { expiresIn: '6h' });
     await this.loginToken(token);
     return token;
+  }
+
+  private async checkReferralCode(referralCode: string) {
+    const isReferralCodeExist = await this.prisma.client.findUnique({
+      where: { referralCode },
+    });
+    if (!isReferralCodeExist)
+      throw new NotFoundException('Referral code is not valid');
+
+    return true;
   }
 }

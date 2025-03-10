@@ -34,7 +34,7 @@ model User {
 }
 
 model Client {
-  id             String           @id @default(uuid())
+  id             String           @id
   referralCode   String?          @unique
   points         Int              @default(0)
   ban            Boolean          @default(false)
@@ -214,8 +214,8 @@ model Slot {
   id        String   @id @default(uuid())
   start     Int
   end       Int
-  barberId  String   @unique
-  cashierId String   @unique
+  barberId  String?  @unique
+  cashierId String?  @unique
   Cashier   Cashier? @relation(fields: [cashierId], references: [id])
   barber    Barber?  @relation(fields: [barberId], references: [id])
   slot      String[]

@@ -662,18 +662,17 @@ export class MockService {
       });
     });
 
-    // const settings = this.prisma.settings.create({
-    //   data: {
-    //     aboutUs: this.aboutUs,
-    //     terms: this.terms,
-    //     privacy: this.privacy,
-    //     contactUs: this.contactUs,
-    //     faq: this.faq,
-    //     branch: this.branch,
-    //   },
-    // });
+    const settings = await this.prisma.settings.create({
+      data: {
+        canceledOrder: 2,
+        pointLimiit: 100,
+        PointsPercentage: 10,
+        referralPoints: 1000,
+      },
+    });
 
     return {
+      settings,
       client,
       admins,
       barber1,

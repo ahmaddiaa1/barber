@@ -36,7 +36,7 @@ export class RegisterDto {
   @IsOptional()
   @Transform(({ value }) => value ?? null)
   @IsString()
-  referCode: string;
+  referralCode: string;
 
   @IsOptional()
   @Transform(({ value }) => value ?? null)

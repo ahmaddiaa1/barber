@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { JwtPayload } from 'jsonwebtoken';
 
 @Injectable()
 export class AcceptLanguage implements CanActivate {

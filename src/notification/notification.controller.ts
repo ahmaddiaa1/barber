@@ -8,7 +8,11 @@ export class NotificationController {
 
   @Post('single')
   create(@Body() createNotificationDto: CreateNotificationDto) {
-    return this.firebaseService.sendNotification(['token'], 'title', 'body');
+    return this.firebaseService.sendNotification(
+      createNotificationDto.user,
+      'title',
+      'body',
+    );
   }
 
   @Post('multiple')

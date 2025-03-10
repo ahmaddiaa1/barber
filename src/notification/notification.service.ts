@@ -2,10 +2,11 @@
 
 import { Injectable } from '@nestjs/common';
 import * as admin from 'firebase-admin';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class FirebaseService {
-  constructor() {
+  constructor(private readonly prisma: PrismaService) {
     if (!admin.apps.length) {
       admin.initializeApp({
         credential: admin.credential.cert(
@@ -30,7 +31,11 @@ export class FirebaseService {
 
     try {
       const response = await admin.messaging().sendEachForMulticast(message);
+
+      // const notifications = await this.prisma.notification.createMany({})
+
       console.log('Notifications sent:', response.successCount);
+      console.log('Notifications failed:', response);
     } catch (error) {
       console.error('Error sending notifications:', error);
     }

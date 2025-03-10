@@ -17,6 +17,7 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
+    const fcmToken = req.headers['NotificationCode'];
     const token =
       req.headers['authorization']?.split(' ')[1] ||
       req.headers['Authorization']?.split(' ')[1];
@@ -39,6 +40,13 @@ export class AuthGuard implements CanActivate {
           client: true,
         },
       });
+
+      if (!user.fcmToken || user.fcmToken !== fcmToken) {
+        await this.prisma.user.update({
+          where: { id },
+          data: { fcmToken },
+        });
+      }
 
       req.user = user;
       req.token = token;

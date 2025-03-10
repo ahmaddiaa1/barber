@@ -15,6 +15,7 @@ export class UserService {
     avatar: true,
     phone: true,
     role: true,
+    fcmToken: true,
     createdAt: true,
     updatedAt: true,
   } as Prisma.UserSelect;
@@ -43,7 +44,7 @@ export class UserService {
           client: { select: this.client },
         },
         skip: (page - 1) * pageSize,
-        take: pageSize,
+        take: +pageSize,
       });
 
       return new AppSuccess({ users }, 'Clients fetched successfully', 200);
@@ -69,7 +70,7 @@ export class UserService {
       const fetchedUser = await this.prisma.user.findMany({
         where: { role: Role[role?.toUpperCase()] ?? { not: Role.USER } },
         skip: (page - 1) * pageSize,
-        take: pageSize,
+        take: +pageSize,
         select: { ...this.user, ...include },
       });
 

@@ -240,11 +240,10 @@ export class OrderService {
     const total = Math.max(subTotal - discount, 0);
     const duration =
       allServices.reduce((acc, service) => acc + service.duration, 0) * 15;
-    const OrderDate = dateWithoutTime;
 
     return new AppSuccess(
       {
-        date: format(new Date(OrderDate), 'yyyy-MM-dd'),
+        date: format(new Date(dateWithoutTime), 'yyyy-MM-dd'),
         slot,
         barberId,
         branchId,
@@ -643,8 +642,6 @@ export class OrderService {
       s.PackagesServices.map((ps) => ps.id),
     );
 
-    const settings = await this.prisma.settings.findMany({});
-
     await this.prisma.$transaction(async (prisma) => {
       if (packageServiceIds.length > 0) {
         await this.prisma.packagesServices.deleteMany({
@@ -657,20 +654,6 @@ export class OrderService {
           },
         });
       }
-
-      await prisma.user.update({
-        where: { id: updatedOrder.userId },
-        data: {
-          client: {
-            update: {
-              points: {
-                increment:
-                  updatedOrder.total * settings[0].PointsPercentage * 0.01,
-              },
-            },
-          },
-        },
-      });
 
       if (updatedOrder.usedPackage) {
         await prisma.clientPackages.deleteMany({
@@ -694,6 +677,22 @@ export class OrderService {
     const updatedOrder = await this.prisma.order.update({
       where: { id },
       data: { status: 'PAID', cashierId: userId },
+    });
+
+    const settings = await this.prisma.settings.findMany({});
+
+    await this.prisma.user.update({
+      where: { id: updatedOrder.userId },
+      data: {
+        client: {
+          update: {
+            points: {
+              increment:
+                updatedOrder.total * (settings[0].PointsPercentage / 100),
+            },
+          },
+        },
+      },
     });
 
     return new AppSuccess(updatedOrder, 'Order marked as paid');

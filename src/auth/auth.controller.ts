@@ -6,6 +6,7 @@ import {
   Param,
   UploadedFile,
   UseInterceptors,
+  ConflictException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/auth-login-dto';
@@ -14,6 +15,7 @@ import { AuthGuard } from 'guard/auth.guard';
 import { UserData } from 'decorators/user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from '../../src/config/multer.config';
+import { AppSuccess } from 'src/utils/AppSuccess';
 
 @Controller('auth')
 export class AuthController {
@@ -37,5 +39,17 @@ export class AuthController {
   @UseGuards(AuthGuard)
   logout(@UserData('token') token: string) {
     return this.authService.logout(token);
+  }
+
+  @Post('/referral-code')
+  checkReferralCode(@Body('referralCode') referralCode: string) {
+    const isCodeValid = this.authService.checkReferralCode(referralCode);
+    if (!isCodeValid) {
+      throw new ConflictException('Referral Code is not valid');
+    }
+    return new AppSuccess(
+      { referralCode: isCodeValid },
+      'Referral Code is Applying',
+    );
   }
 }

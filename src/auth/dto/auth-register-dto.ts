@@ -2,6 +2,7 @@ import { Role } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsPhoneNumber,
   IsString,
@@ -58,18 +59,18 @@ export class RegisterDto {
       object?.role?.toUpperCase() === 'CASHIER' ||
       object?.role?.toUpperCase() === 'BARBER',
   )
-  @Transform(({ value }) => value ?? null)
+  @Transform(({ value }) => Number(value) ?? null)
   @IsNotEmpty()
-  @IsString()
-  start: string;
+  @IsNumber()
+  start: number;
 
   @ValidateIf(
     (object) =>
       object?.role?.toUpperCase() === 'CASHIER' ||
       object?.role?.toUpperCase() === 'BARBER',
   )
-  @Transform(({ value }) => value ?? null)
+  @Transform(({ value }) => Number(value) ?? null)
   @IsNotEmpty()
-  @IsString()
-  end: string;
+  @IsNumber()
+  end: number;
 }

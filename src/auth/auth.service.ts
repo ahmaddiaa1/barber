@@ -12,7 +12,7 @@ import { RegisterDto } from './dto/auth-register-dto';
 import { LoginDto } from './dto/auth-login-dto';
 import * as jwt from 'jsonwebtoken';
 import { AppSuccess } from '../utils/AppSuccess';
-import { Role, User } from '@prisma/client';
+import { Client, Prisma, Role, User } from '@prisma/client';
 import { Random } from '../utils/generate';
 
 @Global()
@@ -30,12 +30,13 @@ export class AuthService {
       branchId,
       start,
       end,
-      referralCode,
+      referralCode: code,
     } = createAuthDto;
+
     let user: User;
     const saltOrRounds = 10;
     const settings = await this.prisma.settings.findFirst({});
-    const isReferralCodeExist = this.checkReferralCode(referralCode);
+    const existReferralCode = await this.checkReferralCode(code);
     const isPhoneExist = await this.prisma.user.findUnique({
       where: { phone },
     });
@@ -47,6 +48,8 @@ export class AuthService {
       throw new NotFoundException('Role not found');
     }
 
+    const referralCodeStatus = code && existReferralCode.status;
+
     const hashedPassword = await hash(password, saltOrRounds);
 
     switch (role.toUpperCase()) {
@@ -57,13 +60,16 @@ export class AuthService {
           {
             role: Role.ADMIN,
             admin: { create: {} },
-          },
+          } as Prisma.UserCreateInput,
           file?.path,
         );
 
         break;
 
       case Role.USER:
+        !referralCodeStatus &&
+          new BadRequestException('Referral code is invalid');
+
         let referralCode: string;
         do {
           referralCode = Random(6);
@@ -79,12 +85,20 @@ export class AuthService {
           {
             role: Role.USER,
             client: {
-              create: { referralCode, point: settings.referralPoints },
+              create: {
+                referralCode,
+                points: referralCodeStatus ? settings.referralPoints : 0,
+              },
             },
-          },
+          } as Prisma.UserCreateInput,
           file?.path,
         );
-
+        await this.prisma.client.update({
+          where: { id: existReferralCode.user.id },
+          data: {
+            points: { increment: settings.referralPoints },
+          },
+        });
         break;
 
       case Role.BARBER:
@@ -95,8 +109,19 @@ export class AuthService {
           hashedPassword,
           {
             role: Role.BARBER,
-            barber: { create: { branchId } },
-          },
+            barber: {
+              create: {
+                branchId,
+                Slot: {
+                  create: {
+                    start,
+                    end,
+                    slot: await this.generateSlots(start, end),
+                  },
+                },
+              },
+            },
+          } as Prisma.UserCreateInput,
           file?.path,
         );
 
@@ -110,8 +135,19 @@ export class AuthService {
           hashedPassword,
           {
             role: Role.CASHIER,
-            cashier: { create: { branchId } },
-          },
+            cashier: {
+              create: {
+                branchId,
+                Slot: {
+                  create: {
+                    start,
+                    end,
+                    slot: await this.generateSlots(start, end),
+                  },
+                },
+              },
+            },
+          } as Prisma.UserCreateInput,
           file?.path,
         );
 
@@ -235,13 +271,37 @@ export class AuthService {
     return token;
   }
 
-  private async checkReferralCode(referralCode: string) {
+  public async checkReferralCode(
+    referralCode: string,
+  ): Promise<{ status: boolean; user: Client }> {
     const isReferralCodeExist = await this.prisma.client.findUnique({
       where: { referralCode },
     });
-    if (!isReferralCodeExist)
-      throw new NotFoundException('Referral code is not valid');
+    if (!isReferralCodeExist) return { status: false, user: null };
+    return { status: true, user: isReferralCodeExist };
+  }
 
-    return true;
+  private async generateSlots(start: number, end: number) {
+    const duration = (await this.prisma.settings.findFirst({})).slotDuration;
+
+    const slotsArray = [];
+    for (let hour = start; hour < end; hour++) {
+      for (let minute = 0; minute < 60; minute += duration) {
+        const slot = `${hour.toString().padStart(2, '0')}:${minute
+          .toString()
+          .padStart(2, '0')}`;
+        slotsArray.push(
+          +slot.split(':')[0] > 11
+            ? (+slot.split(':')[0] - 12 === 0 ? 12 : +slot.split(':')[0] - 12)
+                .toString()
+                .padStart(2, '0') +
+                ':' +
+                slot.split(':')[1] +
+                ' PM'
+            : slot + ' AM',
+        );
+      }
+    }
+    return slotsArray;
   }
 }

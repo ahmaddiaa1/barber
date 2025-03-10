@@ -135,8 +135,8 @@ export class MockService {
         'https://res.cloudinary.com/unknowndev/image/upload/v1741063667/barber/barbers/whl07h8d9qt5dugpmmtj.webp',
       password: '1234',
       role: 'barber',
-      start: 8,
-      end: 21,
+      start: 0,
+      end: 8,
     },
     {
       firstName: 'Hassan',
@@ -147,7 +147,7 @@ export class MockService {
       password: '1234',
       role: 'barber',
       start: 8,
-      end: 21,
+      end: 16,
     },
     {
       firstName: 'Ali',
@@ -157,8 +157,8 @@ export class MockService {
         'https://res.cloudinary.com/unknowndev/image/upload/v1741063667/barber/barbers/ung59agowqpun0flfcjd.jpg',
       password: '1234',
       role: 'barber',
-      start: 8,
-      end: 21,
+      start: 16,
+      end: 0,
     },
   ];
 

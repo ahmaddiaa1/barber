@@ -154,6 +154,12 @@ export class OrderService {
         (await this.promoCodeService.validatePromoCode(promoCode)).data,
     ]);
 
+    const settings = await this.prisma.settings.findMany({});
+
+    if (settings[0].pointLimiit > points) {
+      throw new BadRequestException('You have exceeded the points limit');
+    }
+
     if (usedPromoCode.UserOrders.length && promoCode)
       throw new ConflictException(
         `Promo code "${promoCode}" is invalid or expired.`,
@@ -312,6 +318,12 @@ export class OrderService {
           select: { client: { select: { points: true } } },
         }),
       ]);
+
+    const settings = await this.prisma.settings.findMany({});
+
+    if (settings[0].pointLimiit > points) {
+      throw new BadRequestException('You have exceeded the points limit');
+    }
 
     if (usedPromoCode.UserOrders.length && promoCode)
       throw new ConflictException(
@@ -631,6 +643,8 @@ export class OrderService {
       s.PackagesServices.map((ps) => ps.id),
     );
 
+    const settings = await this.prisma.settings.findMany({});
+
     await this.prisma.$transaction(async (prisma) => {
       if (packageServiceIds.length > 0) {
         await this.prisma.packagesServices.deleteMany({
@@ -643,6 +657,20 @@ export class OrderService {
           },
         });
       }
+
+      await prisma.user.update({
+        where: { id: updatedOrder.userId },
+        data: {
+          client: {
+            update: {
+              points: {
+                increment:
+                  updatedOrder.total * settings[0].PointsPercentage * 0.01,
+              },
+            },
+          },
+        },
+      });
 
       if (updatedOrder.usedPackage) {
         await prisma.clientPackages.deleteMany({

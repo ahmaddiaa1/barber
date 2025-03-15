@@ -3,6 +3,7 @@
 /node_modules
 /build
 /secret
+/config
 
 # Logs
 logs
@@ -43,6 +44,8 @@ lerna-debug.log*
 .env.production.local
 .env.local
 serviceAccountKey.json
+
+
 # temp directory
 .temp
 .tmp

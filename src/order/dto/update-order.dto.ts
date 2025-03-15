@@ -10,4 +10,11 @@ export class UpdateOrderDto extends PartialType(CreateOrderDto) {
   @IsOptional()
   @IsArray()
   remove: string[];
+  @IsOptional()
+  @IsArray()
+  addPackage: string[];
+
+  @IsOptional()
+  @IsArray()
+  removePackage: string[];
 }

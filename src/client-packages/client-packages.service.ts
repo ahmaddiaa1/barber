@@ -192,8 +192,6 @@ export class ClientPackagesService {
   }
 
   async remove(id: string) {
-    console.log('id', id);
-
     await this.prisma.$transaction(async (prisma) => {
       await prisma.packagesServices.deleteMany({
         where: { ClientPackagesId: id },

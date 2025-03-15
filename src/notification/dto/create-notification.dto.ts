@@ -7,13 +7,9 @@ export class CreateNotificationDto {
 
   @IsNotEmpty()
   @IsString()
-  content: string;
+  body: string;
 
   @IsNotEmpty()
   @IsArray()
   user: string[];
-
-  @IsNotEmpty()
-  @IsString()
-  description: string;
 }

@@ -260,9 +260,7 @@ export class AuthService {
           },
         });
       });
-    } catch (error) {
-      console.log(error.message);
-    }
+    } catch (error) {}
   }
 
   private async generateToken(userId: string) {
@@ -285,22 +283,15 @@ export class AuthService {
     const duration = (await this.prisma.settings.findFirst({})).slotDuration;
 
     const slotsArray = [];
-    for (let hour = start; hour < end; hour++) {
-      for (let minute = 0; minute < 60; minute += duration) {
-        const slot = `${hour.toString().padStart(2, '0')}:${minute
-          .toString()
-          .padStart(2, '0')}`;
-        slotsArray.push(
-          +slot.split(':')[0] > 11
-            ? (+slot.split(':')[0] - 12 === 0 ? 12 : +slot.split(':')[0] - 12)
-                .toString()
-                .padStart(2, '0') +
-                ':' +
-                slot.split(':')[1] +
-                ' PM'
-            : slot + ' AM',
-        );
-      }
+    for (let time = start * 60; time < end * 60; time += duration) {
+      let hour = Math.floor(time / 60);
+      let minute = time % 60;
+      let formattedHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+      let period = hour >= 12 ? 'PM' : 'AM';
+      let slot = `${formattedHour.toString().padStart(2, '0')}:${minute
+        .toString()
+        .padStart(2, '0')} ${period}`;
+      slotsArray.push(slot);
     }
     return slotsArray;
   }

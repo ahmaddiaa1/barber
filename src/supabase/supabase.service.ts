@@ -20,13 +20,11 @@ export class SupabaseService {
   //       upsert: false,
   //     });
   //   if (error) {
-  //     console.log('Error uploading avatar:', error);
   //     throw new Error(error.message);
   //   }
   //   const { data: publicUrlData } = this.supabase.storage
   //     .from('avatars')
   //     .getPublicUrl(filePath);
-  //   console.log(publicUrlData);
   //   return publicUrlData.publicUrl;
   // }
 }

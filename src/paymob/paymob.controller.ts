@@ -69,8 +69,6 @@ export class PaymobController {
 
     const type = offers.offerType.toLocaleLowerCase();
 
-    console.log('offers', offers);
-
     const item = [
       {
         name: offers[type].Translation[0].name,
@@ -94,7 +92,6 @@ export class PaymobController {
       id,
       offers[type].price,
     );
-    console.log('paymentKey', paymentKey);
     return res.redirect(paymentKey);
   }
 

@@ -96,7 +96,6 @@ export class PackageService {
         },
       },
     });
-    console.log(fetchedPackages);
     const packages = fetchedPackages.map((packageData) => {
       const {
         createdAt,
@@ -126,8 +125,6 @@ export class PackageService {
         services,
       };
     });
-
-    console.log(packages);
 
     return new AppSuccess({ packages }, 'packages fetched successfully', 200);
   }

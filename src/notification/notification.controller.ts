@@ -1,24 +1,77 @@
-import { Controller, Post, Body } from '@nestjs/common';
-import { FirebaseService } from './notification.service';
-import { CreateNotificationDto } from './dto/create-notification.dto';
+import { Controller, Post, Body, Get, Headers } from '@nestjs/common';
+import { NotificationService } from './notification.service';
+import * as jwt from 'jsonwebtoken';
+import * as admin from 'firebase-admin';
+import axios from 'axios';
+const users = [] as {
+  username: string;
+  password: string;
+  fcmToken: string | null;
+}[];
 
-@Controller('notification')
+@Controller()
 export class NotificationController {
-  constructor(private readonly firebaseService: FirebaseService) {}
+  constructor(private readonly authService: NotificationService) {}
 
-  @Post('single')
-  create(@Body() createNotificationDto: CreateNotificationDto) {
-    return this.firebaseService.sendNotification(
-      createNotificationDto.user,
-      'title',
-      'body',
-    );
+  @Post('signup')
+  signUp(@Body() body) {
+    return this.authService.signUp(body.username, body.password, users);
   }
 
-  @Post('multiple')
-  createMultiple(@Body() createNotificationDto: CreateNotificationDto) {
-    return this.firebaseService.sendToAllClients('title', 'body', {
-      key: 'value',
-    });
+  @Post('login')
+  login(@Body() body) {
+    return this.authService.login(body.username, body.password, users);
+  }
+
+  @Post('set-fcm')
+  setFCM(@Headers('Authorization') token, @Body() body) {
+    console.log(token);
+    const decoded = jwt.verify(token.split(' ')[1], 'your_jwt_secret') as {
+      username: string;
+    };
+    console.log(decoded);
+    return this.authService.setFCMToken(decoded.username, body.fcmToken, users);
+  }
+
+  @Post('send-notification')
+  async sendNotification(@Headers('Authorization') token, @Body() body) {
+    console.log(token);
+
+    const decoded = jwt.verify(token.split(' ')[1], 'your_jwt_secret') as {
+      username: string;
+    };
+
+    console.log(decoded);
+    const user = users.find((u) => u.username === decoded.username);
+    if (!user?.fcmToken) return { error: 'User has no FCM token' };
+
+    const message = {
+      to: user.fcmToken, // ✅ Must be a string, not an array
+      notification: {
+        title: body.title,
+        body: body.message,
+      },
+    };
+    console.log(message);
+
+    try {
+      await admin.messaging().send({
+        token: user.fcmToken,
+        notification: {
+          title: body.title,
+          body: body.message,
+        },
+      });
+    } catch (error) {
+      console.log(error);
+      return { error: 'Failed to send notification' };
+    }
+
+    return { success: true };
+  }
+
+  @Get('users')
+  getAuthUser() {
+    return this.authService.getAuthUser(users);
   }
 }

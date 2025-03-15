@@ -20,7 +20,6 @@ export class AcceptLanguage implements CanActivate {
     return lang;
   }
   catch(error) {
-    console.log(error);
     throw new UnauthorizedException('Invalid ');
   }
 }

@@ -42,7 +42,6 @@ export const multerConfig = (folder: string): multer.Options => {
     ) => {
       const mimeType = file.mimetype;
       const ext = extname(file.originalname).toLowerCase().replace('.', '');
-      console.log(mimeType, ext);
 
       if (
         !mimeType ||

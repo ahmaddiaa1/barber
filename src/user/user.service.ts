@@ -30,6 +30,7 @@ export class UserService {
   private barberAndCashier = {
     id: false,
     branch: true,
+    Slot: true,
   } as Prisma.BarberSelect;
 
   public async findAllClients(page = 1, pageSize = 10, phone?: string) {
@@ -54,14 +55,22 @@ export class UserService {
     }
   }
 
-  public async findAllUser(page = 1, pageSize = 10, role?: string) {
+  public async findAllUser(page = 1, pageSize = 10, role?: Role) {
     if (role && !Role[role?.toUpperCase()]) {
       throw new NotFoundException('Role not found');
     }
 
     try {
       const include = role
-        ? { [role?.toLowerCase()]: true }
+        ? {
+            [role?.toLowerCase()]: {
+              select:
+                Role[role.toUpperCase()] === 'BARBER' ||
+                Role[role.toUpperCase()] === 'CASHIER'
+                  ? this.barberAndCashier
+                  : this.client,
+            },
+          }
         : {
             admin: false,
             barber: { select: this.barberAndCashier },

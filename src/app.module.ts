@@ -21,6 +21,7 @@ import { PaymobModule } from './paymob/paymob.module';
 import { NotificationModule } from './notification/notification.module';
 import { ProductModule } from './product/product.module';
 import { StaticModule } from './static/static.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { StaticModule } from './static/static.module';
     MockModule,
     ProductModule,
     StaticModule,
+    AdminModule,
   ],
   controllers: [],
   providers: [TokenService],

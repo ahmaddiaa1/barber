@@ -8,11 +8,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { StaticService } from './static.service';
-import {
-  CreateAboutDto,
-  CreateQuestionDto,
-  CreateStaticDto,
-} from './dto/create-static.dto';
+import { CreateAboutDto, CreateQuestionDto } from './dto/create-static.dto';
 import { UpdateStaticDto } from './dto/update-static.dto';
 
 @Controller('static')
@@ -23,6 +19,7 @@ export class StaticController {
   createAbout(@Body() data: CreateAboutDto) {
     return this.staticService.createAbout(data);
   }
+
   @Post('/questions')
   createQuestions(@Body() data: CreateQuestionDto) {
     return this.staticService.createQuestions(data);
@@ -37,13 +34,18 @@ export class StaticController {
   updateAbout(@Param('id') id: string, @Body() data: UpdateStaticDto) {
     return this.staticService.updateAbout(id, data);
   }
+
   @Put('question/:id')
   updateQuestion(@Param('id') id: string, @Body() data: CreateQuestionDto) {
     return this.staticService.updateQuestion(id, data);
   }
 
-  @Delete(':id')
-  deleteStatic(@Param('id') id: string) {
-    return this.staticService.deleteStatic(id);
+  @Delete('question/:id') deleteQuestion(@Param('id') id: string) {
+    return this.staticService.deleteQuestion(id);
+  }
+
+  @Delete()
+  deleteStatic() {
+    return this.staticService.deleteStatic();
   }
 }

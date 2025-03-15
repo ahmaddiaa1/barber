@@ -9,35 +9,33 @@ export class StaticService {
   constructor(private prisma: PrismaService) {}
 
   async createAbout(data: CreateAboutDto) {
-    const about = data;
-
     const staticData = await this.prisma.static.findFirst({});
 
     if (!staticData) {
-      const abouts = await this.prisma.static.create({
+      const about = await this.prisma.static.create({
         data: {
           about: {
             create: {
-              content: about.content,
-              location: about.location,
-              time: about.time,
+              content: data.content,
+              location: data.location,
+              time: data.time,
             },
           },
         },
         include: { about: true },
       });
-      return new AppSuccess(abouts, 'Static data created successfully');
+      return new AppSuccess(about, 'Static data created successfully');
     }
 
-    const abouts = await this.prisma.about.update({
+    const about = await this.prisma.about.update({
       where: { id: staticData.id },
       data: {
-        content: about.content,
-        location: about.location,
-        time: about.time,
+        content: data.content,
+        location: data.location,
+        time: data.time,
       },
     });
-    return new AppSuccess(abouts, 'Static data created successfully');
+    return new AppSuccess(about, 'Static data created successfully');
   }
 
   async createQuestions(data: CreateQuestionDto) {
@@ -46,15 +44,15 @@ export class StaticService {
     const staticData = await this.prisma.static.findFirst({});
 
     if (!staticData) {
-      const questionss = await this.prisma.static.create({
+      const questionsDate = await this.prisma.static.create({
         data: {
           questions: { createMany: { data: questions } },
         },
       });
-      return new AppSuccess(questionss, 'Static data created successfully');
+      return new AppSuccess(questionsDate, 'Static data created successfully');
     }
 
-    const questionss = await this.prisma.static.update({
+    const questionsDate = await this.prisma.static.update({
       where: { id: staticData.id },
       data: {
         questions: {
@@ -63,8 +61,11 @@ export class StaticService {
           },
         },
       },
+      select: {
+        questions: { select: { id: true, question: true, answer: true } },
+      },
     });
-    return new AppSuccess(questionss, 'Static data created successfully');
+    return new AppSuccess(questionsDate, 'Static data created successfully');
   }
 
   async getStatic() {
@@ -112,12 +113,22 @@ export class StaticService {
     );
   }
 
-  async deleteStatic(id: string) {
-    await this.ensureStaticExists(id);
-    return this.prisma.static.delete({ where: { id } });
+  async deleteQuestion(id: string) {
+    const ExistQuestion = await this.prisma.questions.findUnique({
+      where: { id },
+    });
+
+    !ExistQuestion && new NotFoundException('Question not found');
+
+    const question = await this.prisma.questions.delete({ where: { id } });
+    return new AppSuccess(question, 'Question deleted successfully');
   }
 
-  private async ensureStaticExists(id: string) {
+  async deleteStatic() {
+    return this.prisma.static.deleteMany();
+  }
+
+  async ensureStaticExists(id: string) {
     const exists = await this.prisma.static.findUnique({ where: { id } });
     if (!exists) throw new NotFoundException('Static not found');
   }

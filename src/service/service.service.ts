@@ -56,22 +56,22 @@ export class ServiceService {
   ): Promise<AppSuccess<Service>> {
     const serviceImg = file?.path;
 
-    console.log(createServiceDto);
-
     const newService = await this.prisma.service.create({
       data: {
         ...createServiceDto,
         ...(serviceImg && { serviceImg }),
         Translation: createTranslation(createServiceDto),
       },
-      include: serviceTranslation(false, language),
+      include: serviceTranslation(false),
     });
 
     const { Translation, ...rest } = newService;
 
     const service = {
       ...rest,
-      name: Translation[0]?.name,
+      nameEN: Translation.find((t) => t.language === 'EN')?.name,
+      nameAR: Translation.find((t) => t.language === 'AR')?.name,
+      name: Translation.find((t) => t.language === language)?.name,
     };
 
     return new AppSuccess(service, 'Service created successfully');
@@ -95,14 +95,16 @@ export class ServiceService {
           Translation: updateTranslation(updateServiceDto),
         }),
       },
-      include: serviceTranslation(false, language),
+      include: serviceTranslation(false),
     });
 
     const { Translation, ...rest } = updatedService;
 
     const service = {
       ...rest,
-      name: Translation[0]?.name,
+      nameEN: Translation.find((t) => t.language === 'EN')?.name,
+      nameAR: Translation.find((t) => t.language === 'AR')?.name,
+      name: Translation.find((t) => t.language === language)?.name,
     };
 
     return new AppSuccess(service, 'Service updated successfully');
@@ -127,19 +129,19 @@ export class ServiceService {
   ): Promise<Service> {
     const fetchedService = await this.prisma.service.findUnique({
       where: { id },
-      include: serviceTranslation(false, language),
+      include: serviceTranslation(false),
     });
-
+    if (!fetchedService) {
+      throw new NotFoundException('Service not found');
+    }
     const { Translation, ...rest } = fetchedService;
 
     const service = {
       ...rest,
-      name: Translation[0]?.name,
+      nameEN: Translation.find((t) => t.language === 'EN')?.name,
+      nameAR: Translation.find((t) => t.language === 'AR')?.name,
+      name: Translation.find((t) => t.language === language)?.name,
     };
-
-    if (!service) {
-      throw new NotFoundException('Service not found');
-    }
 
     return service;
   }

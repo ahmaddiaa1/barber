@@ -42,8 +42,6 @@ export class PaymobService {
     id: string,
     amount: number,
   ) {
-    console.log('dataaaaaaaa', billing_data, items);
-
     const { first_name, last_name, phone_number } = billing_data;
 
     try {
@@ -84,14 +82,11 @@ export class PaymobService {
           },
         },
       );
-      console.log(response.data);
 
       const clientSecret = response.data.client_secret;
 
       return `https://uae.paymob.com/unifiedcheckout/?publicKey=${process.env.PAYMOB_PUBLIC_KEY}&clientSecret=${clientSecret}`;
-    } catch (error) {
-      console.log(error.response.data);
-    }
+    } catch (error) {}
   }
 
   async verifyPaymobQuery(
@@ -139,8 +134,6 @@ export class PaymobService {
     const success =
       generatedHmac === providedHmac && payload.success === 'true';
 
-    console.log('success', success);
-
     if (success) {
       const response = await axios.post(
         'https://accept.paymob.com/api/ecommerce/orders/transaction_inquiry',
@@ -149,7 +142,6 @@ export class PaymobService {
           order_id: payload.order,
         },
       );
-      console.log('response', response.data.payment_key_claims.extra.order_id);
       const packageId = response.data.payment_key_claims.extra.order_id;
 
       const offer = await this.prisma.offers
@@ -166,15 +158,12 @@ export class PaymobService {
         });
 
       const type = offer.offerType.toLowerCase();
-      console.log('type', type);
 
       if (type === 'packages') {
         await this.packages.create(packageId, user, lang);
       } else if (type === 'points') {
         const a = await this.points.create(packageId, user, lang);
-        console.log('a', a);
       }
-      console.log('Package purchased successfully');
     }
 
     // Redirect to the HTML file with the success status
@@ -185,9 +174,6 @@ export class PaymobService {
   }
 
   return(res: Response) {
-    console.log(
-      join(__dirname, '..', '..', 'config', 'transaction-status.html'),
-    );
     const redirectUrl = join(__dirname, 'transaction-status.html');
     res.sendFile(redirectUrl);
   }

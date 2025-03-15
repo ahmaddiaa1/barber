@@ -10,7 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
-import { Language, Service } from '@prisma/client';
+import { Language, Role, Service } from '@prisma/client';
 import { format } from 'date-fns';
 import { Translation } from 'src/class-type/translation';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -25,6 +25,47 @@ export class OrderService {
     private readonly prisma: PrismaService,
     private readonly promoCodeService: PromoCodeService,
   ) {}
+
+  async getNonSelectedServices(id: string, language: Language) {
+    const order = await this.findOneOrFail(id);
+
+    const FetchedCategory = await this.prisma.category.findMany({
+      include: {
+        Translation: true,
+        services: {
+          where: {
+            id: {
+              notIn: order.service.flatMap((o) => o.id),
+            },
+          },
+          include: {
+            Translation: true,
+          },
+        },
+      },
+    });
+
+    const category = FetchedCategory.map((category) => {
+      const { Translation, services, ...rest } = category;
+      return {
+        ...rest,
+        nameEN: Translation.find((t) => t.language === 'EN')?.name,
+        nameAR: Translation.find((t) => t.language === 'AR')?.name,
+        name: Translation.find((t) => t.language === language)?.name,
+        services: services.map((service) => {
+          const { Translation, ...rest } = service;
+          return {
+            ...rest,
+            nameEN: Translation.find((t) => t.language === 'EN')?.name,
+            nameAR: Translation.find((t) => t.language === 'AR')?.name,
+            name: Translation.find((t) => t.language === language)?.name,
+          };
+        }),
+      };
+    });
+
+    return new AppSuccess({ category }, 'Services found successfully');
+  }
 
   async getAllOrders(userId: string, lang: Language) {
     const fetchedOrders = await this.prisma.order.findMany({
@@ -102,6 +143,154 @@ export class OrderService {
     );
   }
 
+  async getPayedOrders(lang: Language) {
+    const fetchedOrders = await this.prisma.order.findMany({
+      where: { date: new Date(), status: 'COMPLETED' },
+      include: {
+        barber: { include: { barber: { include: { user: true } } } },
+        branch: { include: Translation(false, lang) },
+        service: true,
+      },
+    });
+    const orders = await Promise.all(
+      fetchedOrders.map(async (order) => {
+        const {
+          barber,
+          date,
+          total,
+          subTotal,
+          discount,
+          points,
+          service,
+          branch: { Translation, ...branchRest },
+          booking,
+          ...rest
+        } = order;
+
+        const usedPackage = await this.prisma.clientPackages.findMany({
+          where: { id: { in: order.usedPackage } },
+        });
+
+        const usedPackageIds = usedPackage.flatMap((u) => u.packageId);
+
+        const packageServices = await this.prisma.packages.findMany({
+          where: { id: { in: usedPackageIds } },
+          include: { services: true },
+        });
+
+        const allServices = [
+          ...service,
+          ...packageServices.flatMap((p) => p.services),
+        ];
+
+        const duration = (
+          allServices.reduce((total, service) => total + service.duration, 0) *
+          30
+        ).toString();
+
+        return {
+          ...rest,
+          booking,
+          date: format(new Date(date), 'yyyy-MM-dd'),
+          duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
+          barber: barber.barber,
+          total: total.toString(),
+          subTotal: subTotal.toString(),
+          discount: (total - subTotal).toString(),
+          points: points.toString(),
+          usedPackage: packageServices,
+          service,
+          branch: {
+            ...branchRest,
+            name: Translation[0].name,
+          },
+        };
+      }),
+    );
+
+    return new AppSuccess({ orders }, 'Orders fetched successfully');
+  }
+
+  async GetBarberOrders(barberId: string, language: Language) {
+    const fetchedOrders = await this.prisma.order.findMany({
+      include: {
+        barber: { include: { barber: { include: { user: true } } } },
+        branch: { include: Translation(false) },
+        service: { include: { Translation: true } },
+      },
+    });
+
+    const orders = await Promise.all(
+      fetchedOrders.map(async (order) => {
+        const {
+          barber,
+          date,
+          total,
+          subTotal,
+          discount,
+          points,
+          service,
+          branch: { Translation, ...branchRest },
+          booking,
+          ...rest
+        } = order;
+
+        const usedPackage = await this.prisma.clientPackages.findMany({
+          where: { id: { in: order.usedPackage } },
+        });
+
+        const usedPackageIds = usedPackage.flatMap((u) => u.packageId);
+
+        const packageServices = await this.prisma.packages.findMany({
+          where: { id: { in: usedPackageIds } },
+          include: { services: true },
+        });
+
+        const allServices = [
+          ...service,
+          ...packageServices.flatMap((p) => p.services),
+        ];
+
+        const duration = (
+          allServices.reduce((total, service) => total + service.duration, 0) *
+          30
+        ).toString();
+
+        const services = service.map((s) => {
+          const { Translation, ...rest } = s;
+          return {
+            ...rest,
+            nameEN: Translation.find((t) => t.language === 'EN')?.name,
+            nameAR: Translation.find((t) => t.language === 'AR')?.name,
+            name: Translation.find((t) => t.language === language)?.name,
+          };
+        });
+
+        return {
+          ...rest,
+          booking,
+          date: format(new Date(date), 'yyyy-MM-dd'),
+          duration: `${duration} ${language === 'EN' ? 'Minutes' : 'دقيقة'}`,
+          barber: barber.barber,
+          total: total.toString(),
+          subTotal: subTotal.toString(),
+          discount: (total - subTotal).toString(),
+          points: points.toString(),
+          usedPackage: packageServices,
+          services,
+          branch: {
+            ...branchRest,
+            nameEN: Translation.find((t) => t.language === 'EN')?.name,
+            nameAR: Translation.find((t) => t.language === 'AR')?.name,
+            name: Translation.find((t) => t.language === language)?.name,
+          },
+        };
+      }),
+    );
+
+    return new AppSuccess({ orders }, 'Orders fetched successfully');
+  }
+
   async getOrderById(id: string) {
     const order = await this.findOneOrFail(id);
 
@@ -143,6 +332,7 @@ export class OrderService {
       await this.prisma.user.findFirst({
         where: { id: userId },
         select: {
+          client: { select: { points: true } },
           UserOrders: {
             where: {
               promoCode: promoCode,
@@ -249,6 +439,7 @@ export class OrderService {
         slot,
         barberId,
         branchId,
+        canUsePoints: settings.pointLimit < usedPromoCode.client.points,
         points: points?.toString(),
         createdAt: new Date(),
         updatedAt: null,
@@ -260,7 +451,7 @@ export class OrderService {
             ? `${validPromoCode?.discount}%`
             : `${validPromoCode?.discount}EGP`
           : '0',
-        total: total?.toString(),
+        total: (total - points).toString(),
       },
       'Data fetched successfully',
     );
@@ -341,15 +532,12 @@ export class OrderService {
       where: { id: barberId },
     });
     const barbers = await this.prisma.barber.findMany({});
-    console.log(barbers);
     const branch = await this.prisma.branch.findUnique({
       where: { id: branchId },
     });
     const Services = await this.prisma.service.findMany({
       where: { id: { in: service } },
     });
-    console.log(barberId);
-    console.log(barber);
 
     if (!barber) throw new NotFoundException('Barber not found');
     if (!branch) throw new NotFoundException('Branch not found');
@@ -427,7 +615,7 @@ export class OrderService {
     }
 
     const PointsLimit = allServices.sort((a, b) => a.price - b.price)[0].price;
-    // const PointsLimit = (await this.prisma.settings.findFirst({})).pointLimit;
+
     const point = points >= PointsLimit ? points : 0;
 
     points > user.client?.points &&
@@ -437,7 +625,7 @@ export class OrderService {
       new ConflictException(
         'the number of Points must be at least equal to the lowest price of the services',
       );
-
+    if (user.client.ban) throw new ForbiddenException('You are banned');
     const order = await this.prisma.order.create({
       data: {
         ...rest,
@@ -455,7 +643,7 @@ export class OrderService {
           connect: allServices.map((service) => ({ id: service.id })),
         },
         subTotal,
-        total,
+        total: total - points,
       },
       include: {
         service: {
@@ -521,8 +709,6 @@ export class OrderService {
     const duration =
       allServices.reduce((acc, service) => acc + service.duration, 0) * 15;
 
-    if (user.client.ban) throw new ForbiddenException('You are banned');
-
     return new AppSuccess(
       {
         date: format(order.date, 'yyyy-MM-dd'),
@@ -546,34 +732,190 @@ export class OrderService {
     );
   }
 
-  async updateOrder(id: string, updateOrderDto: UpdateOrderDto) {
+  async updateOrder(id: string, updateOrderDto: UpdateOrderDto, Role: Role) {
     const order = await this.findOneOrFail(id);
 
-    const { add, remove } = updateOrderDto;
-
-    if (order.status !== 'IN_PROGRESS') {
+    if (
+      !(
+        (order.status === 'PENDING' && Role === 'USER') ||
+        (order.status === 'IN_PROGRESS' && Role === 'BARBER')
+      )
+    ) {
       throw new ConflictException(
         'Order cannot be updated, it has already started or completed.',
       );
     }
 
-    let allServices = [...order.service.flatMap((o) => o.id), ...add];
+    const { add, remove, addPackage, removePackage, ...rest } = updateOrderDto;
+    const user = await this.prisma.user.findUnique({
+      where: { id: order.userId },
+      select: {
+        client: {
+          select: {
+            ClientPackages: {
+              include: {
+                packageService: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
-    const services = allServices.filter((service) => !remove.includes(service));
+    if (order.service.flatMap((s) => s.id).some((id) => add.includes(id))) {
+      throw new BadRequestException('Service already added');
+    }
 
-    console.log(services);
-    console.log('add', add);
-    console.log('remove', remove);
+    const clientPackages = user.client?.ClientPackages ?? [];
 
-    // const updatedOrder = await this.prisma.order.update({
-    //   where: { id },
-    //   data: {
-    //     ...updateOrderDto,
-    //     service: {
-    //       set: updateOrderDto.service.map((id) => ({ id })),
-    //     },
-    //   },
-    // });
+    const singlePackages = clientPackages.filter(
+      (pkg) => pkg.type === 'SINGLE',
+    );
+    const multiPackages = clientPackages.filter(
+      (pkg) => pkg.type === 'MULTIPLE',
+    );
+    let subTotal = order.subTotal;
+    let total = order.total;
+
+    for (const serviceId of add) {
+      const singlePackageService = singlePackages
+        .flatMap((pkg) => pkg.packageService)
+        .find((pkgService) => pkgService.serviceId === serviceId);
+
+      if (singlePackageService) {
+        if (
+          singlePackageService.remainingCount &&
+          singlePackageService.remainingCount > 0
+        ) {
+          await this.prisma.packagesServices.update({
+            where: { id: singlePackageService.id },
+            data: { remainingCount: singlePackageService.remainingCount - 1 },
+          });
+          const service = await this.prisma.service.findUnique({
+            where: { id: singlePackageService.serviceId },
+            select: { price: true },
+          });
+          subTotal += service.price;
+        } else {
+          const service = await this.prisma.service.findUnique({
+            where: { id: serviceId },
+            select: { price: true },
+          });
+          subTotal += service.price;
+          total += service.price;
+        }
+      } else {
+        const service = await this.prisma.service.findUnique({
+          where: { id: serviceId },
+          select: { price: true },
+        });
+        subTotal += service.price;
+        total += service.price;
+      }
+    }
+
+    for (const serviceId of remove) {
+      const singlePackageService = singlePackages
+        .flatMap((pkg) => pkg.packageService)
+        .find((pkgService) => pkgService.serviceId === serviceId);
+
+      if (singlePackageService) {
+        if (
+          singlePackageService.remainingCount === 0 ||
+          !singlePackageService.isActive
+        ) {
+          await this.prisma.packagesServices.update({
+            where: { id: singlePackageService.id },
+            data: {
+              isActive: true,
+              remainingCount: (singlePackageService.remainingCount || 0) + 1,
+            },
+          });
+          const service = await this.prisma.service.findUnique({
+            where: { id: singlePackageService.serviceId },
+            select: { price: true },
+          });
+
+          total -= service.price;
+          subTotal -= service.price;
+        } else {
+          await this.prisma.packagesServices.update({
+            where: { id: singlePackageService.id },
+            data: { remainingCount: singlePackageService.remainingCount + 1 },
+          });
+          const service = await this.prisma.service.findUnique({
+            where: { id: singlePackageService.serviceId },
+            select: { price: true },
+          });
+          total -= service.price;
+          subTotal -= service.price;
+        }
+      } else {
+        const service = await this.prisma.service.findUnique({
+          where: { id: serviceId },
+          select: { price: true },
+        });
+        total -= service.price;
+        subTotal -= service.price;
+      }
+    }
+
+    if (
+      removePackage &&
+      multiPackages.some((pkg) => removePackage.includes(pkg.id))
+    ) {
+      await this.prisma.clientPackages.updateMany({
+        where: {
+          id: {
+            in: multiPackages
+              .filter((pkg) => removePackage.includes(pkg.id))
+              .map((pkg) => pkg.id),
+          },
+          type: 'MULTIPLE',
+        },
+        data: { isActive: true },
+      });
+    }
+
+    if (
+      addPackage &&
+      multiPackages.some((pkg) => addPackage.includes(pkg.id))
+    ) {
+      await this.prisma.clientPackages.updateMany({
+        where: {
+          id: {
+            in: multiPackages
+              .filter((pkg) => addPackage.includes(pkg.id))
+              .map((pkg) => pkg.id),
+          },
+          type: 'MULTIPLE',
+        },
+        data: { isActive: false },
+      });
+    }
+
+    const updatedOrder = await this.prisma.order.update({
+      where: { id },
+      data: {
+        ...rest,
+        subTotal: total,
+        total,
+        service: {
+          connect: add.map((id) => ({ id })),
+          disconnect: remove.map((id) => ({ id })),
+        },
+        usedPackage: removePackage
+          ? [...order.usedPackage, ...addPackage].filter(
+              (i) => !removePackage.includes(i),
+            )
+          : [...order.usedPackage, ...addPackage],
+      },
+      include: {
+        service: true,
+      },
+    });
+
+    return new AppSuccess(updatedOrder, 'Order updated successfully');
   }
 
   async cancelOrder(id: string) {
@@ -750,7 +1092,7 @@ export class OrderService {
             id: barberId,
           },
           select: {
-            Slot: true,
+            Slot: { select: { slot: true } },
           },
         })
         .Slot(),
@@ -847,7 +1189,7 @@ export class OrderService {
     return new AppSuccess(slots, 'Slots updated successfully');
   }
 
-  private async findOneOrFail(id: string) {
+  async findOneOrFail(id: string) {
     const order = await this.prisma.order.findUnique({
       where: { id },
       include: {

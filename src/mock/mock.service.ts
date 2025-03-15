@@ -485,7 +485,7 @@ export class MockService {
     };
 
     const client = this.clients.map(async (client) => {
-      console.log(client);
+      client;
       await this.prisma.user.create({
         data: {
           firstName: client.firstName,

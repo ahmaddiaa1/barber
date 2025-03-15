@@ -83,7 +83,7 @@ export class CategoryService {
     const categories = fetchedCategories.map((category) => {
       const { Translation: categoryTranslation, services, ...rest } = category;
 
-      console.log(services);
+      services;
 
       const service = services.map((service) => {
         const { Translation: serviceTranslation, ...rest } = service;
@@ -147,6 +147,8 @@ export class CategoryService {
     language: Language,
   ): Promise<AppSuccess<Category>> {
     await this.findOneOrFail(id);
+
+    updateCategoryDto;
 
     const updatedCategory = await this.prisma.category.update({
       where: { id },

@@ -29,6 +29,17 @@ export class OrderController {
     return this.orderService.getAllOrders(user.id, lang);
   }
 
+  @Roles(['BARBER'])
+  @Get('/barber-orders')
+  async getBarberOrders(@UserData('user') user: User, @Lang() lang: Language) {
+    return this.orderService.GetBarberOrders(user.id, lang);
+  }
+
+  @Get('categories/:id')
+  async getCategories(@Param('id') id: string, @Lang() lang: Language) {
+    return this.orderService.getNonSelectedServices(id, lang);
+  }
+
   @Roles(['ADMIN', 'CASHIER'])
   @Put('/paid-order/:id')
   async paidOrder(@Param('id') id: string, @UserData('user') user: User) {
@@ -70,8 +81,9 @@ export class OrderController {
   async updateOrder(
     @Body() updateOrderDto: UpdateOrderDto,
     @Param('id') id: string,
+    @UserData('user') user: User,
   ) {
-    return this.orderService.updateOrder(id, updateOrderDto);
+    return this.orderService.updateOrder(id, updateOrderDto, user.role);
   }
 
   @Get(':id')

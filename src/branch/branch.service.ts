@@ -19,7 +19,6 @@ export class BranchService {
     file: Express.Multer.File,
   ): Promise<AppSuccess<Branch>> {
     const branchImg = file?.path;
-    console.log('file', file);
 
     const newBranch = await this.prisma.branch.create({
       data: {
@@ -51,7 +50,6 @@ export class BranchService {
       },
       include: Translation(),
     });
-    console.log('fetchBranches', fetchBranches[0].Translation);
     const branches = fetchBranches.map((branch) => {
       const { Translation, ...rest } = branch;
       return {

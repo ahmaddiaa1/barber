@@ -272,7 +272,7 @@ export class AuthService {
   public async checkReferralCode(
     referralCode: string,
   ): Promise<{ status: boolean; user: Client }> {
-    const isReferralCodeExist = await this.prisma.client.findUnique({
+    const isReferralCodeExist = await this.prisma.client.findFirst({
       where: { referralCode },
     });
     if (!isReferralCodeExist) return { status: false, user: null };

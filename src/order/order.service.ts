@@ -311,40 +311,53 @@ export class OrderService {
       branchId,
       usedPackage,
       points,
+      phone,
     } = createOrderDto;
 
     const dateWithoutTime = date.toString().split('T')[0];
     let allServices = [] as PrismaServiceType[];
 
-    const [order, usedPromoCode, slots, validPromoCode] = await Promise.all([
-      await this.prisma.order.findFirst({
-        where: {
-          barberId: barberId,
-          date: new Date(dateWithoutTime),
-          slot: slot,
-          OR: [
-            { status: 'PENDING' },
-            { status: 'IN_PROGRESS' },
-            { booking: 'UPCOMING' },
-          ],
-        },
-      }),
-      await this.prisma.user.findFirst({
-        where: { id: userId },
-        select: {
-          client: { select: { points: true } },
-          UserOrders: {
-            where: {
-              promoCode: promoCode,
-              status: 'PENDING',
+    const another = await this.prisma.user.findUnique({ where: { phone } });
+    userId = another.id ?? userId;
+
+    const [order, usedPromoCode, slots, validPromoCode, user] =
+      await Promise.all([
+        await this.prisma.order.findFirst({
+          where: {
+            barberId: barberId,
+            date: new Date(dateWithoutTime),
+            slot: slot,
+            OR: [
+              { status: 'PENDING' },
+              { status: 'IN_PROGRESS' },
+              { booking: 'UPCOMING' },
+            ],
+          },
+        }),
+        await this.prisma.user.findFirst({
+          where: { id: userId },
+          select: {
+            client: { select: { points: true } },
+            UserOrders: {
+              where: {
+                promoCode: promoCode,
+                status: 'PENDING',
+              },
             },
           },
-        },
-      }),
-      (await this.getSlots(dateWithoutTime, barberId)).data.slots,
-      promoCode &&
-        (await this.promoCodeService.validatePromoCode(promoCode)).data,
-    ]);
+        }),
+        (await this.getSlots(dateWithoutTime, barberId)).data.slots,
+        promoCode &&
+          (await this.promoCodeService.validatePromoCode(promoCode)).data,
+        await this.prisma.user.findUnique({
+          where: { phone },
+          select: { client: { select: { ban: true } } },
+        }),
+      ]);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
     const settings = await this.prisma.settings.findFirst({});
 
@@ -471,11 +484,16 @@ export class OrderService {
       usedPackage,
       promoCode,
       points,
+      phone,
       ...rest
     } = createOrderDto;
 
     let allServices = [] as PrismaServiceType[];
     const dateWithoutTime = createOrderDto.date.toString().split('T')[0];
+
+    const another = await this.prisma.user.findUnique({ where: { phone } });
+
+    userId = another.id ?? userId;
 
     const [existingOrder, usedPromoCode, slots, validPromoCode, user] =
       await Promise.all([
@@ -511,27 +529,37 @@ export class OrderService {
         }),
       ]);
 
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.client.ban) {
+      throw new BadRequestException('You are banned');
+    }
+
     const settings = await this.prisma.settings.findFirst({});
 
     if (settings.pointLimit > points) {
       throw new BadRequestException('You have exceeded the points limit');
     }
 
-    if (usedPromoCode.UserOrders.length && promoCode)
+    if (usedPromoCode.UserOrders.length && promoCode) {
       throw new ConflictException(
         `Promo code "${promoCode}" is invalid or expired.`,
       );
+    }
 
-    if (existingOrder)
+    if (existingOrder) {
       throw new ConflictException(`Slot ${slot} is already booked`);
+    }
 
-    if (!slots.includes(slot))
+    if (!slots.includes(slot)) {
       throw new ServiceUnavailableException(`Slot ${slot} is Unavailable`);
+    }
 
     const barber = await this.prisma.barber.findUnique({
       where: { id: barberId },
     });
-    const barbers = await this.prisma.barber.findMany({});
     const branch = await this.prisma.branch.findUnique({
       where: { id: branchId },
     });

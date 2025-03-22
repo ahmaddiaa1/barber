@@ -11,7 +11,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
 import { Language, Role, Service } from '@prisma/client';
-import { format } from 'date-fns';
+import { endOfDay, format, startOfDay } from 'date-fns';
 import { Translation } from 'src/class-type/translation';
 import { UpdateOrderDto } from './dto/update-order.dto';
 
@@ -211,8 +211,26 @@ export class OrderService {
     return new AppSuccess({ orders }, 'Orders fetched successfully');
   }
 
-  async GetBarberOrders(barberId: string, language: Language) {
+  async GetBarberOrders(
+    barberId: string,
+    language: Language,
+    orderDate?: Date,
+  ) {
+    const targetDate = orderDate ? new Date(orderDate) : new Date();
+
+    const startDate = startOfDay(targetDate);
+    const endDate = endOfDay(targetDate);
+
     const fetchedOrders = await this.prisma.order.findMany({
+      where: {
+        barberId: barberId,
+        date: { gte: startDate, lte: endDate },
+        OR: [
+          { status: 'PENDING' },
+          { status: 'IN_PROGRESS' },
+          { booking: 'UPCOMING' },
+        ],
+      },
       include: {
         barber: { include: { barber: { include: { user: true } } } },
         branch: { include: Translation(false) },
@@ -240,6 +258,8 @@ export class OrderService {
         });
 
         const usedPackageIds = usedPackage.flatMap((u) => u.packageId);
+
+        console.log('usedPackage', usedPackage);
 
         const packageServices = await this.prisma.packages.findMany({
           where: { id: { in: usedPackageIds } },
@@ -355,7 +375,7 @@ export class OrderService {
 
         await this.prisma.user.findUnique({
           where: { id: userId },
-          select: { client: { select: { ban: true } } },
+          select: { client: { select: { ban: true, points: true } } },
         }),
       ]);
 
@@ -441,12 +461,27 @@ export class OrderService {
       (acc, service) => acc + service.price,
       0,
     );
-    const discount = promoCode
-      ? validPromoCode?.type === 'PERCENTAGE'
-        ? (subTotal * validPromoCode?.discount) / 100
-        : validPromoCode?.discount
-      : 0;
-    const total = Math.max(subTotal - discount, 0);
+
+    let total = Math.max(subTotal, 0);
+
+    const PointsLimit = allServices.sort((a, b) => a.price - b.price)[0].price;
+
+    const point = points >= PointsLimit ? points : 0;
+
+    points > user.client?.points &&
+      new ConflictException('you do not have enough points');
+
+    PointsLimit > points &&
+      new ConflictException(
+        'the number of Points must be at least equal to the lowest price of the services',
+      );
+
+    if (promoCode && validPromoCode?.type === 'PERCENTAGE') {
+      total = subTotal - point - (subTotal * validPromoCode.discount) / 100;
+    } else if (promoCode && validPromoCode?.type === 'AMOUNT') {
+      total = subTotal - point - validPromoCode.discount;
+    }
+
     const duration =
       allServices.reduce((acc, service) => acc + service.duration, 0) * 15;
 
@@ -469,6 +504,7 @@ export class OrderService {
             : `${validPromoCode?.discount}EGP`
           : '0',
         total: (points ? total - points : total).toString(),
+        limit: PointsLimit.toString(),
       },
       'Data fetched successfully',
     );
@@ -641,12 +677,6 @@ export class OrderService {
 
     let total = Math.max(subTotal, 0);
 
-    if (promoCode && validPromoCode?.type === 'PERCENTAGE') {
-      total = subTotal - (subTotal * validPromoCode.discount) / 100;
-    } else if (promoCode && validPromoCode?.type === 'AMOUNT') {
-      total = subTotal - validPromoCode.discount;
-    }
-
     const PointsLimit = allServices.sort((a, b) => a.price - b.price)[0].price;
 
     const point = points >= PointsLimit ? points : 0;
@@ -658,6 +688,13 @@ export class OrderService {
       new ConflictException(
         'the number of Points must be at least equal to the lowest price of the services',
       );
+
+    if (promoCode && validPromoCode?.type === 'PERCENTAGE') {
+      total = subTotal - point - (subTotal * validPromoCode.discount) / 100;
+    } else if (promoCode && validPromoCode?.type === 'AMOUNT') {
+      total = subTotal - point - validPromoCode.discount;
+    }
+
     if (user.client.ban) throw new ForbiddenException('You are banned');
     const order = await this.prisma.order.create({
       data: {

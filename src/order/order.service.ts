@@ -352,13 +352,14 @@ export class OrderService {
         (await this.getSlots(dateWithoutTime, barberId)).data.slots,
         promoCode &&
           (await this.promoCodeService.validatePromoCode(promoCode)).data,
-        await this.prisma.user.findUnique({
-          where: { phone },
-          select: { client: { select: { ban: true } } },
-        }),
+        phone &&
+          (await this.prisma.user.findUnique({
+            where: { phone },
+            select: { client: { select: { ban: true } } },
+          })),
       ]);
 
-    if (!user) {
+    if (phone && !user) {
       throw new NotFoundException('User not found');
     }
 
@@ -467,7 +468,7 @@ export class OrderService {
             ? `${validPromoCode?.discount}%`
             : `${validPromoCode?.discount}EGP`
           : '0',
-        total: (total - points).toString(),
+        total: (points ? total - points : total).toString(),
       },
       'Data fetched successfully',
     );

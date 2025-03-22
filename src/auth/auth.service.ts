@@ -231,7 +231,13 @@ export class AuthService {
     data: any,
     avatar?: string,
   ) {
-    const { branchId, role: roles = 'user', ...rest } = createAuthDto;
+    const {
+      branchId,
+      role: roles = 'user',
+      start,
+      end,
+      ...rest
+    } = createAuthDto;
     const role = roles.toUpperCase() as Role;
 
     if (branchId) {

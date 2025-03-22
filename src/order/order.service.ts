@@ -319,7 +319,7 @@ export class OrderService {
 
     const another =
       phone && (await this.prisma.user.findUnique({ where: { phone } }));
-    userId = another.id ?? userId;
+    userId = another ? another.id : userId;
 
     const [order, usedPromoCode, slots, validPromoCode, user] =
       await Promise.all([

@@ -676,7 +676,7 @@ export class OrderService {
           connect: allServices.map((service) => ({ id: service.id })),
         },
         subTotal,
-        total: total - points,
+        total: points ? total - points : total,
       },
       include: {
         service: {

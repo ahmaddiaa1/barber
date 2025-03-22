@@ -83,8 +83,6 @@ export class CategoryService {
     const categories = fetchedCategories.map((category) => {
       const { Translation: categoryTranslation, services, ...rest } = category;
 
-      services;
-
       const service = services.map((service) => {
         const { Translation: serviceTranslation, ...rest } = service;
         return {

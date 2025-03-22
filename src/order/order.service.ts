@@ -375,7 +375,7 @@ export class OrderService {
 
         await this.prisma.user.findUnique({
           where: { id: userId },
-          select: { client: { select: { ban: true, points: true } } },
+          select: { client: { select: { ban: true } } },
         }),
       ]);
 
@@ -384,6 +384,8 @@ export class OrderService {
     }
 
     const settings = await this.prisma.settings.findFirst({});
+
+    console.log(settings.pointLimit, points);
 
     if (settings.pointLimit > points) {
       throw new BadRequestException('You have exceeded the points limit');
@@ -457,31 +459,28 @@ export class OrderService {
 
     const costServices = allServices.filter((service) => !service.isFree);
 
-    const subTotal = costServices.reduce(
+    let subTotal = costServices.reduce(
       (acc, service) => acc + service.price,
       0,
     );
 
-    let total = Math.max(subTotal, 0);
-
-    const PointsLimit = allServices.sort((a, b) => a.price - b.price)[0].price;
-
-    const point = points >= PointsLimit ? points : 0;
-
-    points > user.client?.points &&
-      new ConflictException('you do not have enough points');
-
-    PointsLimit > points &&
-      new ConflictException(
-        'the number of Points must be at least equal to the lowest price of the services',
-      );
-
-    if (promoCode && validPromoCode?.type === 'PERCENTAGE') {
-      total = subTotal - point - (subTotal * validPromoCode.discount) / 100;
-    } else if (promoCode && validPromoCode?.type === 'AMOUNT') {
-      total = subTotal - point - validPromoCode.discount;
+    if (points > subTotal) {
+      throw new BadRequestException('Cannot use points more than the total');
     }
 
+    subTotal -= points;
+
+    console.log(subTotal);
+
+    const discount = promoCode
+      ? validPromoCode?.type === 'PERCENTAGE'
+        ? (subTotal * validPromoCode?.discount) / 100
+        : validPromoCode?.discount
+      : 0;
+
+    const total = Math.max(subTotal - discount, 0);
+
+    console.log(total);
     const duration =
       allServices.reduce((acc, service) => acc + service.duration, 0) * 15;
 
@@ -503,8 +502,7 @@ export class OrderService {
             ? `${validPromoCode?.discount}%`
             : `${validPromoCode?.discount}EGP`
           : '0',
-        total: (points ? total - points : total).toString(),
-        limit: PointsLimit.toString(),
+        total: total.toString(),
       },
       'Data fetched successfully',
     );

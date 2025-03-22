@@ -30,7 +30,12 @@ export class AdminService {
   async update(updateAdminDto: UpdateAdminDto) {
     const ExistingSettings = await this.prisma.settings.findFirst();
     if (!ExistingSettings) {
-      return new NotFoundException(null, 'Settings not found');
+      return new AppSuccess(
+        await this.prisma.settings.create({
+          data: updateAdminDto,
+        }),
+        'Settings not found',
+      );
     }
     const settings = await this.prisma.settings.update({
       where: { id: ExistingSettings.id },

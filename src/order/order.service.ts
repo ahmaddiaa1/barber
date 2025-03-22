@@ -352,11 +352,11 @@ export class OrderService {
         (await this.getSlots(dateWithoutTime, barberId)).data.slots,
         promoCode &&
           (await this.promoCodeService.validatePromoCode(promoCode)).data,
-        phone &&
-          (await this.prisma.user.findUnique({
-            where: { phone },
-            select: { client: { select: { ban: true } } },
-          })),
+
+        await this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { client: { select: { ban: true } } },
+        }),
       ]);
 
     if (phone && !user) {
@@ -495,9 +495,10 @@ export class OrderService {
     let allServices = [] as PrismaServiceType[];
     const dateWithoutTime = createOrderDto.date.toString().split('T')[0];
 
-    const another = await this.prisma.user.findUnique({ where: { phone } });
+    const another =
+      phone && (await this.prisma.user.findUnique({ where: { phone } }));
 
-    userId = another.id ?? userId;
+    userId = another ? another.id : userId;
 
     const [existingOrder, usedPromoCode, slots, validPromoCode, user] =
       await Promise.all([

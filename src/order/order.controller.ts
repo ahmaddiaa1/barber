@@ -31,8 +31,12 @@ export class OrderController {
 
   @Roles(['BARBER'])
   @Get('/barber-orders')
-  async getBarberOrders(@UserData('user') user: User, @Lang() lang: Language) {
-    return this.orderService.GetBarberOrders(user.id, lang);
+  async getBarberOrders(
+    @UserData('user') user: User,
+    @Lang() lang: Language,
+    @Query('orderDate') orderDate?: Date,
+  ) {
+    return this.orderService.GetBarberOrders(user.id, lang, orderDate);
   }
 
   @Get('categories/:id')

@@ -318,7 +318,9 @@ export class OrderService {
     let allServices = [] as PrismaServiceType[];
 
     const another =
-      phone && (await this.prisma.user.findUnique({ where: { phone } }));
+      phone &&
+      phone !== '' &&
+      (await this.prisma.user.findUnique({ where: { phone } }));
     userId = another ? another.id : userId;
 
     const [order, usedPromoCode, slots, validPromoCode, user] =

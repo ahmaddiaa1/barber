@@ -780,6 +780,18 @@ export class OrderService {
         });
       }
     });
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        client: {
+          update: {
+            points: {
+              decrement: points,
+            },
+          },
+        },
+      },
+    });
 
     const duration =
       allServices.reduce((acc, service) => acc + service.duration, 0) * 15;

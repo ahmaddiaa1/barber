@@ -330,7 +330,7 @@ export class OrderService {
       date,
       branchId,
       usedPackage,
-      points,
+      points = 0,
       phone,
     } = createOrderDto;
 
@@ -520,7 +520,7 @@ export class OrderService {
       branchId,
       usedPackage,
       promoCode,
-      points,
+      points = 0,
       phone,
       ...rest
     } = createOrderDto;

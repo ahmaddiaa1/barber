@@ -530,7 +530,7 @@ export class OrderService {
       throw new BadRequestException('Points must be a number');
     }
     if (points <= 0) {
-      throw new BadRequestException('Points must be a greater than 0');
+      throw new BadRequestException('You have exceeded the points limit');
     }
 
     let allServices = [] as PrismaServiceType[];

@@ -468,10 +468,6 @@ export class OrderService {
       throw new BadRequestException('Cannot use points more than the total');
     }
 
-    if (points) {
-      subTotal -= points;
-    }
-
     console.log(subTotal);
 
     const discount = promoCode
@@ -504,7 +500,7 @@ export class OrderService {
             ? `${validPromoCode?.discount}%`
             : `${validPromoCode?.discount}EGP`
           : '0',
-        total: total.toString(),
+        total: (points ? total - points : total).toString(),
         limit: settings.pointLimit.toString(),
       },
       'Data fetched successfully',
@@ -684,8 +680,6 @@ export class OrderService {
       subTotal -= points;
     }
 
-    let total = Math.max(subTotal, 0);
-
     const PointsLimit = allServices.sort((a, b) => a.price - b.price)[0].price;
 
     const point = points >= PointsLimit ? points : 0;
@@ -698,11 +692,13 @@ export class OrderService {
         'the number of Points must be at least equal to the lowest price of the services',
       );
 
-    if (promoCode && validPromoCode?.type === 'PERCENTAGE') {
-      total = subTotal - (subTotal * validPromoCode.discount) / 100;
-    } else if (promoCode && validPromoCode?.type === 'AMOUNT') {
-      total = subTotal - validPromoCode.discount;
-    }
+    const discount = promoCode
+      ? validPromoCode?.type === 'PERCENTAGE'
+        ? (subTotal * validPromoCode?.discount) / 100
+        : validPromoCode?.discount
+      : 0;
+
+    const total = Math.max(subTotal - discount, 0);
 
     if (user.client.ban) throw new ForbiddenException('You are banned');
     const order = await this.prisma.order.create({

@@ -524,6 +524,9 @@ export class OrderService {
       phone,
       ...rest
     } = createOrderDto;
+    if (!Number.isInteger(points)) {
+      throw new BadRequestException('Points must be a number');
+    }
 
     let allServices = [] as PrismaServiceType[];
     const dateWithoutTime = createOrderDto.date.toString().split('T')[0];
@@ -577,7 +580,7 @@ export class OrderService {
 
     const settings = await this.prisma.settings.findFirst({});
 
-    if (points && settings.pointLimit > points) {
+    if (points && points > 0 && settings.pointLimit > points) {
       throw new BadRequestException('You have exceeded the points limit');
     }
 
@@ -776,7 +779,7 @@ export class OrderService {
         });
       }
     });
-    if (points) {
+    if (points || points > 0) {
       await this.prisma.user.update({
         where: { id: userId },
         data: {
@@ -1163,31 +1166,42 @@ export class OrderService {
   async getSlots(date: string, barberId: string) {
     const dateWithoutTime = date.split('T')[0];
 
+    const startOfDay = new Date(dateWithoutTime);
+    const endOfDay = new Date(dateWithoutTime);
+
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
     const [orders, allSlotsData] = await Promise.all([
       this.prisma.order.findMany({
-        where: { date: new Date(dateWithoutTime), barberId },
+        where: {
+          barberId,
+          date: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
+        },
         select: {
+          date: true,
           slot: true,
           service: { select: { duration: true } },
         },
       }),
-      this.prisma.barber
-        .findUnique({
-          where: {
-            id: barberId,
-          },
-          select: {
-            Slot: { select: { slot: true } },
-          },
-        })
-        .Slot(),
+      this.prisma.barber.findUnique({
+        where: {
+          id: barberId,
+        },
+        select: {
+          Slot: { select: { slot: true } },
+        },
+      }),
     ]);
 
     if (!allSlotsData)
       throw new ConflictException('No slots found in the database.');
 
-    const allSlots = allSlotsData.slot;
-    const blockedSlots = new Set<string>();
+    const allSlots = allSlotsData.Slot.slot;
+    const blockedSlots = [];
 
     for (const order of orders) {
       const startIndex = allSlots.indexOf(order.slot);
@@ -1199,10 +1213,16 @@ export class OrderService {
       );
       allSlots
         .slice(startIndex, startIndex + totalDuration)
-        .forEach((slot) => blockedSlots.add(slot));
+        .forEach((slot) => blockedSlots.push(slot));
     }
 
-    const availableSlots = allSlots.filter((slot) => !blockedSlots.has(slot));
+    const availableSlots = allSlots.filter(
+      (slot) => !blockedSlots.includes(slot),
+    );
+    console.log('availableSlots', availableSlots);
+    console.log('blockedSlots', blockedSlots);
+    console.log('orders', orders);
+    console.log('allSlots', allSlots);
 
     return new AppSuccess(
       { slots: availableSlots },
@@ -1212,21 +1232,6 @@ export class OrderService {
 
   async generateSlot(start: number, end: number) {
     const slotsArray = [];
-
-    if (!Number.isInteger(start) || !Number.isInteger(end))
-      throw new ConflictException(
-        'Start and end must not be decimal, negative or string.',
-      );
-
-    if (start < 0 || start >= 24 || end < 0 || end > 24) {
-      throw new ConflictException(
-        'Start and end must be Integer numbers between 0 and 24.',
-      );
-    }
-
-    if (start >= end) {
-      throw new ConflictException('Start time must be less than end time.');
-    }
 
     const settings = await this.prisma.settings.findFirst({});
 

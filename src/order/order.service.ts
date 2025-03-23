@@ -468,7 +468,9 @@ export class OrderService {
       throw new BadRequestException('Cannot use points more than the total');
     }
 
-    subTotal -= points;
+    if (points) {
+      subTotal -= points;
+    }
 
     console.log(subTotal);
 
@@ -668,10 +670,18 @@ export class OrderService {
 
     const costServices = allServices.filter((service) => !service.isFree);
 
-    const subTotal = costServices.reduce(
+    let subTotal = costServices.reduce(
       (acc, service) => acc + service.price,
       0,
     );
+
+    if (points > subTotal) {
+      throw new BadRequestException('Cannot use points more than the total');
+    }
+
+    if (points) {
+      subTotal -= points;
+    }
 
     let total = Math.max(subTotal, 0);
 
@@ -688,9 +698,9 @@ export class OrderService {
       );
 
     if (promoCode && validPromoCode?.type === 'PERCENTAGE') {
-      total = subTotal - point - (subTotal * validPromoCode.discount) / 100;
+      total = subTotal - (subTotal * validPromoCode.discount) / 100;
     } else if (promoCode && validPromoCode?.type === 'AMOUNT') {
-      total = subTotal - point - validPromoCode.discount;
+      total = subTotal - validPromoCode.discount;
     }
 
     if (user.client.ban) throw new ForbiddenException('You are banned');

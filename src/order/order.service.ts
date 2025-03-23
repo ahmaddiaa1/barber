@@ -330,7 +330,7 @@ export class OrderService {
       date,
       branchId,
       usedPackage,
-      points = 0,
+      points,
       phone,
     } = createOrderDto;
 
@@ -387,7 +387,7 @@ export class OrderService {
 
     console.log(settings.pointLimit, points);
 
-    if (settings.pointLimit > points) {
+    if (points && settings.pointLimit > points) {
       throw new BadRequestException('You have exceeded the points limit');
     }
 
@@ -520,7 +520,7 @@ export class OrderService {
       branchId,
       usedPackage,
       promoCode,
-      points = 0,
+      points,
       phone,
       ...rest
     } = createOrderDto;
@@ -577,7 +577,7 @@ export class OrderService {
 
     const settings = await this.prisma.settings.findFirst({});
 
-    if (settings.pointLimit > points) {
+    if (points && settings.pointLimit > points) {
       throw new BadRequestException('You have exceeded the points limit');
     }
 
@@ -674,10 +674,6 @@ export class OrderService {
 
     if (points > subTotal) {
       throw new BadRequestException('Cannot use points more than the total');
-    }
-
-    if (points) {
-      subTotal -= points;
     }
 
     const PointsLimit = allServices.sort((a, b) => a.price - b.price)[0].price;

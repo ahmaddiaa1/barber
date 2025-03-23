@@ -527,6 +527,9 @@ export class OrderService {
     if (!Number.isInteger(points)) {
       throw new BadRequestException('Points must be a number');
     }
+    if (points <= 0) {
+      throw new BadRequestException('Points must be a positive number');
+    }
 
     let allServices = [] as PrismaServiceType[];
     const dateWithoutTime = createOrderDto.date.toString().split('T')[0];

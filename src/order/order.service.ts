@@ -505,6 +505,7 @@ export class OrderService {
             : `${validPromoCode?.discount}EGP`
           : '0',
         total: total.toString(),
+        limit: settings.pointLimit.toString(),
       },
       'Data fetched successfully',
     );

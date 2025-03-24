@@ -333,7 +333,7 @@ export class OrderService {
       points,
       phone,
     } = createOrderDto;
-    if (points <= 0) {
+    if (points && points <= 0) {
       throw new BadRequestException('You have exceeded the points limit');
     }
     const dateWithoutTime = date.toString().split('T')[0];
@@ -464,7 +464,7 @@ export class OrderService {
       0,
     );
 
-    if (points > subTotal) {
+    if (points && points > subTotal) {
       throw new BadRequestException('Cannot use points more than the total');
     }
 
@@ -527,7 +527,7 @@ export class OrderService {
     if (!Number.isInteger(points)) {
       throw new BadRequestException('Points must be a number');
     }
-    if (points <= 0) {
+    if (points && points <= 0) {
       throw new BadRequestException('You have exceeded the points limit');
     }
 
@@ -678,7 +678,7 @@ export class OrderService {
       0,
     );
 
-    if (points > subTotal) {
+    if (points && points > subTotal) {
       throw new BadRequestException('Cannot use points more than the total');
     }
 

@@ -1010,8 +1010,8 @@ export class OrderService {
   }
 
   async cancelOrder(id: string) {
-    await this.findOneOrFail(id);
-
+    this.findOneOrFail(id);
+    const settings = await this.prisma.settings.findFirst();
     const updatedOrder = await this.prisma.order.update({
       where: { id },
       include: {
@@ -1025,7 +1025,46 @@ export class OrderService {
           },
         },
       },
-      data: { status: 'CANCELLED' },
+      data: { status: 'CANCELLED', booking: 'CANCELLED' },
+    });
+    if (updatedOrder.points && updatedOrder.points > 0) {
+      await this.prisma.client.update({
+        where: { id: updatedOrder.userId },
+        data: {
+          points: {
+            increment: updatedOrder.points,
+          },
+        },
+      });
+    }
+
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const endOfMonth = new Date();
+    endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+    endOfMonth.setDate(0);
+    endOfMonth.setHours(23, 59, 59, 999);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: updatedOrder.userId },
+      select: {
+        id: true,
+        UserOrders: {
+          where: {
+            status: 'CANCELLED',
+            date: {
+              gte: startOfMonth,
+              lte: endOfMonth,
+            },
+          },
+          select: {
+            id: true,
+            status: true,
+          },
+        },
+      },
     });
 
     if (
@@ -1043,7 +1082,7 @@ export class OrderService {
     );
 
     await this.prisma.$transaction(async (prisma) => {
-      if (packageServiceIds.length > 0) {
+      if (packageServiceIds.length >= settings.canceledOrder) {
         await prisma.packagesServices.updateMany({
           where: {
             id: { in: packageServiceIds },
@@ -1071,6 +1110,15 @@ export class OrderService {
           },
         });
       }
+
+      if (user?.UserOrders.length >= 1) {
+        await prisma.client.update({
+          where: { id: user.id },
+          data: {
+            ban: true,
+          },
+        });
+      }
     });
 
     return new AppSuccess(updatedOrder, 'Order cancelled successfully');
@@ -1081,7 +1129,7 @@ export class OrderService {
 
     const updatedOrder = await this.prisma.order.update({
       where: { id },
-      data: { status: 'IN_PROGRESS' },
+      data: { status: 'IN_PROGRESS', booking: 'UPCOMING' },
     });
 
     return new AppSuccess(updatedOrder, 'Order started successfully');
@@ -1092,7 +1140,7 @@ export class OrderService {
 
     const updatedOrder = await this.prisma.order.update({
       where: { id },
-      data: { status: 'COMPLETED' },
+      data: { status: 'COMPLETED', booking: 'PAST' },
       include: {
         service: {
           include: {
@@ -1144,7 +1192,7 @@ export class OrderService {
 
     const updatedOrder = await this.prisma.order.update({
       where: { id },
-      data: { status: 'PAID', cashierId: userId },
+      data: { status: 'PAID', booking: 'PAST', cashierId: userId },
     });
 
     const settings = await this.prisma.settings.findFirst({});

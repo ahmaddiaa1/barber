@@ -91,8 +91,6 @@ export class OrderService {
           subTotal,
           points,
           service,
-
-          booking,
           id,
           promoCode,
           slot,
@@ -141,7 +139,7 @@ export class OrderService {
       }),
     );
 
-    return new AppSuccess(orders, 'Orders fetched successfully');
+    return new AppSuccess({ orders }, 'Orders fetched successfully');
   }
 
   async getAllOrders(userId: string, lang: Language) {

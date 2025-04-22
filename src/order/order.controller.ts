@@ -51,13 +51,15 @@ export class OrderController {
   }
 
   @Roles(['ADMIN', 'CASHIER'])
+  @Get('/paid-orders')
+  async getPaidOrders(@Query('date') date: string) {
+    return this.orderService.billOrders(new Date(date));
+  }
+
+  @Roles(['ADMIN', 'CASHIER'])
   @Put('/paid-order/:id')
-  async paidOrder(
-    @Param('id') id: string,
-    @UserData('user') user: User,
-    @Lang() lang: Language,
-  ) {
-    return this.orderService.paidOrder(id, user.id, lang);
+  async paidOrder(@Param('id') id: string, @UserData('user') user: User) {
+    return this.orderService.paidOrder(id, user.id);
   }
 
   @Put('/cancel-order/:id')

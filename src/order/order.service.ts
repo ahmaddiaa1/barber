@@ -67,6 +67,68 @@ export class OrderService {
     return new AppSuccess({ category }, 'Services found successfully');
   }
 
+  async billOrders(date = new Date()) {
+    const order = await this.prisma.order.findMany({
+      where: {
+        status: 'PAID',
+        date: {
+          gte: startOfDay(date),
+          lte: endOfDay(date),
+        },
+      },
+      select: {
+        id: true,
+        total: true,
+        subTotal: true,
+        discount: true,
+        date: true,
+        slot: true,
+        client: { select: { firstName: true, lastName: true } },
+        service: {
+          select: {
+            Translation: { where: { language: 'EN' }, select: { name: true } },
+            price: true,
+          },
+        },
+        Cashier: { select: { firstName: true, lastName: true } },
+        barber: { select: { firstName: true, lastName: true } },
+        branch: {
+          select: {
+            Translation: { where: { language: 'EN' }, select: { name: true } },
+          },
+        },
+      },
+    });
+
+    const orders = order.map((order) => {
+      const {
+        service,
+        branch,
+        date,
+        slot,
+        barber: { firstName: barberFirstName, lastName: barberLastName },
+        Cashier: { firstName: cashierFirstName, lastName: cashierLastName },
+        client: { firstName, lastName },
+        ...rest
+      } = order;
+      return {
+        ...rest,
+        service: service.map((service) => ({
+          name: service.Translation[0].name,
+          price: service.price,
+        })),
+        branch: branch.Translation[0].name,
+        barberName: `${barberFirstName} ${barberLastName}`,
+        cashierName: `${cashierFirstName} ${cashierLastName}`,
+        clientName: `${firstName} ${lastName}`,
+        day: format(new Date(date), 'EEEE'),
+        time: slot,
+      };
+    });
+
+    return new AppSuccess({ orders }, 'Orders fetched successfully');
+  }
+
   async getCashierOrders(id: string, lang: Language) {
     const cashier = await this.prisma.cashier.findUnique({
       where: { id },
@@ -1265,7 +1327,7 @@ export class OrderService {
     );
   }
 
-  async paidOrder(id: string, userId: string, language: string) {
+  async paidOrder(id: string, userId: string) {
     await this.findOneOrFail(id);
 
     const updatedOrder = await this.prisma.order.update({
@@ -1273,8 +1335,8 @@ export class OrderService {
       data: { status: 'PAID', booking: 'PAST', cashierId: userId },
       include: {
         service: true,
-        barber: { include: { barber: true } },
-        branch: { include: Translation(false) },
+        barber: { select: { firstName: true, lastName: true } },
+        branch: { include: {} },
       },
     });
 

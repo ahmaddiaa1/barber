@@ -67,6 +67,80 @@ export class OrderService {
     return new AppSuccess({ category }, 'Services found successfully');
   }
 
+  async getCashierOrders(id: string, lang: Language) {
+    const cashier = await this.prisma.cashier.findUnique({
+      where: { id },
+    });
+    if (!cashier) throw new NotFoundException('Cashier not found');
+
+    const fetchedOrders = await this.prisma.order.findMany({
+      where: { branchId: cashier.branchId, status: 'COMPLETED' },
+      include: {
+        barber: { include: { barber: { include: { user: true } } } },
+        branch: { include: Translation(false, lang) },
+        service: true,
+      },
+    });
+
+    const orders = await Promise.all(
+      fetchedOrders.map(async (order) => {
+        const {
+          barber,
+          date,
+          total,
+          subTotal,
+          discount,
+          points,
+          service,
+          branch: { Translation, ...branchRest },
+          booking,
+          ...rest
+        } = order;
+
+        const usedPackage = await this.prisma.clientPackages.findMany({
+          where: { id: { in: order.usedPackage } },
+        });
+
+        const usedPackageIds = usedPackage.flatMap((u) => u.packageId);
+
+        const packageServices = await this.prisma.packages.findMany({
+          where: { id: { in: usedPackageIds } },
+          include: { services: true },
+        });
+
+        const allServices = [
+          ...service,
+          ...packageServices.flatMap((p) => p.services),
+        ];
+
+        const duration = (
+          allServices.reduce((total, service) => total + service.duration, 0) *
+          30
+        ).toString();
+
+        return {
+          ...rest,
+          booking,
+          date: format(new Date(date), 'yyyy-MM-dd'),
+          duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
+          barber: barber.barber,
+          total: total.toString(),
+          subTotal: subTotal.toString(),
+          discount: (total - subTotal).toString(),
+          points: points.toString(),
+          usedPackage: packageServices,
+          service,
+          branch: {
+            ...branchRest,
+            name: Translation[0].name,
+          },
+        };
+      }),
+    );
+
+    return new AppSuccess(orders, 'Orders fetched successfully');
+  }
+
   async getAllOrders(userId: string, lang: Language) {
     const fetchedOrders = await this.prisma.order.findMany({
       where: { userId: userId },
@@ -488,10 +562,13 @@ export class OrderService {
         slot,
         barberId,
         branchId,
-        canUsePoints: settings.pointLimit < usedPromoCode.client.points,
+        canUsePoints:
+          settings.pointLimit < usedPromoCode?.client?.points ||
+          settings.pointLimit + 1,
         points: points?.toString(),
         createdAt: new Date(),
         updatedAt: null,
+        ...(phone && { phone }),
         duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
         promoCode: promoCode ? promoCode : null,
         subTotal: subTotal?.toString(),
@@ -577,7 +654,7 @@ export class OrderService {
       throw new NotFoundException('User not found');
     }
 
-    if (user.client.ban) {
+    if (user?.client?.ban) {
       throw new BadRequestException('You are banned');
     }
 
@@ -702,7 +779,7 @@ export class OrderService {
 
     const total = Math.max(subTotal - discount, 0);
 
-    if (user.client.ban) throw new ForbiddenException('You are banned');
+    if (user?.client?.ban) throw new ForbiddenException('You are banned');
     const order = await this.prisma.order.create({
       data: {
         ...rest,
@@ -1187,12 +1264,17 @@ export class OrderService {
     );
   }
 
-  async paidOrder(id: string, userId: string) {
+  async paidOrder(id: string, userId: string, language: string) {
     await this.findOneOrFail(id);
 
     const updatedOrder = await this.prisma.order.update({
       where: { id },
       data: { status: 'PAID', booking: 'PAST', cashierId: userId },
+      include: {
+        service: true,
+        barber: { include: { barber: true } },
+        branch: { include: Translation(false) },
+      },
     });
 
     const settings = await this.prisma.settings.findFirst({});

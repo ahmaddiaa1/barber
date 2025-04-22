@@ -44,10 +44,20 @@ export class OrderController {
     return this.orderService.getNonSelectedServices(id, lang);
   }
 
+  @Roles(['CASHIER'])
+  @Get('/cashier')
+  async getCashierOrders(@UserData('user') user: User, @Lang() lang: Language) {
+    return this.orderService.getCashierOrders(user.id, lang);
+  }
+
   @Roles(['ADMIN', 'CASHIER'])
   @Put('/paid-order/:id')
-  async paidOrder(@Param('id') id: string, @UserData('user') user: User) {
-    return this.orderService.paidOrder(id, user.id);
+  async paidOrder(
+    @Param('id') id: string,
+    @UserData('user') user: User,
+    @Lang() lang: Language,
+  ) {
+    return this.orderService.paidOrder(id, user.id, lang);
   }
 
   @Put('/cancel-order/:id')

@@ -565,7 +565,7 @@ export class OrderService {
         branchId,
         canUsePoints:
           settings.pointLimit < usedPromoCode?.client?.points ||
-          settings.pointLimit + 1,
+          settings.pointLimit > settings.pointLimit + 1,
         points: points?.toString(),
         createdAt: new Date(),
         updatedAt: null,

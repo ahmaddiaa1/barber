@@ -1278,22 +1278,6 @@ export class OrderService {
       },
     });
 
-    const settings = await this.prisma.settings.findFirst({});
-
-    await this.prisma.user.update({
-      where: { id: updatedOrder.userId },
-      data: {
-        client: {
-          update: {
-            points: {
-              increment:
-                updatedOrder.total * (settings[0].PointsPercentage / 100),
-            },
-          },
-        },
-      },
-    });
-
     return new AppSuccess(updatedOrder, 'Order marked as paid');
   }
 

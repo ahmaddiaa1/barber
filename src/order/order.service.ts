@@ -77,7 +77,7 @@ export class OrderService {
       where: { branchId: cashier.branchId, status: 'COMPLETED' },
       include: {
         barber: { include: { barber: { include: { user: true } } } },
-        branch: { include: Translation(false, lang) },
+        client: { select: { firstName: true, phone: true } },
         service: true,
       },
     });
@@ -89,19 +89,22 @@ export class OrderService {
           date,
           total,
           subTotal,
-          discount,
           points,
           service,
-          branch: { Translation, ...branchRest },
+
           booking,
-          ...rest
+          id,
+          promoCode,
+          slot,
+          usedPackage,
+          client: { firstName, phone },
         } = order;
 
-        const usedPackage = await this.prisma.clientPackages.findMany({
-          where: { id: { in: order.usedPackage } },
+        const usedPackages = await this.prisma.clientPackages.findMany({
+          where: { id: { in: usedPackage } },
         });
 
-        const usedPackageIds = usedPackage.flatMap((u) => u.packageId);
+        const usedPackageIds = usedPackages.flatMap((u) => u.packageId);
 
         const packageServices = await this.prisma.packages.findMany({
           where: { id: { in: usedPackageIds } },
@@ -119,21 +122,21 @@ export class OrderService {
         ).toString();
 
         return {
-          ...rest,
-          booking,
+          id,
+          promoCode,
+          slot,
           date: format(new Date(date), 'yyyy-MM-dd'),
           duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
-          barber: barber.barber,
+          barberFirstName: barber.barber.user.firstName,
+          barberAvatar: barber.barber.user.avatar,
+          userName: firstName,
+          userPhone: phone,
           total: total.toString(),
           subTotal: subTotal.toString(),
           discount: (total - subTotal).toString(),
           points: points.toString(),
           usedPackage: packageServices,
           service,
-          branch: {
-            ...branchRest,
-            name: Translation[0].name,
-          },
         };
       }),
     );

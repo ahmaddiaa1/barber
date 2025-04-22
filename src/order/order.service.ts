@@ -67,13 +67,15 @@ export class OrderService {
     return new AppSuccess({ category }, 'Services found successfully');
   }
 
-  async billOrders(date = new Date()) {
+  async billOrders(date?: string) {
+    const targetDate = date ? new Date(date) : new Date();
+    console.log(targetDate);
     const order = await this.prisma.order.findMany({
       where: {
         status: 'PAID',
         date: {
-          gte: startOfDay(date),
-          lte: endOfDay(date),
+          gte: startOfDay(targetDate),
+          lte: endOfDay(targetDate),
         },
       },
       select: {

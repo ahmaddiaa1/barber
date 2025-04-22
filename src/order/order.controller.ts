@@ -53,7 +53,7 @@ export class OrderController {
   @Roles(['ADMIN', 'CASHIER'])
   @Get('/paid-orders')
   async getPaidOrders(@Query('date') date: string) {
-    return this.orderService.billOrders(new Date(date));
+    return this.orderService.billOrders(date);
   }
 
   @Roles(['ADMIN', 'CASHIER'])

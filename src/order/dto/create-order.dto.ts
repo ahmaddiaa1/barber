@@ -14,6 +14,7 @@ import {
 import { OrderStatus, BookingStatus } from '@prisma/client';
 
 export class CreateOrderDto {
+  @IsOptional()
   userId: string;
 
   @IsOptional()

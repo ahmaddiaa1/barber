@@ -249,12 +249,12 @@ model Order {
   updatedAt   DateTime      @updatedAt
   subTotal    Int
   total       Int
-  userId      String
+  userId      String?
   barberId    String
   cashierId   String?
   discount    Int           @default(0)
   branch      Branch        @relation(fields: [branchId], references: [id])
-  client      User          @relation("UserOrders", fields: [userId], references: [id])
+  client      User?         @relation("UserOrders", fields: [userId], references: [id])
   barber      User          @relation("BarberOrders", fields: [barberId], references: [id])
   Cashier     User?         @relation("CashierOrders", fields: [cashierId], references: [id])
   service     Service[]     @relation("OrderToServices")

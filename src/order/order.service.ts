@@ -558,7 +558,18 @@ export class OrderService {
     const FetchedServices = await this.prisma.service.findMany({
       where: { id: { in: service } },
     });
-    let single;
+    let single: {
+      pkgId: string;
+      id: string;
+      createdAt: Date;
+      updatedAt: Date;
+      offersId: string | null;
+      price: number;
+      serviceImg: string | null;
+      duration: number;
+      categoryId: string;
+      available: boolean;
+    }[];
     if (user?.role === 'USER') {
       const clientPackages = await this.prisma.clientPackages.findMany({
         where: {

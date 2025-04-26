@@ -85,7 +85,7 @@ export class OrderService {
         discount: true,
         date: true,
         slot: true,
-        client: { select: { firstName: true, lastName: true } },
+        client: true,
         service: {
           select: {
             Translation: { where: { language: 'EN' }, select: { name: true } },
@@ -110,7 +110,7 @@ export class OrderService {
         slot,
         barber: { firstName: barberFirstName, lastName: barberLastName },
         Cashier: { firstName: cashierFirstName, lastName: cashierLastName },
-        client: { firstName, lastName },
+        client,
         total,
         subTotal,
         discount,
@@ -128,7 +128,7 @@ export class OrderService {
         branch: branch.Translation[0].name,
         barberName: `${barberFirstName} ${barberLastName}`,
         cashierName: `${cashierFirstName} ${cashierLastName}`,
-        clientName: `${firstName} ${lastName}`,
+        clientName: `${client?.firstName} ${client?.lastName}`,
         day: format(new Date(date), 'EEEE'),
         time: slot,
       };

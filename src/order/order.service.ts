@@ -81,13 +81,16 @@ export class OrderService {
       select: {
         id: true,
         total: true,
+        type: true,
         subTotal: true,
         discount: true,
+        freeService: true,
         date: true,
         slot: true,
         client: true,
         service: {
           select: {
+            id: true,
             Translation: { where: { language: 'EN' }, select: { name: true } },
             price: true,
           },
@@ -112,18 +115,20 @@ export class OrderService {
         Cashier: { firstName: cashierFirstName, lastName: cashierLastName },
         client,
         total,
+        type,
         subTotal,
         discount,
+        freeService,
         ...rest
       } = order;
       return {
         ...rest,
         total: total.toString(),
         subTotal: subTotal.toString(),
-        discount: discount.toString(),
+        discount: `${discount.toString()} ${type === 'AMOUNT' ? 'EGP' : '%'}`,
         service: service.map((service) => ({
           name: service.Translation[0].name,
-          price: service.price.toString(),
+          price: freeService.includes(service.id) ? 0 : service.price,
         })),
         branch: branch.Translation[0].name,
         barberName: `${barberFirstName} ${barberLastName}`,
@@ -966,9 +971,12 @@ export class OrderService {
           barberId,
           branchId,
           points: point,
+          discount,
+          type: validPromoCode ? validPromoCode.type : 'AMOUNT',
           usedPackage: selectedPackage
             ? selectedPackage.flatMap((e) => e.id)
             : [],
+          freeService: allServices.filter((s) => s.isFree).flatMap((s) => s.id),
           date: new Date(dateWithoutTime),
           service: {
             connect: allServices.map((service) => ({ id: service.id })),

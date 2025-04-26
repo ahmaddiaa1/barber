@@ -555,21 +555,7 @@ export class OrderService {
       throw new ServiceUnavailableException(`Slot ${slot} is Unavailable`);
 
     let costServices = [] as PrismaServiceType[];
-    const FetchedServices = await this.prisma.service.findMany({
-      where: { id: { in: service } },
-    });
-    let single: {
-      pkgId: string;
-      id: string;
-      createdAt: Date;
-      updatedAt: Date;
-      offersId: string | null;
-      price: number;
-      serviceImg: string | null;
-      duration: number;
-      categoryId: string;
-      available: boolean;
-    }[];
+
     if (user?.role === 'USER') {
       const clientPackages = await this.prisma.clientPackages.findMany({
         where: {
@@ -598,13 +584,24 @@ export class OrderService {
         throw new BadRequestException('This package is not valid anymore');
       }
 
-      single = clientPackages
+      const single = clientPackages
         .filter((pkg) => pkg.type === 'SINGLE' && pkg.isActive)
         .flatMap((pkg) =>
           pkg.packageService.flatMap((ps) => {
             return { ...ps.service, pkgId: pkg.id };
           }),
         );
+
+      const FetchedServices = await this.prisma.service.findMany({
+        where: { id: { in: service } },
+      });
+
+      const services = FetchedServices.map((srv) => ({
+        ...srv,
+        isFree: single.some((s) => s.id === srv.id),
+      }));
+
+      allServices.push(...services);
 
       for (const pkg of selectedPackage) {
         if (pkg.type === 'SINGLE') {
@@ -620,11 +617,19 @@ export class OrderService {
 
       costServices = allServices.filter((service) => !service.isFree);
     }
-    const services = FetchedServices.map((srv) => ({
-      ...srv,
-      isFree: single.some((s) => s.id === srv.id),
-    }));
-    allServices.push(...services);
+
+    if (user?.role === 'CASHIER') {
+      const FetchedServices = await this.prisma.service.findMany({
+        where: { id: { in: service } },
+      });
+
+      const services = FetchedServices.map((srv) => ({
+        ...srv,
+        isFree: false,
+      }));
+
+      allServices.push(...services);
+    }
     let subTotal = costServices.reduce(
       (acc, service) => acc + service.price,
       0,

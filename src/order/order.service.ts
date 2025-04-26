@@ -974,7 +974,7 @@ export class OrderService {
           barberId,
           branchId,
           points: point,
-          discount,
+          discount: validPromoCode ? validPromoCode.discount : 0,
           type: validPromoCode ? validPromoCode.type : 'AMOUNT',
           usedPackage: selectedPackage
             ? selectedPackage.flatMap((e) => e.id)

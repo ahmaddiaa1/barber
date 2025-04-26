@@ -88,6 +88,7 @@ export class OrderService {
         date: true,
         slot: true,
         client: true,
+        points: true,
         service: {
           select: {
             id: true,

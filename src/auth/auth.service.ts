@@ -236,6 +236,7 @@ export class AuthService {
       role: roles = 'user',
       start,
       end,
+      referralCode,
       ...rest
     } = createAuthDto;
     const role = roles.toUpperCase() as Role;

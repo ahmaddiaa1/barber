@@ -53,6 +53,7 @@ export class OrderController {
   @Roles(['ADMIN', 'CASHIER'])
   @Get('/paid-orders')
   async getPaidOrders(@Query('date') date: string) {
+    console.log(date);
     return this.orderService.billOrders(date);
   }
 

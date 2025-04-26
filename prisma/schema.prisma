@@ -253,6 +253,8 @@ model Order {
   barberId    String
   cashierId   String?
   discount    Int           @default(0)
+  type        discount      @default(AMOUNT)
+  freeService String[]
   branch      Branch        @relation(fields: [branchId], references: [id])
   client      User?         @relation("UserOrders", fields: [userId], references: [id])
   barber      User          @relation("BarberOrders", fields: [barberId], references: [id])
@@ -333,6 +335,11 @@ model notification {
   image     String?
   user      User[]   @relation("notifications")
   createdAt DateTime @default(now()) @map("createdAt")
+}
+
+enum discount {
+  PERCENTAGE
+  AMOUNT
 }
 
 enum PackagesStatus {

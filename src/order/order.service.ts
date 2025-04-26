@@ -966,6 +966,7 @@ export class OrderService {
         slot,
         barberId,
         branchId,
+        discount: discount,
         points: point,
         usedPackage: selectedPackage
           ? selectedPackage.flatMap((e) => e.id)

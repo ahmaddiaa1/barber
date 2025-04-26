@@ -129,7 +129,9 @@ export class OrderService {
         discount: `${discount.toString()} ${type === 'AMOUNT' ? 'EGP' : '%'}`,
         service: service.map((service) => ({
           name: service.Translation[0].name,
-          price: freeService.includes(service.id) ? 0 : service.price,
+          price: freeService.includes(service.id)
+            ? '0'
+            : service.price.toString(),
         })),
         branch: branch.Translation[0].name,
         barberName: `${barberFirstName} ${barberLastName}`,

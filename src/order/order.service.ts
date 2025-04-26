@@ -618,18 +618,6 @@ export class OrderService {
       costServices = allServices.filter((service) => !service.isFree);
     }
 
-    if (user?.role === 'CASHIER') {
-      const FetchedServices = await this.prisma.service.findMany({
-        where: { id: { in: service } },
-      });
-
-      const services = FetchedServices.map((srv) => ({
-        ...srv,
-        isFree: false,
-      }));
-
-      allServices.push(...services);
-    }
     let subTotal = costServices.reduce(
       (acc, service) => acc + service.price,
       0,
@@ -1354,53 +1342,51 @@ export class OrderService {
   async completeOrder(id: string) {
     await this.findOneOrFail(id);
 
-    const updatedOrder = await this.prisma.order.update({
-      where: { id },
-      data: { status: 'COMPLETED', booking: 'PAST' },
-      include: {
-        service: {
-          include: {
-            PackagesServices: {
-              select: {
-                id: true,
+    await this.prisma.$transaction(async (prisma) => {
+      const updatedOrder = await this.prisma.order.update({
+        where: { id },
+        data: { status: 'COMPLETED', booking: 'PAST' },
+        include: {
+          service: {
+            include: {
+              PackagesServices: {
+                select: {
+                  id: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    const packageServiceIds = updatedOrder.service.flatMap((s) =>
-      s.PackagesServices.map((ps) => ps.id),
-    );
-
-    await this.prisma.$transaction(async (prisma) => {
-      if (packageServiceIds.length > 0) {
+      const packageServiceIds = updatedOrder.service.flatMap((s) =>
+        s.PackagesServices.map((ps) => ps.id),
+      );
+      if (packageServiceIds.length > 0 && updatedOrder.userId) {
         await this.prisma.packagesServices.deleteMany({
           where: {
             id: { in: packageServiceIds },
             ClientPackages: {
-              clientId: updatedOrder.userId,
+              clientId: updatedOrder?.userId,
             },
             remainingCount: { lt: 1 },
           },
         });
       }
 
-      if (updatedOrder.usedPackage) {
+      if (updatedOrder.usedPackage && updatedOrder.userId) {
         await prisma.clientPackages.deleteMany({
           where: {
-            id: { in: updatedOrder.usedPackage },
-            clientId: updatedOrder.userId,
+            id: { in: updatedOrder?.usedPackage },
+            clientId: updatedOrder?.userId,
           },
         });
       }
+      return new AppSuccess(
+        updatedOrder,
+        'Order completed successfully, used services removed.',
+      );
     });
-
-    return new AppSuccess(
-      updatedOrder,
-      'Order completed successfully, used services removed.',
-    );
   }
 
   async paidOrder(id: string, userId: string) {

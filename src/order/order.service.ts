@@ -957,38 +957,38 @@ export class OrderService {
           },
         });
       }
-    }
-
-    order = await this.prisma.order.create({
-      data: {
-        ...rest,
-        ...(validPromoCode && { promoCode }),
-        slot,
-        barberId,
-        branchId,
-        points: point,
-        usedPackage: selectedPackage
-          ? selectedPackage.flatMap((e) => e.id)
-          : [],
-        date: new Date(dateWithoutTime),
-        service: {
-          connect: allServices.map((service) => ({ id: service.id })),
+    } else {
+      order = await this.prisma.order.create({
+        data: {
+          ...rest,
+          ...(validPromoCode && { promoCode }),
+          slot,
+          barberId,
+          branchId,
+          points: point,
+          usedPackage: selectedPackage
+            ? selectedPackage.flatMap((e) => e.id)
+            : [],
+          date: new Date(dateWithoutTime),
+          service: {
+            connect: allServices.map((service) => ({ id: service.id })),
+          },
+          subTotal,
+          total: points ? total - points : total,
         },
-        subTotal,
-        total: points ? total - points : total,
-      },
-      include: {
-        service: {
-          include: {
-            PackagesServices: {
-              select: {
-                id: true,
+        include: {
+          service: {
+            include: {
+              PackagesServices: {
+                select: {
+                  id: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
+    }
 
     const duration =
       allServices.reduce((acc, service) => acc + service.duration, 0) * 15;

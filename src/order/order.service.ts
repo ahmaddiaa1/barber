@@ -111,13 +111,19 @@ export class OrderService {
         barber: { firstName: barberFirstName, lastName: barberLastName },
         Cashier: { firstName: cashierFirstName, lastName: cashierLastName },
         client: { firstName, lastName },
+        total,
+        subTotal,
+        discount,
         ...rest
       } = order;
       return {
         ...rest,
+        total: total.toString(),
+        subTotal: subTotal.toString(),
+        discount: discount.toString(),
         service: service.map((service) => ({
           name: service.Translation[0].name,
-          price: service.price,
+          price: service.price.toString(),
         })),
         branch: branch.Translation[0].name,
         barberName: `${barberFirstName} ${barberLastName}`,
@@ -141,7 +147,7 @@ export class OrderService {
       where: { branchId: cashier.branchId, status: 'COMPLETED' },
       include: {
         barber: { include: { barber: { include: { user: true } } } },
-        client: { select: { firstName: true, phone: true } },
+        client: true,
         service: true,
       },
     });
@@ -159,7 +165,7 @@ export class OrderService {
           promoCode,
           slot,
           usedPackage,
-          client: { firstName, phone },
+          client,
         } = order;
 
         const usedPackages = await this.prisma.clientPackages.findMany({
@@ -191,8 +197,8 @@ export class OrderService {
           duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
           barberFirstName: barber.barber.user.firstName,
           barberAvatar: barber.barber.user.avatar,
-          userName: firstName,
-          userPhone: phone,
+          userName: client?.firstName,
+          userPhone: client?.phone,
           total: total.toString(),
           subTotal: subTotal.toString(),
           discount: (total - subTotal).toString(),

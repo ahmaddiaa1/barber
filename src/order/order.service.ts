@@ -555,7 +555,9 @@ export class OrderService {
       throw new ServiceUnavailableException(`Slot ${slot} is Unavailable`);
 
     let costServices = [] as PrismaServiceType[];
-
+    const FetchedServices = await this.prisma.service.findMany({
+      where: { id: { in: service } },
+    });
     if (user?.role === 'USER') {
       const clientPackages = await this.prisma.clientPackages.findMany({
         where: {
@@ -592,10 +594,6 @@ export class OrderService {
           }),
         );
 
-      const FetchedServices = await this.prisma.service.findMany({
-        where: { id: { in: service } },
-      });
-
       const services = FetchedServices.map((srv) => ({
         ...srv,
         isFree: single.some((s) => s.id === srv.id),
@@ -616,6 +614,14 @@ export class OrderService {
       }
 
       costServices = allServices.filter((service) => !service.isFree);
+    }
+    if (user?.role !== 'USER') {
+      const services = FetchedServices.map((srv) => ({
+        ...srv,
+        isFree: false,
+      }));
+      allServices.push(...services);
+      costServices = allServices;
     }
 
     let subTotal = costServices.reduce(

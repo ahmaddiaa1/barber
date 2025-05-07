@@ -17,6 +17,10 @@ export class ClientPackagesService {
     const user = await this.prisma.user.findUnique({
       where: { phone },
     });
+
+    if (!user)
+      throw new NotFoundException(`User with phone ${phone} not found`);
+
     const pkg = await this.prisma.packages.findFirst({
       where: { id: packageId },
       include: { services: true, ...translationDes() },

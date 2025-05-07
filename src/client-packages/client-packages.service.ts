@@ -23,7 +23,7 @@ export class ClientPackagesService {
     });
 
     if (!pkg) {
-      throw new NotFoundException(`Package with ID ${packageId} not found`);
+      throw new NotFoundException(`the Package you choose not found`);
     }
 
     const clientPackageExists = await this.prisma.clientPackages.findFirst({

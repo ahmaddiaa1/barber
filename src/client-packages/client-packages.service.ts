@@ -13,7 +13,10 @@ import {
 export class ClientPackagesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(packageId: string, user: User, language: Language) {
+  async create(packageId: string, phone: string, language: Language) {
+    const user = await this.prisma.user.findUnique({
+      where: { phone },
+    });
     const pkg = await this.prisma.packages.findFirst({
       where: { id: packageId },
       include: { services: true, ...translationDes() },

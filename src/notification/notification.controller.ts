@@ -1,50 +1,26 @@
-import { Controller, Post, Body, Get, Headers } from '@nestjs/common';
+import { Controller, Post, Body, Headers, UseGuards } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import * as jwt from 'jsonwebtoken';
 import * as admin from 'firebase-admin';
-import axios from 'axios';
-const users = [] as {
-  username: string;
-  password: string;
-  fcmToken: string | null;
-}[];
+import { AuthGuard } from 'guard/auth.guard';
+import { UserData } from 'decorators/user.decorator';
+import { User } from '@prisma/client';
 
+@UseGuards(AuthGuard)
 @Controller()
 export class NotificationController {
   constructor(private readonly authService: NotificationService) {}
 
-  @Post('signup')
-  signUp(@Body() body) {
-    return this.authService.signUp(body.username, body.password, users);
-  }
-
-  @Post('login')
-  login(@Body() body) {
-    return this.authService.login(body.username, body.password, users);
-  }
-
   @Post('set-fcm')
-  setFCM(@Headers('Authorization') token, @Body() body) {
-    console.log(token);
-    const decoded = jwt.verify(token.split(' ')[1], 'your_jwt_secret') as {
-      username: string;
-    };
-    console.log(decoded);
-    return this.authService.setFCMToken(decoded.username, body.fcmToken, users);
+  setFCM(@UserData('user') user: User, @Body() body) {
+    return this.authService.setFCMToken(user, body.fcmToken);
   }
 
   @Post('send-notification')
-  async sendNotification(@Headers('Authorization') token, @Body() body) {
-    console.log(token);
-
-    const decoded = jwt.verify(token.split(' ')[1], 'your_jwt_secret') as {
-      username: string;
-    };
-
-    console.log(decoded);
-    const user = users.find((u) => u.username === decoded.username);
-    if (!user?.fcmToken) return { error: 'User has no FCM token' };
-
+  async sendNotification(
+    @UserData('user') user: User,
+    @Body() body: { title: string; message: string },
+  ) {
     const message = {
       to: user.fcmToken, // ✅ Must be a string, not an array
       notification: {
@@ -68,10 +44,5 @@ export class NotificationController {
     }
 
     return { success: true };
-  }
-
-  @Get('users')
-  getAuthUser() {
-    return this.authService.getAuthUser(users);
   }
 }

@@ -23,11 +23,11 @@ export class ClientPackagesController {
 
   @Post()
   create(
-    @UserData('user') user: User,
+    @Body('phone') phone: string,
     @Query('packageId') packageId: string,
     @Lang() lang: Language,
   ) {
-    return this.clientPackagesService.create(packageId, user, lang);
+    return this.clientPackagesService.create(packageId, phone, lang);
   }
 
   @Get()

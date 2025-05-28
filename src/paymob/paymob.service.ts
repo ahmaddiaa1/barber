@@ -160,7 +160,7 @@ export class PaymobService {
       const type = offer.offerType.toLowerCase();
 
       if (type === 'packages') {
-        await this.packages.create(packageId, user, lang);
+        // await this.packages.create(packageId, user, lang);
       } else if (type === 'points') {
         const a = await this.points.create(packageId, user, lang);
       }

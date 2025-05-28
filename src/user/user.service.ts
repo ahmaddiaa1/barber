@@ -189,4 +189,23 @@ export class UserService {
 
     return { ...rest, [userRole]: admin || barber || cashier || client };
   }
+
+  async unbanUser(id: string) {
+    const user = await this.prisma.client.findUnique({
+      where: { id },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    if (user.ban) {
+      const updatedUser = await this.prisma.client.update({
+        where: { id },
+        data: { ban: false },
+      });
+
+      return new AppSuccess(updatedUser, 'User unbanned successfully', 200);
+    } else {
+      throw new NotFoundException('User is not banned');
+    }
+  }
 }

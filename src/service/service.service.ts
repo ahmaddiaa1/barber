@@ -4,7 +4,6 @@ import { Language, Service } from '@prisma/client';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
-import { AwsService } from 'src/aws/aws.service';
 import { Random } from 'src/utils/generate';
 import {
   createTranslation,
@@ -14,10 +13,7 @@ import {
 
 @Injectable()
 export class ServiceService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly awsService: AwsService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async getAllService(
     language: Language,

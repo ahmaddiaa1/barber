@@ -43,7 +43,13 @@ export class NotificationController {
   @Post('send-notification')
   async sendNotification(
     @UserData('user') user: User,
-    @Body() body: { title: string; message: string; imageUrl?: string },
+    @Body()
+    body: {
+      fcmTokens: string[];
+      title: string;
+      message: string;
+      imageUrl?: string;
+    },
   ) {
     const message = {
       to: user.fcmToken, // ✅ Must be a string, not an array
@@ -57,7 +63,7 @@ export class NotificationController {
     try {
       const [noti] = await Promise.all([
         admin.messaging().sendEachForMulticast({
-          tokens: [user.fcmToken],
+          tokens: body.fcmTokens,
           android: { notification: { color: '#000000' } },
           notification: {
             title: body.title,

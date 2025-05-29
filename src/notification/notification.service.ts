@@ -24,7 +24,10 @@ export class NotificationService {
       },
     });
 
-    return new AppSuccess(token.fcmToken, 'FCM token updated successfully');
+    return new AppSuccess(
+      { token: token.fcmToken },
+      'FCM token updated successfully',
+    );
   }
 
   async getNotification(user: User) {

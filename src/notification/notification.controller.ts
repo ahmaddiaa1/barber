@@ -42,7 +42,7 @@ export class NotificationController {
 
   @Post('send-notification')
   async sendNotification(
-    @UserData('user') user: User,
+    // @UserData('user') user: User,
     @Body()
     body: {
       fcmTokens: string[];
@@ -52,14 +52,16 @@ export class NotificationController {
     },
   ) {
     const message = {
-      to: user.fcmToken, // ✅ Must be a string, not an array
+      to: body.fcmTokens, // ✅ Must be a string, not an array
       notification: {
         title: body.title,
         body: body.message,
       },
     };
     console.log(message);
-
+    const user = await this.prisma.user.findFirst({
+      where: { fcmToken: body.fcmTokens[0] },
+    });
     try {
       const [noti] = await Promise.all([
         admin.messaging().sendEachForMulticast({
@@ -71,19 +73,26 @@ export class NotificationController {
             ...(body.imageUrl && { image: body.imageUrl }),
           },
         }),
-        this.prisma.notification.create({
-          data: {
-            title: body.title,
-            content: body.message,
 
-            user: {
-              connect: {
-                id: user.id,
+        this.prisma.user.update({
+          where: {
+            id: user.id,
+          },
+          data: {
+            notification: {
+              create: {
+                title: body.title,
+                content: body.message,
+                image: body.imageUrl,
               },
             },
           },
         }),
       ]);
+      if (noti.failureCount > 0) {
+        console.error('Failed to send notification:', noti.responses);
+        return { error: 'Failed to send notification' };
+      }
 
       console.log('Notification sent successfully to:', user.fcmToken);
       return new AppSuccess(noti, 'Notification sent successfully');

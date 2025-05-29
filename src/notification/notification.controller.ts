@@ -6,6 +6,7 @@ import {
   UseGuards,
   Put,
   Get,
+  NotFoundException,
 } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import * as jwt from 'jsonwebtoken';
@@ -62,6 +63,11 @@ export class NotificationController {
     const user = await this.prisma.user.findFirst({
       where: { fcmToken: body.fcmTokens[0] },
     });
+
+    if (!user) {
+      throw new NotFoundException('User not found with the provided FCM token');
+    }
+
     try {
       const [noti] = await Promise.all([
         admin.messaging().sendEachForMulticast({
@@ -89,10 +95,6 @@ export class NotificationController {
           },
         }),
       ]);
-      if (noti.failureCount > 0) {
-        console.error('Failed to send notification:', noti.responses);
-        return { error: 'Failed to send notification' };
-      }
 
       console.log('Notification sent successfully to:', user.fcmToken);
       return new AppSuccess(noti, 'Notification sent successfully');

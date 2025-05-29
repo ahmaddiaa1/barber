@@ -37,7 +37,7 @@ export class NotificationService {
       },
     });
     return new AppSuccess(
-      notifications,
+      { notifications },
       'Notifications retrieved successfully',
     );
   }

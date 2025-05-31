@@ -193,24 +193,19 @@ export class UserService {
   async unbanUser(phone: string) {
     const user = await this.prisma.user.findUnique({
       where: { phone },
-      select: { id: true, client: { select: { ban: true } } },
     });
-
+    console.log(phone, user);
     if (!user) throw new NotFoundException('User not found');
 
-    if (user.client.ban) {
-      const updatedUser = await this.prisma.user.update({
-        where: { phone },
-        data: {
-          client: {
-            update: { ban: false },
-          },
+    const updatedUser = await this.prisma.user.update({
+      where: { phone },
+      data: {
+        client: {
+          update: { ban: false },
         },
-      });
-
-      return new AppSuccess(updatedUser, 'User unbanned successfully', 200);
-    } else {
-      throw new NotFoundException('User is not banned');
-    }
+      },
+    });
+    console.log(updatedUser);
+    return new AppSuccess(updatedUser, 'User unbanned successfully', 200);
   }
 }

@@ -24,6 +24,12 @@ import { multerConfig } from 'src/config/multer.config';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Put('unban')
+  unbanUser(@Body('number') number: string) {
+    console.log('Unban request for number:', number);
+    return this.userService.unbanUser(number);
+  }
+
   @Get()
   findAll(
     @Query()
@@ -66,10 +72,5 @@ export class UserController {
   @Get('current/profile')
   CurrentUser(@UserData('user') user: User) {
     return this.userService.CurrentUser(user);
-  }
-
-  @Put('unban')
-  unbanUser(@Body('number') number: string) {
-    return this.userService.unbanUser(number);
   }
 }

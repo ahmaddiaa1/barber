@@ -68,8 +68,8 @@ export class UserController {
     return this.userService.CurrentUser(user);
   }
 
-  @Put('unban/:id')
-  unbanUser(@Param('id', ParseUUIDPipe) id: string) {
-    return this.userService.unbanUser(id);
+  @Put('unban')
+  unbanUser(@Body('number') number: string) {
+    return this.userService.unbanUser(number);
   }
 }

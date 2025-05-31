@@ -77,14 +77,13 @@ export class StaticService {
     );
   }
 
-  async updateAbout(id: string, data: UpdateStaticDto) {
-    await this.ensureStaticExists(id);
-
+  async updateAbout(data: UpdateStaticDto) {
+    const Firstabout = await this.prisma.static.findFirst({});
     const { about } = data;
 
     return new AppSuccess(
       await this.prisma.static.update({
-        where: { id },
+        where: { id: Firstabout.id },
         data: {
           about: {
             update: about,

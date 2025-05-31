@@ -30,9 +30,9 @@ export class StaticController {
     return this.staticService.getStatic();
   }
 
-  @Put('/about/:id')
-  updateAbout(@Param('id') id: string, @Body() data: UpdateStaticDto) {
-    return this.staticService.updateAbout(id, data);
+  @Put('/about')
+  updateAbout(@Body() data: UpdateStaticDto) {
+    return this.staticService.updateAbout(data);
   }
 
   @Put('question/:id')

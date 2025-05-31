@@ -43,9 +43,4 @@ export class StaticController {
   @Delete('question/:id') deleteQuestion(@Param('id') id: string) {
     return this.staticService.deleteQuestion(id);
   }
-
-  @Delete()
-  deleteStatic() {
-    return this.staticService.deleteStatic();
-  }
 }

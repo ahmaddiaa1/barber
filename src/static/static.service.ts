@@ -78,16 +78,18 @@ export class StaticService {
   }
 
   async updateAbout(data: UpdateStaticDto) {
-    const Firstabout = await this.prisma.static.findFirst({});
+    const Firstabout = await this.prisma.static.findFirst({
+      select: { about: true },
+    });
     const { about } = data;
+    console.log(Firstabout, data);
 
     return new AppSuccess(
-      await this.prisma.static.update({
-        where: { id: Firstabout.id },
+      await this.prisma.about.update({
+        where: { id: Firstabout.about.id },
         data: {
-          about: {
-            update: about,
-          },
+          location: about.location,
+          ...about,
         },
       }),
       'Static data updated successfully',
@@ -121,10 +123,6 @@ export class StaticService {
 
     const question = await this.prisma.questions.delete({ where: { id } });
     return new AppSuccess(question, 'Question deleted successfully');
-  }
-
-  async deleteStatic() {
-    return this.prisma.static.deleteMany();
   }
 
   async ensureStaticExists(id: string) {

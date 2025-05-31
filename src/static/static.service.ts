@@ -9,7 +9,9 @@ export class StaticService {
   constructor(private prisma: PrismaService) {}
 
   async createAbout(data: CreateAboutDto) {
-    const staticData = await this.prisma.static.findFirst({});
+    const staticData = await this.prisma.static.findFirst({
+      select: { about: true, id: true },
+    });
 
     if (!staticData) {
       const about = await this.prisma.static.create({
@@ -26,7 +28,22 @@ export class StaticService {
       });
       return new AppSuccess(about, 'Static data created successfully');
     }
-
+    if (!staticData.about) {
+      const about = await this.prisma.static.update({
+        where: { id: staticData.id },
+        data: {
+          about: {
+            create: {
+              content: data.content,
+              location: data.location,
+              time: data.time,
+            },
+          },
+        },
+        include: { about: true },
+      });
+      return new AppSuccess(about, 'Static data created successfully');
+    }
     const about = await this.prisma.about.update({
       where: { id: staticData.id },
       data: {

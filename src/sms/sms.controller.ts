@@ -15,7 +15,7 @@ export class SmsController {
 
   @Post()
   create(
-    @Body('phone')
+    @Body()
     { phone, type }: { phone: string; type?: 'register' | 'reset' },
   ) {
     return this.smsService.sendOTP(phone, type);
@@ -24,5 +24,10 @@ export class SmsController {
   @Post('/verify')
   verifyCode(@Body() body: any, @UploadedFile() file: Express.Multer.File) {
     return this.smsService.verifyCode(body, file);
+  }
+
+  @Post('/resend')
+  resendCode(@Body('phone') phone: string, type: 'register' | 'reset') {
+    return this.smsService.reSendOTP(phone, type);
   }
 }

@@ -58,7 +58,8 @@ export class SmsService {
             expiredAt: new Date(Date.now() + 5 * 60 * 1000),
           },
         });
-      } else if (type === 'reset') {
+      }
+      if (type === 'reset') {
         await this.prisma.user.update({
           where: { phone },
           data: {
@@ -100,9 +101,13 @@ export class SmsService {
     return await this.authService.signup(body, file);
   }
 
-  async reSendOTP(phone: string) {
+  async reSendOTP(phone: string, type = 'register') {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const message = `Your verification code is ${code}`;
+    const hashedPassword = await hash(Random(10), 10); // Hash the code for password reset
+    const message =
+      type === 'register'
+        ? `Your verification code is ${code}`
+        : `Your new password is ${hashedPassword}`;
     const url = `${process.env.SMS_API_URL}?username=${encodeURIComponent(this.username)}&password=${encodeURIComponent(this.password)}&sendername=${this.senderName}&message=${encodeURIComponent(message)}&mobiles=${phone}`;
 
     try {
@@ -113,20 +118,27 @@ export class SmsService {
           'Accept-Language': 'en-US',
         },
       });
-      const phoneVerification = await this.prisma.phoneVerification.upsert({
-        where: {
-          phone,
-        },
-        update: {
-          code,
-          expiredAt: new Date(Date.now() + 5 * 60 * 1000), // Extend expiration time
-        },
-        create: {
-          phone,
-          code,
-          expiredAt: new Date(Date.now() + 5 * 60 * 1000), // Set initial expiration time
-        },
-      });
+      if (type === 'register') {
+        await this.prisma.phoneVerification.upsert({
+          where: { phone },
+          update: { code, expiredAt: new Date(Date.now() + 5 * 60 * 1000) },
+          create: {
+            phone,
+            code,
+            expiredAt: new Date(Date.now() + 5 * 60 * 1000),
+          },
+        });
+      }
+      if (type === 'reset') {
+        await this.prisma.user.update({
+          where: { phone },
+          data: {
+            password: hashedPassword,
+          },
+        });
+      }
+
+      return { message: 'OTP resent successfully' };
     } catch (error) {
       this.logger.error(`Error resending OTP: ${error.message}`, error.stack);
       throw new InternalServerErrorException('Failed to resend OTP');

@@ -1,26 +1,50 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { CreateSmDto } from './dto/create-sm.dto';
 import { UpdateSmDto } from './dto/update-sm.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
+import axios from 'axios';
 
 @Injectable()
 export class SmsService {
-  create(createSmDto: CreateSmDto) {
-    return 'This action adds a new sm';
+  private readonly username: string;
+  private readonly password: string;
+  private readonly senderName: string;
+  private readonly logger = new Logger(SmsService.name);
+
+  constructor(private readonly prisma: PrismaService) {
+    this.username = process.env.SMS_USERNAME;
+    this.password = process.env.SMS_PASSWORD;
+    this.senderName = process.env.SMS_SENDER_NAME;
   }
 
-  findAll() {
-    return `This action returns all sms`;
-  }
+  async sendVerificationCode(mobile: string) {
+    const code = 12356; // This should be generated dynamically, e.g., using a random number generator
 
-  findOne(id: number) {
-    return `This action returns a #${id} sm`;
-  }
+    const message = `Your verification code is ${code}`;
+    const url = `${process.env.SMS_API_URL}?username=${this.username}&password=${this.password}&sendername=${this.senderName}&message=${message}&mobiles=${mobile}`;
 
-  update(id: number, updateSmDto: UpdateSmDto) {
-    return `This action updates a #${id} sm`;
-  }
+    console.log(url);
 
-  remove(id: number) {
-    return `This action removes a #${id} sm`;
+    try {
+      const { data } = await axios.post(url, null, {
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'Accept-Language': 'en-US',
+        },
+      });
+
+      console.log(data);
+
+      return data;
+    } catch (e) {
+      const error = e as Error;
+      this.logger.error(`Error sending SMS: ${error.message}`, error.stack);
+      throw new InternalServerErrorException(error);
+    }
   }
 }

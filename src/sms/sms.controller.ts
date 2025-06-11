@@ -1,22 +1,28 @@
 import {
   Controller,
-  Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { SmsService } from './sms.service';
-import { CreateSmDto } from './dto/create-sm.dto';
-import { UpdateSmDto } from './dto/update-sm.dto';
+import { multerConfig } from 'src/config/multer.config';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('sms')
 export class SmsController {
   constructor(private readonly smsService: SmsService) {}
 
   @Post()
-  create(@Body('mobile') mobile: string) {
-    return this.smsService.sendVerificationCode(mobile);
+  create(
+    @Body('phone')
+    { phone, type }: { phone: string; type?: 'register' | 'reset' },
+  ) {
+    return this.smsService.sendOTP(phone, type);
+  }
+  @UseInterceptors(FileInterceptor('file', multerConfig('avatars')))
+  @Post('/verify')
+  verifyCode(@Body() body: any, @UploadedFile() file: Express.Multer.File) {
+    return this.smsService.verifyCode(body, file);
   }
 }

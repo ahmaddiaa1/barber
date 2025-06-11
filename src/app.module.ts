@@ -20,6 +20,7 @@ import { NotificationModule } from './notification/notification.module';
 import { ProductModule } from './product/product.module';
 import { StaticModule } from './static/static.module';
 import { AdminModule } from './admin/admin.module';
+import { SmsModule } from './sms/sms.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { AdminModule } from './admin/admin.module';
     ProductModule,
     StaticModule,
     AdminModule,
+    SmsModule,
   ],
   controllers: [],
   providers: [TokenService],

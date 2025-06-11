@@ -69,6 +69,17 @@ model Admin {
   user User   @relation(fields: [id], references: [id])
 }
 
+model PhoneVerification {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  code      String
+  expiredAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([phone])
+}
+
 model Settings {
   id               String @id @default(uuid())
   PointsPercentage Int    @default(10)

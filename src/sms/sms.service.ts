@@ -25,9 +25,7 @@ export class SmsService {
     const code = 12356; // This should be generated dynamically, e.g., using a random number generator
 
     const message = `Your verification code is ${code}`;
-    const url = `${process.env.SMS_API_URL}?username=${this.username}&password=${this.password}&sendername=${this.senderName}&message=${message}&mobiles=${mobile}`;
-
-    console.log(url);
+    const url = `${process.env.SMS_API_URL}?username=${encodeURIComponent(this.username)}&password=${encodeURIComponent(this.password)}&sendername=${this.senderName}&message=${encodeURIComponent(message)}&mobiles=${mobile}`;
 
     try {
       const { data } = await axios.post(url, null, {
@@ -37,8 +35,6 @@ export class SmsService {
           'Accept-Language': 'en-US',
         },
       });
-
-      console.log(data);
 
       return data;
     } catch (e) {

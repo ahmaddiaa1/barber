@@ -26,7 +26,6 @@ export class UserController {
 
   @Put('unban')
   unbanUser(@Body('number') number: string) {
-    console.log('Unban request for number:', number);
     return this.userService.unbanUser(number);
   }
 

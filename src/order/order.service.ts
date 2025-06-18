@@ -69,7 +69,6 @@ export class OrderService {
 
   async billOrders(date?: string) {
     const targetDate = date ? new Date(date) : new Date();
-    console.log(targetDate);
     const order = await this.prisma.order.findMany({
       where: {
         status: 'PAID',
@@ -412,8 +411,6 @@ export class OrderService {
 
         const usedPackageIds = usedPackage.flatMap((u) => u.packageId);
 
-        console.log('usedPackage', usedPackage);
-
         const packageServices = await this.prisma.packages.findMany({
           where: { id: { in: usedPackageIds } },
           include: { services: true },
@@ -633,8 +630,6 @@ export class OrderService {
       throw new BadRequestException('Cannot use points more than the total');
     }
 
-    console.log(subTotal);
-
     const discount = promoCode
       ? validPromoCode?.type === 'PERCENTAGE'
         ? (subTotal * validPromoCode?.discount) / 100
@@ -643,7 +638,6 @@ export class OrderService {
 
     const total = Math.max(subTotal - discount, 0);
 
-    console.log(total);
     const duration =
       allServices.reduce((acc, service) => acc + service.duration, 0) * 15;
 
@@ -1467,10 +1461,6 @@ export class OrderService {
     const availableSlots = allSlots.filter(
       (slot) => !blockedSlots.includes(slot),
     );
-    console.log('availableSlots', availableSlots);
-    console.log('blockedSlots', blockedSlots);
-    console.log('orders', orders);
-    console.log('allSlots', allSlots);
 
     return new AppSuccess(
       { slots: availableSlots },

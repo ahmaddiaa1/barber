@@ -78,7 +78,6 @@ export class SmsService {
   ) {
     const { phone, code } = body;
 
-    console.log('body', body);
     const verification = await this.prisma.phoneVerification.findUnique({
       where: { phone },
     });

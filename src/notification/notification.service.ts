@@ -14,7 +14,6 @@ export class NotificationService {
   private secret = process.env.JWT_SECRET;
 
   async setFCMToken(user: User, fcmToken: string) {
-    console.log('Setting FCM token for user:', fcmToken, user.id);
     const token = await this.prisma.user.update({
       where: {
         id: user.id,

@@ -194,7 +194,6 @@ export class UserService {
     const user = await this.prisma.user.findUnique({
       where: { phone },
     });
-    console.log(phone, user);
     if (!user) throw new NotFoundException('User not found');
 
     const updatedUser = await this.prisma.user.update({
@@ -205,7 +204,6 @@ export class UserService {
         },
       },
     });
-    console.log(updatedUser);
     return new AppSuccess(updatedUser, 'User unbanned successfully', 200);
   }
 }

@@ -63,7 +63,6 @@ export function AuthGuard(required = true): any {
       if (apiKeyHeader) {
         try {
           const decoded = Buffer.from(apiKeyHeader, 'base64').toString('utf-8');
-          console.log('decoded', decoded);
           if (decoded === process.env.API_KEY) {
             req.apiKeyUser = { role: 'api', access: 'basic' };
           }

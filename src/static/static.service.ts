@@ -99,7 +99,6 @@ export class StaticService {
       select: { about: true },
     });
     const { about } = data;
-    console.log(Firstabout, data);
 
     return new AppSuccess(
       await this.prisma.about.update({

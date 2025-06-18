@@ -58,7 +58,6 @@ export class NotificationController {
         body: body.message,
       },
     };
-    console.log(message);
     const user = await this.prisma.user.findFirst({
       where: { fcmToken: body.fcmTokens[0] },
     });
@@ -95,10 +94,8 @@ export class NotificationController {
         }),
       ]);
 
-      console.log('Notification sent successfully to:', user.fcmToken);
       return new AppSuccess(noti, 'Notification sent successfully');
     } catch (error) {
-      console.log(error);
       return { error: 'Failed to send notification' };
     }
   }

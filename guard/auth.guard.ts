@@ -56,7 +56,8 @@ export function AuthGuard(required = true): any {
             isAuthenticated = true;
           }
         } catch (error) {
-          throw new UnauthorizedException('Invalid token');
+          console.error('Token verification failed:', error);
+          throw new UnauthorizedException('Invalid credentials');
         }
       }
       if (apiKeyHeader) {

@@ -20,13 +20,11 @@ import { multerConfig } from '../../src/config/multer.config';
 import { Lang } from 'decorators/accept.language';
 import { Language } from '@prisma/client';
 
-@UseGuards(RolesGuard)
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard(), RolesGuard)
 @Controller('package')
 export class PackageController {
   constructor(private readonly packageService: PackageService) {}
 
-  // @Roles(['ADMIN'])
   @UseInterceptors(FileInterceptor('file', multerConfig('packages')))
   @Post()
   create(
@@ -52,7 +50,6 @@ export class PackageController {
     return this.packageService.update(id);
   }
 
-  // @Roles(['ADMIN'])
   @Delete('delete-many')
   remove(@Param('id') id: string) {
     return this.packageService.remove();

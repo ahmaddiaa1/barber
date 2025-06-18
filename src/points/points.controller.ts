@@ -20,7 +20,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from 'src/config/multer.config';
 import { Lang } from '../../decorators/accept.language';
 
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard())
 @Controller('points')
 export class PointsController {
   constructor(private readonly pointsService: PointsService) {}

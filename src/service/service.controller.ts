@@ -19,17 +19,20 @@ import { multerConfig } from '../../src/config/multer.config';
 
 import { Lang } from '../../decorators/accept.language';
 import { AuthGuard } from 'guard/auth.guard';
+import { RolesGuard } from 'guard/role.guard';
+import { Roles } from 'decorators/roles.decorator';
 
-@UseGuards(AuthGuard)
 @Controller('service')
 export class ServiceController {
   constructor(private readonly serviceService: ServiceService) {}
 
+  @UseGuards(AuthGuard(false))
   @Get()
   public async findAllService(@Lang() lang: Language) {
     return await this.serviceService.getAllService(lang);
   }
 
+  @UseGuards(AuthGuard(false))
   @Get(':id')
   public async findServiceById(
     @Param('id', ParseUUIDPipe) id: string,
@@ -38,6 +41,8 @@ export class ServiceController {
     return await this.serviceService.getServiceById(id, language);
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(['ADMIN'])
   @Post()
   @UseInterceptors(FileInterceptor('file', multerConfig('services')))
   public async createService(
@@ -52,6 +57,8 @@ export class ServiceController {
     );
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(['ADMIN'])
   @Put(':id')
   @UseInterceptors(FileInterceptor('file', multerConfig('services')))
   public async updateService(
@@ -68,6 +75,8 @@ export class ServiceController {
     );
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(['ADMIN'])
   @Put(':id/status')
   public async softDeleteService(
     @Param('id', ParseUUIDPipe) id: string,

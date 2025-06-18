@@ -9,7 +9,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { NotificationService } from './notification.service';
-import * as jwt from 'jsonwebtoken';
 import * as admin from 'firebase-admin';
 import { AuthGuard } from 'guard/auth.guard';
 import { UserData } from 'decorators/user.decorator';
@@ -17,7 +16,7 @@ import { User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
 
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard())
 @Controller('notification')
 export class NotificationController {
   constructor(

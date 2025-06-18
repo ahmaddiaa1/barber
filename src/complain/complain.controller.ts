@@ -17,8 +17,7 @@ import { RolesGuard } from 'guard/role.guard';
 import { Roles } from 'decorators/roles.decorator';
 
 @Controller('complain')
-@UseGuards(RolesGuard)
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard(), RolesGuard)
 export class ComplainController {
   constructor(private readonly complainService: ComplainService) {}
 

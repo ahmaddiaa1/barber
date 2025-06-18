@@ -20,7 +20,7 @@ import { Role, User } from '@prisma/client';
 import { multerConfig } from 'src/config/multer.config';
 
 @Controller('user')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard())
 export class UserController {
   constructor(private readonly userService: UserService) {}
 

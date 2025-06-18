@@ -1,7 +1,18 @@
-import { Controller, Get, Post, Body, Delete, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Delete,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { PromoCodeService } from './promo-code.service';
 import { CreatePromoCodeDto } from './dto/create-promo-code.dto';
+import { RolesGuard } from 'guard/role.guard';
+import { AuthGuard } from 'guard/auth.guard';
 
+@UseGuards(AuthGuard(), RolesGuard)
 @Controller('promo-code')
 export class PromoCodeController {
   constructor(private readonly promoCodeService: PromoCodeService) {}

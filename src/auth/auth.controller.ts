@@ -36,7 +36,7 @@ export class AuthController {
   }
 
   @Post('/logout')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard())
   logout(@UserData('token') token: string) {
     return this.authService.logout(token);
   }

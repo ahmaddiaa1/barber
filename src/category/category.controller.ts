@@ -20,11 +20,10 @@ import { UserData } from 'decorators/user.decorator';
 import { Lang } from '../../decorators/accept.language';
 
 @Controller('category')
-@UseGuards(RolesGuard)
-@UseGuards(AuthGuard)
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
+  @UseGuards(AuthGuard(false))
   @Get()
   public async findAllCategories(
     @UserData('user') user: User,
@@ -33,6 +32,7 @@ export class CategoryController {
     return await this.categoryService.findAllCategories(user, lang);
   }
 
+  @UseGuards(AuthGuard(false))
   @Get(':id')
   public async findCategoryById(
     @Param('id', ParseUUIDPipe) id: string,
@@ -41,6 +41,7 @@ export class CategoryController {
     return await this.categoryService.findCategoryById(id, language);
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['ADMIN'])
   @Post()
   public async createCategory(
@@ -53,6 +54,7 @@ export class CategoryController {
     );
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['ADMIN'])
   @Put(':id')
   public async updateCategory(
@@ -67,6 +69,7 @@ export class CategoryController {
     );
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['ADMIN'])
   @Put(':id')
   public async deleteCategory(

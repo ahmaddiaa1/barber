@@ -19,57 +19,60 @@ export class CategoryService {
     user: User,
     language: Language,
   ): Promise<AppSuccess<{ categories: Category[]; package: any }>> {
-    const CurrUser = await this.prisma.user.findUnique({
-      where: { id: user.id },
-      include: {
-        client: {
-          include: {
-            ClientPackages: {
-              where: { isActive: true, type: 'MULTIPLE' },
-              include: {
-                Translation: {
-                  where: { language },
-                  ...translationDes().Translation,
-                },
-                packageService: {
-                  select: {
-                    service: true,
+    let packages;
+
+    if (user) {
+      const CurrUser = await this.prisma.user.findUnique({
+        where: { id: user?.id },
+        include: {
+          client: {
+            include: {
+              ClientPackages: {
+                where: { isActive: true, type: 'MULTIPLE' },
+                include: {
+                  Translation: {
+                    where: { language },
+                    ...translationDes().Translation,
+                  },
+                  packageService: {
+                    select: {
+                      service: true,
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
-    });
+      });
+      if (!CurrUser) throw new NotFoundException('User not found');
+      packages =
+        CurrUser &&
+        CurrUser.role === 'USER' &&
+        CurrUser.client.ClientPackages.map((item) => {
+          const {
+            packageService,
+            clientId,
+            Translation,
+            isActive,
+            id,
+            type,
+            createdAt,
+            updatedAt,
+            description,
+          } = item;
 
-    if (!CurrUser) throw new NotFoundException('User not found');
-
-    const client =
-      CurrUser.role === 'USER' &&
-      CurrUser.client.ClientPackages.map((item) => {
-        const {
-          packageService,
-          clientId,
-          Translation,
-          isActive,
-          id,
-          type,
-          createdAt,
-          updatedAt,
-          description,
-        } = item;
-
-        return Translation.map((translate) => ({
-          id,
-          createdAt,
-          updatedAt,
-          type,
-          name: translate.name,
-          description: translate.description,
-          services: packageService.flatMap((service) => service.service),
-        }));
-      }).flat();
+          return Translation.map((translate) => ({
+            id,
+            createdAt,
+            updatedAt,
+            type,
+            name: translate.name,
+            description: translate.description,
+            services: packageService.flatMap((service) => service.service),
+          }));
+        }).flat();
+    }
 
     const fetchedCategories = await this.prisma.category.findMany({
       include: {
@@ -103,7 +106,7 @@ export class CategoryService {
     });
 
     return new AppSuccess(
-      { categories, ...(client.length && { package: client }) },
+      { categories, ...(packages?.length && { package: packages }) },
       'Categories found successfully',
     );
   }

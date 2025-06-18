@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   UseInterceptors,
   UploadedFile,
+  UseGuards,
 } from '@nestjs/common';
 import { BranchService } from './branch.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
@@ -18,14 +19,19 @@ import { multerConfig } from '../../src/config/multer.config';
 
 import { Lang } from '../../decorators/accept.language';
 import { Language } from '@prisma/client';
+import { AuthGuard } from 'guard/auth.guard';
+import { RolesGuard } from 'guard/role.guard';
+import { Roles } from 'decorators/roles.decorator';
 
 @UseInterceptors(FileInterceptor('file', multerConfig('branches')))
 @Controller('branch')
 export class BranchController {
   constructor(private readonly branchService: BranchService) {}
 
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(['ADMIN'])
   @Post()
-  // @UseInterceptors(FileInterceptor('file', multerConfig('branches')))
+  @UseInterceptors(FileInterceptor('file', multerConfig('branches')))
   create(
     @Body() createBranchDto: CreateBranchDto,
     @UploadedFile() file: Express.Multer.File,
@@ -33,16 +39,20 @@ export class BranchController {
     return this.branchService.create(createBranchDto, file);
   }
 
+  @UseGuards(AuthGuard(false))
   @Get()
   findAll(@Lang() language: Language) {
     return this.branchService.findAll(language);
   }
 
+  @UseGuards(AuthGuard(false))
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string, @Lang() language: Language) {
     return this.branchService.findOne(id, language);
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(['ADMIN'])
   @Put(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -52,6 +62,8 @@ export class BranchController {
     return this.branchService.update(id, updateBranchDto, file);
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(['ADMIN'])
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.branchService.remove(id);

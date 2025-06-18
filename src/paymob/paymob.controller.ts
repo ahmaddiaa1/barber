@@ -35,7 +35,7 @@ export class PaymobController {
     private readonly prisma: PrismaService,
   ) {}
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard())
   @Post('payment-key')
   async getPaymentKey(
     @Body() body: CreatePaymobDto,

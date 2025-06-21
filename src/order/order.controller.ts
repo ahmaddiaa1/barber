@@ -18,7 +18,7 @@ import { Roles } from 'decorators/roles.decorator';
 import { Lang } from 'decorators/accept.language';
 import { UpdateOrderDto } from './dto/update-order.dto';
 
-@UseGuards(AuthGuard(), RolesGuard)
+@UseGuards(AuthGuard(false), RolesGuard)
 @Controller('order')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}

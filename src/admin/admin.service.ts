@@ -15,6 +15,7 @@ export class AdminService {
         data: createAdminDto,
       });
     }
+    console.log(createAdminDto);
   }
 
   async findAll() {

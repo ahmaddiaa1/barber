@@ -127,6 +127,8 @@ Use this to log in. Do not share this code.
 If you didn't request it, contact support.`;
     const url = `${process.env.SMS_API_URL}?username=${encodeURIComponent(this.username)}&password=${encodeURIComponent(this.password)}&sendername=${this.senderName}&message=${encodeURIComponent(message)}&mobiles=${phone}`;
 
+    let time = new Date(Date.now() + 60 * 1000);
+
     try {
       await axios.post(url, null, {
         headers: {
@@ -136,15 +138,8 @@ If you didn't request it, contact support.`;
         },
       });
 
-      const existingVerification =
-        await this.prisma.phoneVerification.findUnique({
-          where: { phone },
-        });
-
-      if (existingVerification && new Date() < existingVerification.expiredAt) {
-        throw new ConflictException(
-          'A verification code is already sent and not expired yet',
-        );
+      if (new Date() > time) {
+        throw new ConflictException('You can only resend OTP after 1 minute');
       }
 
       if (type === 'register') {

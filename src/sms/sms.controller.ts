@@ -20,6 +20,7 @@ export class SmsController {
   ) {
     return this.smsService.sendOTP(phone, type);
   }
+
   @UseInterceptors(FileInterceptor('file', multerConfig('avatars')))
   @Post('/verify')
   verifyCode(@Body() body: any, @UploadedFile() file: Express.Multer.File) {

@@ -14,8 +14,12 @@ import { RegisterDto } from 'src/auth/dto/auth-register-dto';
 export class SmsController {
   constructor(private readonly smsService: SmsService) {}
 
+  @UseInterceptors(FileInterceptor('file', multerConfig('avatars')))
   @Post()
-  create(@Body() body: RegisterDto & { type?: 'register' | 'reset' }) {
+  create(
+    @Body() body: RegisterDto & { type?: 'register' | 'reset' },
+    @UploadedFile() file: Express.Multer.File,
+  ) {
     return this.smsService.sendOTP(body);
   }
 

@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import axios from 'axios';
@@ -20,7 +21,7 @@ export class SmsService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly authService: AuthService, // Assuming you have an AuthService for user-related operations
+    private readonly authService: AuthService,
   ) {
     this.senderName = process.env.SMS_SENDERNAME;
     this.username = process.env.SMS_USERNAME;
@@ -29,12 +30,27 @@ export class SmsService {
 
   async sendOTP(phone: string, type = 'register') {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const hashedPassword = await hash(Random(10), 10); // Hash the code for password reset
+    const pass = Random(6);
     const message =
       type === 'register'
-        ? `Your verification code is ${code}`
-        : `Your new password  is ${hashedPassword}`;
+        ? `[NAEMAN] Your verification code is: ${code}.
+It expires in 5 minutes. Do not share this code with anyone.
+`
+        : `[NAEMAN] Your secure access code: ${pass} 
+Use this to log in. Do not share this code.
+If you didn't request it, contact support.`;
+
     const url = `${process.env.SMS_API_URL}?username=${encodeURIComponent(this.username)}&password=${encodeURIComponent(this.password)}&sendername=${this.senderName}&message=${encodeURIComponent(message)}&mobiles=${phone}`;
+
+    const userExists = await this.prisma.user.findUnique({
+      where: { phone },
+    });
+
+    if (type === 'register' && userExists)
+      throw new ConflictException('User already exists with this phone number');
+    if (type === 'reset' && !userExists)
+      throw new NotFoundException('User not found with this phone number');
+
     try {
       await axios.post(url, null, {
         headers: {
@@ -44,7 +60,7 @@ export class SmsService {
         },
       });
 
-      if (type === 'register') {
+      if (type === 'register' && !userExists) {
         await this.prisma.phoneVerification.upsert({
           where: { phone },
           update: { code, expiredAt: new Date(Date.now() + 5 * 60 * 1000) },
@@ -55,20 +71,23 @@ export class SmsService {
           },
         });
       }
-      if (type === 'reset') {
+      if (type === 'reset' && userExists) {
         await this.prisma.user.update({
           where: { phone },
           data: {
-            password: hashedPassword,
+            password: await hash(pass, 10),
           },
         });
       }
 
-      return { message: 'Verification code sent successfully' };
+      return { message: 'Message code sent successfully' };
     } catch (e) {
+      if (e instanceof ConflictException || e instanceof NotFoundException) {
+        throw e;
+      }
+
       const error = e as Error;
       this.logger.error(`Error sending SMS: ${error.message}`, error.stack);
-      return { data: false };
     }
   }
 
@@ -76,7 +95,7 @@ export class SmsService {
     body: RegisterDto & { code: string },
     file?: Express.Multer.File,
   ) {
-    const { phone, code } = body;
+    const { phone, code, ...rest } = body;
 
     const verification = await this.prisma.phoneVerification.findUnique({
       where: { phone },
@@ -93,16 +112,18 @@ export class SmsService {
     if (verification.code !== code || new Date() > verification.expiredAt) {
       throw new ConflictException('Invalid verification code');
     }
-    return await this.authService.signup(body, file);
+    return await this.authService.signup({ phone, ...rest }, file);
   }
-
   async reSendOTP(phone: string, type = 'register') {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const hashedPassword = await hash(Random(10), 10); // Hash the code for password reset
+    const pass = Random(6);
     const message =
       type === 'register'
-        ? `Your verification code is ${code}`
-        : `Your new password is ${hashedPassword}`;
+        ? `[NAEMAN] Your verification code is: ${code}.
+It expires in 5 minutes. Do not share this code with anyone.`
+        : `[NAEMAN] Your secure access code: ${pass} 
+Use this to log in. Do not share this code.
+If you didn't request it, contact support.`;
     const url = `${process.env.SMS_API_URL}?username=${encodeURIComponent(this.username)}&password=${encodeURIComponent(this.password)}&sendername=${this.senderName}&message=${encodeURIComponent(message)}&mobiles=${phone}`;
 
     try {
@@ -128,12 +149,12 @@ export class SmsService {
         await this.prisma.user.update({
           where: { phone },
           data: {
-            password: hashedPassword,
+            password: await hash(pass, 10),
           },
         });
       }
 
-      return { message: 'OTP resent successfully' };
+      return { message: 'Message resent successfully' };
     } catch (error) {
       this.logger.error(`Error resending OTP: ${error.message}`, error.stack);
       throw new InternalServerErrorException('Failed to resend OTP');

@@ -26,7 +26,7 @@ export class SmsController {
     return this.smsService.verifyCode(body, file);
   }
 
-  @Post('/resend')
+  @Post('/re-send')
   resendCode(@Body('phone') phone: string, type: 'register' | 'reset') {
     return this.smsService.reSendOTP(phone, type);
   }

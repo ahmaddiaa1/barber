@@ -20,7 +20,12 @@ export class SmsController {
     @Body() body: RegisterDto & { type?: 'register' | 'reset' },
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.smsService.sendOTP(body);
+    return this.smsService.sendVerificationCode(body);
+  }
+
+  @Post('password-reset')
+  resetPassword(@Body('phone') phone: string) {
+    return this.smsService.sendResetPassword(phone);
   }
 
   @UseInterceptors(FileInterceptor('file', multerConfig('avatars')))
@@ -29,8 +34,25 @@ export class SmsController {
     return this.smsService.verifyCode(body, file);
   }
 
-  @Post('/re-send')
-  resendCode(@Body('phone') phone: string, type: 'register' | 'reset') {
-    return this.smsService.reSendOTP(phone, type);
+  @Post('/verify-reset')
+  verifyResetCode(
+    @Body()
+    body: {
+      phone: string;
+      code: string;
+      password: string;
+      confirmPassword: string;
+    },
+  ) {
+    return this.smsService.verifyResetCode(body);
+  }
+
+  @Post('/resend-Register-code')
+  resendRegistrationCode(@Body('phone') phone: string) {
+    return this.smsService.reSendRegistrationOTP(phone);
+  }
+  @Post('/resend-reset-password-code')
+  resendResetPasswordCode(@Body('phone') phone: string) {
+    return this.smsService.reSendResetPasswordOTP(phone);
   }
 }

@@ -47,7 +47,7 @@ export class SmsController {
     return this.smsService.verifyResetCode(body);
   }
 
-  @Post('/resend-Register-code')
+  @Post('/resend-register-code')
   resendRegistrationCode(@Body('phone') phone: string) {
     return this.smsService.reSendRegistrationOTP(phone);
   }

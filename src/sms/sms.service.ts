@@ -114,6 +114,7 @@ If you didn't request it, contact support.`;
     }
     return await this.authService.signup({ phone, ...rest }, file);
   }
+
   async reSendOTP(phone: string, type = 'register') {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const pass = Random(6);
@@ -134,6 +135,18 @@ If you didn't request it, contact support.`;
           'Accept-Language': 'en-US',
         },
       });
+
+      const existingVerification =
+        await this.prisma.phoneVerification.findUnique({
+          where: { phone },
+        });
+
+      if (existingVerification && new Date() < existingVerification.expiredAt) {
+        throw new ConflictException(
+          'A verification code is already sent and not expired yet',
+        );
+      }
+
       if (type === 'register') {
         await this.prisma.phoneVerification.upsert({
           where: { phone },
@@ -156,6 +169,13 @@ If you didn't request it, contact support.`;
 
       return { message: 'Message resent successfully' };
     } catch (error) {
+      if (
+        error instanceof ConflictException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+
       this.logger.error(`Error resending OTP: ${error.message}`, error.stack);
       throw new InternalServerErrorException('Failed to resend OTP');
     }

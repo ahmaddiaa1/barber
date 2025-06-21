@@ -8,17 +8,15 @@ import {
 import { SmsService } from './sms.service';
 import { multerConfig } from 'src/config/multer.config';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { RegisterDto } from 'src/auth/dto/auth-register-dto';
 
 @Controller('sms')
 export class SmsController {
   constructor(private readonly smsService: SmsService) {}
 
   @Post()
-  create(
-    @Body()
-    { phone, type }: { phone: string; type?: 'register' | 'reset' },
-  ) {
-    return this.smsService.sendOTP(phone, type);
+  create(@Body() body: RegisterDto & { type?: 'register' | 'reset' }) {
+    return this.smsService.sendOTP(body);
   }
 
   @UseInterceptors(FileInterceptor('file', multerConfig('avatars')))

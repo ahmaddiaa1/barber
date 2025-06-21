@@ -12,6 +12,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { Random } from 'src/utils/generate';
 import { hash } from 'bcrypt';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { AppSuccess } from 'src/utils/AppSuccess';
 
 @Injectable()
 export class SmsService {
@@ -34,7 +35,8 @@ export class SmsService {
     { lastSent: number; resendCount: number; countExpiresAt: number }
   >();
 
-  async sendOTP(phone: string, type = 'register') {
+  async sendOTP(body: RegisterDto & { type?: 'register' | 'reset' }) {
+    const { phone, type = 'register', ...rest } = body;
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const pass = Random(6);
     const message =
@@ -86,7 +88,7 @@ If you didn't request it, contact support.`;
         });
       }
 
-      return { message: 'Message code sent successfully' };
+      return new AppSuccess({ ...rest, phone }, 'OTP sent successfully');
     } catch (e) {
       if (e instanceof ConflictException || e instanceof NotFoundException) {
         throw e;

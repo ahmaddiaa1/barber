@@ -154,22 +154,15 @@ If you didn't request it, contact support.`;
     const message =
       type === 'register'
         ? `[NAEMAN] Your verification code is: ${code}.
-  It expires in 5 minutes. Do not share this code with anyone.`
-        : `[NAEMAN] Your secure access code: ${pass}
-  Use this to log in. Do not share this code.
-  If you didn't request it, contact support.`;
+It expires in 5 minutes. Do not share this code with anyone.`
+        : `[NAEMAN] Your secure access code: ${pass} 
+Use this to log in. Do not share this code.
+If you didn't request it, contact support.`;
+    const url = `${process.env.SMS_API_URL}?username=${encodeURIComponent(this.username)}&password=${encodeURIComponent(this.password)}&sendername=${this.senderName}&message=${encodeURIComponent(message)}&mobiles=${phone}`;
 
-    // Build SMS URL
-    const url = `${process.env.SMS_API_URL}?username=${encodeURIComponent(
-      this.username,
-    )}&password=${encodeURIComponent(
-      this.password,
-    )}&sendername=${this.senderName}&message=${encodeURIComponent(
-      message,
-    )}&mobiles=${phone}`;
+    let time = new Date(Date.now() + 60 * 1000);
 
     try {
-      // Send SMS
       await axios.post(url, null, {
         headers: {
           'Content-Type': 'application/json',
@@ -178,19 +171,10 @@ If you didn't request it, contact support.`;
         },
       });
 
-      // Update in-memory OTP store
-      const resendCount = existing ? existing.resendCount + 1 : 1;
-      const countExpiresAt = existing
-        ? existing.countExpiresAt
-        : now + windowDuration;
+      if (new Date() > time) {
+        throw new ConflictException('You can only resend OTP after 1 minute');
+      }
 
-      this.otpStore.set(phone, {
-        lastSent: now,
-        resendCount,
-        countExpiresAt,
-      });
-
-      // Handle OTP persistence (via Prisma)
       if (type === 'register') {
         await this.prisma.phoneVerification.upsert({
           where: { phone },

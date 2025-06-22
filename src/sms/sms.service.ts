@@ -205,8 +205,12 @@ It expires in 5 minutes. Do not share this code with anyone.
       );
     }
 
-    if (verification.code !== code || new Date() > verification.expiredAt) {
-      throw new ConflictException('Invalid or expired reset code');
+    if (verification.code !== code) {
+      throw new ConflictException('Invalid code');
+    }
+
+    if (new Date() > verification.expiredAt) {
+      throw new ConflictException('code has expired');
     }
 
     if (password !== confirmPassword) {

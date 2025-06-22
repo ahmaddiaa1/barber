@@ -126,12 +126,12 @@ It expires in 5 minutes. Do not share this code with anyone.
     try {
       await this.prisma.resetPassword.upsert({
         where: { phone: phone },
-        create: {
-          phone: phone,
+        update: {
           code,
           expiredAt: new Date(Date.now() + 5 * 60 * 1000),
         },
-        update: {
+        create: {
+          phone: phone,
           code,
           expiredAt: new Date(Date.now() + 5 * 60 * 1000),
         },

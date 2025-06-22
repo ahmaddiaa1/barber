@@ -184,7 +184,12 @@ It expires in 5 minutes. Do not share this code with anyone.
     code: string;
     password: string;
     confirmPassword: string;
-  }): Promise<AppSuccess<User>> {
+  }): Promise<{
+    data: User;
+    token: string;
+    message: string;
+    statusCode: number;
+  }> {
     const { phone, code, password, confirmPassword } = body;
     const verification = await this.prisma.resetPassword.findUnique({
       where: { phone },
@@ -215,7 +220,14 @@ It expires in 5 minutes. Do not share this code with anyone.
       },
     });
 
-    return new AppSuccess(user, 'Reset code verified successfully');
+    const token = await this.authService.generateToken(user.id);
+
+    return {
+      data: user,
+      token,
+      message: 'password reset successfully',
+      statusCode: 201,
+    };
   }
 
   async reSendRegistrationOTP(phone: string) {

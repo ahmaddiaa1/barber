@@ -270,7 +270,7 @@ export class AuthService {
     } catch (error) {}
   }
 
-  private async generateToken(userId: string) {
+  public async generateToken(userId: string) {
     const token = jwt.sign({ userId }, this.jwtSecret, { expiresIn: '6h' });
     await this.loginToken(token);
     return token;

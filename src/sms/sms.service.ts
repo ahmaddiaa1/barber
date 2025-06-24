@@ -242,14 +242,9 @@ It expires in 5 minutes. Do not share this code with anyone.
     try {
       await this.sendSMS({ phone, code });
 
-      await this.prisma.phoneVerification.upsert({
+      await this.prisma.phoneVerification.update({
         where: { phone },
-        update: { code: code, expiredAt: new Date(now + 5 * 60 * 1000) },
-        create: {
-          phone,
-          code,
-          expiredAt: new Date(now + 5 * 60 * 1000),
-        },
+        data: { code, expiredAt: new Date(now + 5 * 60 * 1000) },
       });
 
       return { message: 'Message resent successfully' };
@@ -273,14 +268,9 @@ It expires in 5 minutes. Do not share this code with anyone.
     try {
       await this.sendSMS({ phone, code });
 
-      await this.prisma.resetPassword.upsert({
+      await this.prisma.resetPassword.update({
         where: { phone },
-        update: { code, expiredAt: new Date(now + 5 * 60 * 1000) },
-        create: {
-          phone,
-          code,
-          expiredAt: new Date(now + 5 * 60 * 1000),
-        },
+        data: { code, expiredAt: new Date(now + 5 * 60 * 1000) },
       });
 
       return { message: 'Message resent successfully' };

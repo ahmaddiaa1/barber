@@ -79,7 +79,7 @@ export class AuthService {
           if (!isReferralCodeExist) break;
         } while (true);
 
-        if (isPhoneExist && isPhoneExist?.deleted) {
+        if (isPhoneExist && isPhoneExist.deleted) {
           console.log('Restoring deleted user with referral code');
           user = await this.prisma.user.update({
             where: { phone },

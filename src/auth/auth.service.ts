@@ -79,7 +79,7 @@ export class AuthService {
           if (!isReferralCodeExist) break;
         } while (true);
 
-        if (isPhoneExist?.deleted) {
+        if (isPhoneExist && isPhoneExist?.deleted) {
           user = await this.prisma.user.update({
             where: { phone },
             data: {
@@ -104,7 +104,8 @@ export class AuthService {
               },
             });
           }
-        } else {
+        }
+        if (!isPhoneExist) {
           user = await this.createUser(
             createAuthDto,
             hashedPassword,
@@ -127,6 +128,7 @@ export class AuthService {
           });
         }
         break;
+
       case Role.BARBER:
         if (!branchId)
           throw new BadRequestException('Branch ID is required for barbers');

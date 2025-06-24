@@ -101,7 +101,7 @@ It expires in 5 minutes. Do not share this code with anyone.
           expiredAt: new Date(Date.now() + 5 * 60 * 1000),
         },
       });
-      // await this.sendSMS({ phone: body.phone, code });
+      await this.sendSMS({ phone: body.phone, code });
       return new AppSuccess(body, 'Verification Code sent successfully');
     } catch (e) {
       if (e instanceof ConflictException || e instanceof NotFoundException) {

@@ -87,7 +87,7 @@ export class AuthService {
               firstName: createAuthDto.firstName,
               lastName: createAuthDto.lastName,
               password: hashedPassword,
-              avatar: file?.path,
+              avatar: file?.path ?? '',
               role: Role.USER,
               client: {
                 update: {

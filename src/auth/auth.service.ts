@@ -40,7 +40,7 @@ export class AuthService {
     const isPhoneExist = await this.prisma.user.findUnique({
       where: { phone },
     });
-    if (isPhoneExist) {
+    if (isPhoneExist && !isPhoneExist.deleted) {
       throw new ConflictException('Phone number is already in use');
     }
 

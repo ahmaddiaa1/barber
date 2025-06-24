@@ -85,7 +85,7 @@ It expires in 5 minutes. Do not share this code with anyone.
     const userExists = await this.prisma.user.findUnique({
       where: { phone: body.phone },
     });
-    if (userExists) {
+    if (userExists && !userExists.deleted) {
       throw new ConflictException('User already exists with this phone number');
     }
     try {
@@ -101,7 +101,7 @@ It expires in 5 minutes. Do not share this code with anyone.
           expiredAt: new Date(Date.now() + 5 * 60 * 1000),
         },
       });
-      await this.sendSMS({ phone: body.phone, code });
+      // await this.sendSMS({ phone: body.phone, code });
       return new AppSuccess(body, 'Verification Code sent successfully');
     } catch (e) {
       if (e instanceof ConflictException || e instanceof NotFoundException) {

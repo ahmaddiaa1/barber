@@ -79,7 +79,7 @@ export class AuthService {
           if (!isReferralCodeExist) break;
         } while (true);
 
-        if (isPhoneExist.deleted) {
+        if (isPhoneExist?.deleted) {
           user = await this.prisma.user.update({
             where: { phone },
             data: {

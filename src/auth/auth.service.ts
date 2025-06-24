@@ -104,6 +104,7 @@ export class AuthService {
               },
             });
           }
+          break;
         }
         if (!isPhoneExist) {
           user = await this.createUser(
@@ -126,6 +127,7 @@ export class AuthService {
               points: { increment: settings.referralPoints },
             },
           });
+          break;
         }
         break;
 

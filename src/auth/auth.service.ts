@@ -80,6 +80,7 @@ export class AuthService {
         } while (true);
 
         if (isPhoneExist && isPhoneExist?.deleted) {
+          console.log('Restoring deleted user with referral code');
           user = await this.prisma.user.update({
             where: { phone },
             data: {
@@ -98,7 +99,7 @@ export class AuthService {
           });
           if (existReferralCode.user) {
             await this.prisma.client.update({
-              where: { id: existReferralCode.user.id },
+              where: { id: existReferralCode?.user?.id },
               data: {
                 points: { increment: settings.referralPoints },
               },
@@ -107,6 +108,7 @@ export class AuthService {
           break;
         }
         if (!isPhoneExist) {
+          console.log('Creating new user with referral code');
           user = await this.createUser(
             createAuthDto,
             hashedPassword,
@@ -122,7 +124,7 @@ export class AuthService {
             file?.path,
           );
           await this.prisma.client.update({
-            where: { id: existReferralCode.user.id },
+            where: { id: existReferralCode?.user?.id },
             data: {
               points: { increment: settings.referralPoints },
             },

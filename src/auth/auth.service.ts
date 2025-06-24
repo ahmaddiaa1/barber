@@ -79,27 +79,55 @@ export class AuthService {
           if (!isReferralCodeExist) break;
         } while (true);
 
-        user = await this.createUser(
-          createAuthDto,
-          hashedPassword,
-          {
-            role: Role.USER,
-            client: {
-              create: {
-                referralCode,
-                points: referralCodeStatus ? settings.referralPoints : 0,
+        if (isPhoneExist.deleted) {
+          user = await this.prisma.user.update({
+            where: { phone },
+            data: {
+              firstName: createAuthDto.firstName,
+              lastName: createAuthDto.lastName,
+              password: hashedPassword,
+              avatar: file?.path,
+              role: Role.USER,
+              client: {
+                update: {
+                  referralCode,
+                  points: referralCodeStatus ? settings.referralPoints : 0,
+                },
               },
             },
-          } as Prisma.UserCreateInput,
-          file?.path,
-        );
-        await this.prisma.client.update({
-          where: { id: existReferralCode.user.id },
-          data: {
-            points: { increment: settings.referralPoints },
-          },
-        });
-        break;
+          });
+          if (existReferralCode.user) {
+            await this.prisma.client.update({
+              where: { id: existReferralCode.user.id },
+              data: {
+                points: { increment: settings.referralPoints },
+              },
+            });
+          }
+          break;
+        } else {
+          user = await this.createUser(
+            createAuthDto,
+            hashedPassword,
+            {
+              role: Role.USER,
+              client: {
+                create: {
+                  referralCode,
+                  points: referralCodeStatus ? settings.referralPoints : 0,
+                },
+              },
+            } as Prisma.UserCreateInput,
+            file?.path,
+          );
+          await this.prisma.client.update({
+            where: { id: existReferralCode.user.id },
+            data: {
+              points: { increment: settings.referralPoints },
+            },
+          });
+          break;
+        }
 
       case Role.BARBER:
         if (!branchId)
@@ -175,7 +203,8 @@ export class AuthService {
       where: { phone },
     });
 
-    if (!user) throw new NotFoundException('Invalid Phone number or password');
+    if (!user || user.deleted)
+      throw new NotFoundException('Invalid Phone number or password');
 
     const isPasswordCorrect = await compare(password, user.password);
 

@@ -104,7 +104,6 @@ export class AuthService {
               },
             });
           }
-          break;
         } else {
           user = await this.createUser(
             createAuthDto,
@@ -126,9 +125,8 @@ export class AuthService {
               points: { increment: settings.referralPoints },
             },
           });
-          break;
         }
-
+        break;
       case Role.BARBER:
         if (!branchId)
           throw new BadRequestException('Branch ID is required for barbers');

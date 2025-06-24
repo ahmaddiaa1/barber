@@ -221,7 +221,7 @@ export class OrderService {
 
   async getAllOrders(userId: string, lang: Language) {
     const fetchedOrders = await this.prisma.order.findMany({
-      where: { userId: userId },
+      where: { userId: userId, deleted: false },
       include: {
         barber: { include: { barber: { include: { user: true } } } },
         branch: { include: Translation(false, lang) },

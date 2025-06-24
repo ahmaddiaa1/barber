@@ -27,6 +27,7 @@ model User {
   CashierOrders Order[]        @relation("CashierOrders")
   UserOrders    Order[]        @relation("UserOrders")
   notification  notification[] @relation("notifications")
+  deleted       Boolean        @default(false)
 
   @@index([phone])
   @@index([role])
@@ -277,6 +278,7 @@ model Order {
   discount    Int           @default(0)
   type        discount      @default(AMOUNT)
   freeService String[]
+  deleted     Boolean       @default(false)
   branch      Branch        @relation(fields: [branchId], references: [id])
   client      User?         @relation("UserOrders", fields: [userId], references: [id])
   barber      User          @relation("BarberOrders", fields: [barberId], references: [id])

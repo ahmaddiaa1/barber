@@ -123,12 +123,14 @@ export class AuthService {
             } as Prisma.UserCreateInput,
             file?.path,
           );
-          await this.prisma.client.update({
-            where: { id: existReferralCode?.user?.id },
-            data: {
-              points: { increment: settings.referralPoints },
-            },
-          });
+          if (existReferralCode.user) {
+            await this.prisma.client.update({
+              where: { id: existReferralCode?.user?.id },
+              data: {
+                points: { increment: settings.referralPoints },
+              },
+            });
+          }
           break;
         }
         break;

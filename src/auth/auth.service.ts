@@ -48,7 +48,7 @@ export class AuthService {
       throw new NotFoundException('Role not found');
     }
 
-    const referralCodeStatus = code && existReferralCode.status;
+    const referralCodeStatus = code && code !== '' && existReferralCode.status;
 
     const hashedPassword = await hash(password, saltOrRounds);
 

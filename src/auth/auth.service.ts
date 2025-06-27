@@ -48,7 +48,7 @@ export class AuthService {
       throw new NotFoundException('Role not found');
     }
 
-    const referralCodeStatus = code && code !== '' && existReferralCode.status;
+    const referralCodeStatus = code && existReferralCode.status;
 
     const hashedPassword = await hash(password, saltOrRounds);
 
@@ -67,8 +67,8 @@ export class AuthService {
         break;
 
       case Role.USER:
-        !referralCodeStatus &&
-          new BadRequestException('Referral code is invalid');
+        !referralCodeStatus && code && code !== '';
+        new BadRequestException('Referral code is invalid');
 
         let referralCode: string;
         do {

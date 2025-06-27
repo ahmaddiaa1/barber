@@ -51,57 +51,22 @@ export class NotificationController {
       imageUrl?: string;
     },
   ) {
-    const message = {
-      to: body.fcmTokens, // ✅ Must be a string, not an array
-      notification: {
-        title: body.title,
-        body: body.message,
-      },
-    };
-    const user = await this.prisma.user.findFirst({
-      where: { fcmToken: body.fcmTokens[0] },
-    });
-
-    if (!user) {
-      throw new NotFoundException('User not found with the provided FCM token');
-    }
-
-    try {
-      const [noti] = await Promise.all([
-        admin.messaging().sendEachForMulticast({
-          tokens: body.fcmTokens,
-          android: { notification: { color: '#000000' } },
-          notification: {
-            title: body.title,
-            body: body.message,
-            ...(body.imageUrl && { image: body.imageUrl }),
-          },
-        }),
-
-        this.prisma.user.update({
-          where: {
-            id: user.id,
-          },
-          data: {
-            notification: {
-              create: {
-                title: body.title,
-                content: body.message,
-                image: body.imageUrl,
-              },
-            },
-          },
-        }),
-      ]);
-
-      return new AppSuccess(noti, 'Notification sent successfully');
-    } catch (error) {
-      return { error: 'Failed to send notification' };
-    }
+    return this.NotificationService.sendNotification(body);
   }
 
   @Get('get-history')
   getNotification(@UserData('user') user: User) {
     return this.NotificationService.getNotification(user);
   }
+
+  // @Get('set')
+  // se() {
+  //  const a = admin
+  //     .messaging()
+  //     .subscribeToTopic(
+  //       'efbeMVbMSo6LoQyiuMXh2T:APA91bHz6ziWxeOrU3J8sWi025T3pLOFRFKlbapAkrGvFGCGtWBNByQSRusEYWrPmL_Bxg4nERycquu0XWkFpXZjrZbz299xo7DkRSaceqE67UYBOAU9pIM',
+  //       'packages',
+  //   );
+  //   return a
+  // }
 }

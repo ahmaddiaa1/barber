@@ -10,10 +10,14 @@ import { AppSuccess } from 'src/utils/AppSuccess';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { createTranslation, Translation } from 'src/class-type/translation';
 import { Language } from '@prisma/client';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class PackageService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notification: NotificationService,
+  ) {}
 
   async create(createPackageDto: CreatePackageDto, file: Express.Multer.File) {
     const { serviceIds, type, count, ...rest } = createPackageDto;
@@ -59,21 +63,11 @@ export class PackageService {
       },
     });
 
-    // const packages = await this.prisma.offers.update({
-    //   where: { id: offer.id },
-    //   data: {
-    //     packages: {
-    //       create: {
-    //         ...rest,
-    //         type,
-    //         count,
-    //         services: { connect: serviceIds.map((id) => ({ id })) },
-    //         ...(image && { image }),
-    //       },
-    //     },
-    //   },
-    // });
-
+    const send = await this.notification.sendNotificationToAllUsers({
+      title: 'New Package added',
+      message: `A new package has been added: ${rest.Translation.find((t) => t.language === 'EN').name}`,
+    });
+    console.log(send);
     return new AppSuccess(offer, 'Package created successfully', 201);
   }
 

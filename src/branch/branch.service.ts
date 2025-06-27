@@ -48,7 +48,7 @@ export class BranchService {
       orderBy: {
         createdAt: 'desc',
       },
-      include: Translation(),
+      include: { ...Translation(), barber: true },
     });
     const branches = fetchBranches.map((branch) => {
       const { Translation, ...rest } = branch;

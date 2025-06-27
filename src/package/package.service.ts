@@ -95,7 +95,7 @@ export class PackageService {
         createdAt,
         updatedAt,
         id,
-        packages: { Translation: packageTrans, services: s, price },
+        packages: { Translation: packageTrans, services: s, price, count },
       } = packageData;
       const services = s.map((s) => {
         const { Translation: serviceTrans, ...rest } = s;
@@ -109,6 +109,7 @@ export class PackageService {
       return {
         id,
         price,
+        count,
         nameEN: packageTrans.find((t) => t.language === 'EN')?.name,
         nameAR: packageTrans.find((t) => t.language === 'AR')?.name,
         name: packageTrans.find((t) => t.language === language)?.name,

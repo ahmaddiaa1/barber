@@ -7,7 +7,6 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsString,
 } from 'class-validator';
 import { translationDto } from 'src/class-type/translation';
 

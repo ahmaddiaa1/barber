@@ -170,7 +170,6 @@ export class PackageService {
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async removeExpiredPackages() {
-    ``;
     const result = await this.prisma.packages.findMany({
       where: {
         expiresAt: {

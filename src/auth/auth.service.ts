@@ -67,8 +67,9 @@ export class AuthService {
         break;
 
       case Role.USER:
-        !referralCodeStatus &&
-          new BadRequestException('Referral code is invalid');
+        if (!referralCodeStatus) {
+          throw new BadRequestException('Referral code is invalid');
+        }
 
         let referralCode: string;
         do {
@@ -196,7 +197,7 @@ export class AuthService {
 
     return {
       data,
-      token,
+      ...(role.toUpperCase() === Role.USER && { token }),
       message: 'User registered successfully',
       statusCode: 201,
     };

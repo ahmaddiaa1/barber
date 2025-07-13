@@ -290,18 +290,18 @@ export class AuthService {
     const duration = (await this.prisma.settings.findFirst({})).slotDuration;
 
     if (!Number.isInteger(start) || !Number.isInteger(end))
-      throw new ConflictException(
+      throw new BadRequestException(
         'Start and end must not be decimal, negative or string.',
       );
 
     if (start < 0 || start >= 24 || end < 0 || end > 24) {
-      throw new ConflictException(
+      throw new BadRequestException(
         'Start and end must be Integer numbers between 0 and 24.',
       );
     }
 
     if (start >= end) {
-      throw new ConflictException('Start time must be less than end time.');
+      throw new BadRequestException('Start time must be less than end time.');
     }
 
     const slotsArray = [];

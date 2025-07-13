@@ -5,8 +5,10 @@ import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
 import * as express from 'express';
 import { join } from 'path';
+import { FirstErrorOnlyFilter } from '../filters/validation-fields-only.filter';
 
 config();
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
@@ -18,12 +20,14 @@ async function bootstrap() {
   const prismaService = app.get(PrismaService);
   await prismaService.onModuleInit();
   app.setGlobalPrefix('api');
+  app.useGlobalFilters(new FirstErrorOnlyFilter());
   app.useGlobalPipes(
     new ValidationPipe({
+      transform: true,
       forbidUnknownValues: false,
       whitelist: true,
       exceptionFactory: (data) => {
-        return new BadRequestException(JSON.stringify(data));
+        return new BadRequestException(data);
       },
     }),
   );
@@ -31,4 +35,5 @@ async function bootstrap() {
     console.log(`Server is running on port ${process.env.PORT}`);
   });
 }
+
 bootstrap();

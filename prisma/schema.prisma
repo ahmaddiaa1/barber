@@ -27,6 +27,7 @@ model User {
   CashierOrders Order[]        @relation("CashierOrders")
   UserOrders    Order[]        @relation("UserOrders")
   notification  notification[] @relation("notifications")
+  deleted       Boolean        @default(false)
 
   @@index([phone])
   @@index([role])
@@ -70,6 +71,17 @@ model Admin {
 }
 
 model PhoneVerification {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  code      String
+  expiredAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([phone])
+}
+
+model ResetPassword {
   id        String   @id @default(uuid())
   phone     String   @unique
   code      String
@@ -266,6 +278,7 @@ model Order {
   discount    Int           @default(0)
   type        discount      @default(AMOUNT)
   freeService String[]
+  deleted     Boolean       @default(false)
   branch      Branch        @relation(fields: [branchId], references: [id])
   client      User?         @relation("UserOrders", fields: [userId], references: [id])
   barber      User          @relation("BarberOrders", fields: [barberId], references: [id])

@@ -206,4 +206,52 @@ export class UserService {
     });
     return new AppSuccess(updatedUser, 'User unbanned successfully', 200);
   }
+
+  public async deleteUser(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        deleted: true,
+        UserOrders: {
+          updateMany: {
+            where: { userId },
+            data: {
+              deleted: true,
+            },
+          },
+        },
+      },
+    });
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        UserOrders: {
+          updateMany: {
+            where: {
+              AND: [
+                { userId },
+                {
+                  OR: [
+                    { booking: 'UPCOMING' },
+                    { status: 'IN_PROGRESS' },
+                    { status: 'PENDING' },
+                  ],
+                },
+              ],
+            },
+            data: {
+              booking: 'CANCELLED',
+              status: 'CANCELLED',
+            },
+          },
+        },
+      },
+    });
+
+    return new AppSuccess(null, 'User deleted successfully', 200);
+  }
 }

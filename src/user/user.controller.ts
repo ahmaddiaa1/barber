@@ -72,4 +72,9 @@ export class UserController {
   CurrentUser(@UserData('user') user: User) {
     return this.userService.CurrentUser(user);
   }
+
+  @Delete('deleteAccount')
+  delete(@UserData('user') user: User) {
+    return this.userService.deleteUser(user.id);
+  }
 }

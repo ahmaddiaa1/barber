@@ -23,7 +23,6 @@ import { AuthGuard } from 'guard/auth.guard';
 import { RolesGuard } from 'guard/role.guard';
 import { Roles } from 'decorators/roles.decorator';
 
-@UseInterceptors(FileInterceptor('file', multerConfig('branches')))
 @Controller('branch')
 export class BranchController {
   constructor(private readonly branchService: BranchService) {}
@@ -53,6 +52,7 @@ export class BranchController {
 
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['ADMIN'])
+  @UseInterceptors(FileInterceptor('file', multerConfig('branches')))
   @Put(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,

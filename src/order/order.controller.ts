@@ -18,16 +18,17 @@ import { Roles } from 'decorators/roles.decorator';
 import { Lang } from 'decorators/accept.language';
 import { UpdateOrderDto } from './dto/update-order.dto';
 
-@UseGuards(AuthGuard(false), RolesGuard)
 @Controller('order')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
+  @UseGuards(AuthGuard(), RolesGuard)
   @Get()
   async getAllOrders(@UserData('user') user: User, @Lang() lang: Language) {
     return this.orderService.getAllOrders(user.id, lang);
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['BARBER'])
   @Get('/barber-orders')
   async getBarberOrders(
@@ -38,46 +39,54 @@ export class OrderController {
     return this.orderService.GetBarberOrders(user.id, lang, orderDate);
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
   @Get('categories/:id')
   async getCategories(@Param('id') id: string, @Lang() lang: Language) {
     return this.orderService.getNonSelectedServices(id, lang);
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['CASHIER'])
   @Get('/cashier')
   async getCashierOrders(@UserData('user') user: User, @Lang() lang: Language) {
     return this.orderService.getCashierOrders(user.id, lang);
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['ADMIN', 'CASHIER'])
   @Get('/paid-orders')
   async getPaidOrders(@Query('date') date: string) {
     return this.orderService.billOrders(date);
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['ADMIN', 'CASHIER'])
   @Put('/paid-order/:id')
   async paidOrder(@Param('id') id: string, @UserData('user') user: User) {
     return this.orderService.paidOrder(id, user.id);
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
   @Put('/cancel-order/:id')
   async cancelOrder(@Param('id') id: string) {
     return this.orderService.cancelOrder(id);
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['ADMIN', 'BARBER'])
   @Put('/start-order/:id')
   async startOrder(@Param('id') id: string) {
     return this.orderService.startOrder(id);
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['ADMIN', 'BARBER'])
   @Put('/complete-order/:id')
   async completeOrder(@Param('id') id: string) {
     return this.orderService.completeOrder(id);
   }
 
+  @UseGuards(AuthGuard(false), RolesGuard)
   @Post('/OrderDetails')
   async getOrderDetails(
     @Body() orderDto: CreateOrderDto,
@@ -87,11 +96,13 @@ export class OrderController {
     return this.orderService.GetData(orderDto, user.id, lang);
   }
 
+  @UseGuards(AuthGuard(false), RolesGuard)
   @Get('/slots')
   async getSlots(@Query('') query: { date: string; barberId: string }) {
     return this.orderService.getSlots(query.date, query.barberId);
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
   @Put('/:id')
   async updateOrder(
     @Body() updateOrderDto: UpdateOrderDto,
@@ -101,11 +112,13 @@ export class OrderController {
     return this.orderService.updateOrder(id, updateOrderDto, user.role);
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
   @Get(':id')
   async getOrderById(@Param('id') id: string) {
     return this.orderService.getOrderById(id);
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
   @Post()
   async createOrder(
     @Body() createOrderDto: CreateOrderDto,
@@ -115,6 +128,7 @@ export class OrderController {
     return this.orderService.createOrder(createOrderDto, user.id, lang);
   }
 
+  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['ADMIN'])
   @Post('/generate-slot')
   async generateSlot(@Body() body: { start: number; end: number }) {

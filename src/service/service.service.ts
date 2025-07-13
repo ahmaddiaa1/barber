@@ -4,7 +4,6 @@ import { Language, Service } from '@prisma/client';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
-import { Random } from 'src/utils/generate';
 import {
   createTranslation,
   Translation as serviceTranslation,

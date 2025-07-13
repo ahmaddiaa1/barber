@@ -40,7 +40,7 @@ export class AuthService {
     const isPhoneExist = await this.prisma.user.findUnique({
       where: { phone },
     });
-    if (isPhoneExist) {
+    if (isPhoneExist && !isPhoneExist.deleted) {
       throw new ConflictException('Phone number is already in use');
     }
 
@@ -67,8 +67,9 @@ export class AuthService {
         break;
 
       case Role.USER:
-        !referralCodeStatus &&
-          new BadRequestException('Referral code is invalid');
+        if (!referralCodeStatus && code) {
+          throw new BadRequestException('Referral code is invalid');
+        }
 
         let referralCode: string;
         do {
@@ -79,26 +80,60 @@ export class AuthService {
           if (!isReferralCodeExist) break;
         } while (true);
 
-        user = await this.createUser(
-          createAuthDto,
-          hashedPassword,
-          {
-            role: Role.USER,
-            client: {
-              create: {
-                referralCode,
-                points: referralCodeStatus ? settings.referralPoints : 0,
+        if (isPhoneExist && isPhoneExist.deleted) {
+          console.log('Restoring deleted user with referral code');
+          user = await this.prisma.user.update({
+            where: { phone },
+            data: {
+              firstName: createAuthDto.firstName,
+              lastName: createAuthDto.lastName,
+              password: hashedPassword,
+              avatar: file?.path ?? '',
+              role: Role.USER,
+              client: {
+                update: {
+                  referralCode,
+                  points: referralCodeStatus ? settings.referralPoints : 0,
+                },
               },
             },
-          } as Prisma.UserCreateInput,
-          file?.path,
-        );
-        await this.prisma.client.update({
-          where: { id: existReferralCode.user.id },
-          data: {
-            points: { increment: settings.referralPoints },
-          },
-        });
+          });
+          if (existReferralCode.user) {
+            await this.prisma.client.update({
+              where: { id: existReferralCode?.user?.id },
+              data: {
+                points: { increment: settings.referralPoints },
+              },
+            });
+          }
+          break;
+        }
+        if (!isPhoneExist) {
+          console.log('Creating new user with referral code');
+          user = await this.createUser(
+            createAuthDto,
+            hashedPassword,
+            {
+              role: Role.USER,
+              client: {
+                create: {
+                  referralCode,
+                  points: referralCodeStatus ? settings.referralPoints : 0,
+                },
+              },
+            } as Prisma.UserCreateInput,
+            file?.path,
+          );
+          if (existReferralCode.user) {
+            await this.prisma.client.update({
+              where: { id: existReferralCode?.user?.id },
+              data: {
+                points: { increment: settings.referralPoints },
+              },
+            });
+          }
+          break;
+        }
         break;
 
       case Role.BARBER:
@@ -162,7 +197,7 @@ export class AuthService {
 
     return {
       data,
-      token,
+      ...(role.toUpperCase() === Role.USER && { token }),
       message: 'User registered successfully',
       statusCode: 201,
     };
@@ -175,7 +210,8 @@ export class AuthService {
       where: { phone },
     });
 
-    if (!user) throw new NotFoundException('Invalid Phone number or password');
+    if (!user || user.deleted)
+      throw new NotFoundException('Invalid Phone number or password');
 
     const isPasswordCorrect = await compare(password, user.password);
 
@@ -270,7 +306,7 @@ export class AuthService {
     } catch (error) {}
   }
 
-  private async generateToken(userId: string) {
+  public async generateToken(userId: string) {
     const token = jwt.sign({ userId }, this.jwtSecret, { expiresIn: '6h' });
     await this.loginToken(token);
     return token;

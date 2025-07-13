@@ -7,13 +7,27 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsString,
 } from 'class-validator';
 import { translationDto } from 'src/class-type/translation';
 
 export class CreatePackageDto {
   @IsNotEmpty()
   @IsArray()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      // Handle comma-separated strings like "id1,id2"
+      if (value.includes(',')) {
+        return value.split(',');
+      }
+      return [value]; // single string becomes array
+    }
+
+    if (Array.isArray(value)) {
+      return value;
+    }
+
+    return [];
+  })
   serviceIds: string[];
 
   @IsNotEmpty()

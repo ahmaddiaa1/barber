@@ -1,10 +1,9 @@
 import { Role } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
+  IsInt,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
-  IsPhoneNumber,
   IsString,
   Length,
   ValidateIf,
@@ -54,23 +53,21 @@ export class RegisterDto {
   @IsString()
   branchId: string;
 
-  @ValidateIf(
-    (object) =>
-      object?.role?.toUpperCase() === 'CASHIER' ||
-      object?.role?.toUpperCase() === 'BARBER',
-  )
-  @Transform(({ value }) => Number(value) ?? null)
-  @IsNotEmpty()
-  @IsNumber()
+  @ValidateIf((o) => ['CASHIER', 'BARBER'].includes(o?.role?.toUpperCase()))
+  @Transform(({ value }) => {
+    const num = Number(value);
+    return !Number.isNaN(num) ? num : undefined;
+  })
+  @IsNotEmpty({ message: 'Start time is required' })
+  @IsInt({ message: 'Start must be a whole number' })
   start: number;
 
-  @ValidateIf(
-    (object) =>
-      object?.role?.toUpperCase() === 'CASHIER' ||
-      object?.role?.toUpperCase() === 'BARBER',
-  )
-  @Transform(({ value }) => Number(value) ?? null)
-  @IsNotEmpty()
-  @IsNumber()
+  @ValidateIf((o) => ['CASHIER', 'BARBER'].includes(o?.role?.toUpperCase()))
+  @Transform(({ value }) => {
+    const num = Number(value);
+    return !Number.isNaN(num) ? num : undefined;
+  })
+  @IsNotEmpty({ message: 'End time is required' })
+  @IsInt({ message: 'End must be a whole number' })
   end: number;
 }

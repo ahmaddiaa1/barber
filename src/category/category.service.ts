@@ -149,8 +149,6 @@ export class CategoryService {
   ): Promise<AppSuccess<Category>> {
     await this.findOneOrFail(id);
 
-    updateCategoryDto;
-
     const updatedCategory = await this.prisma.category.update({
       where: { id },
       data: {

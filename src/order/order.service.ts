@@ -228,7 +228,7 @@ export class OrderService {
       include: {
         barber: { include: { barber: { include: { user: true } } } },
         branch: { include: Translation(false, lang) },
-        service: true,
+        service: { include: { Translation: true } },
       },
     });
 
@@ -279,7 +279,15 @@ export class OrderService {
           discount: (total - subTotal).toString(),
           points: points.toString(),
           usedPackage: packageServices,
-          service,
+          service: service.map((s) => {
+            const { Translation, ...serviceRest } = s;
+            return {
+              ...serviceRest,
+              nameEN: Translation.find((t) => t.language === 'EN').name,
+              nameAR: Translation.find((t) => t.language === 'AR').name,
+              name: Translation.find((t) => t.language === lang).name,
+            };
+          }),
           branch: {
             ...branchRest,
             name: Translation[0].name,

@@ -490,7 +490,7 @@ export class OrderService {
       throw new BadRequestException('You have exceeded the points limit');
     }
     const dateWithoutTime = date.toString().split('T')[0];
-    let allServices = [] as PrismaServiceType[];
+    const allServices = [] as PrismaServiceType[];
 
     const another =
       phone &&
@@ -624,7 +624,7 @@ export class OrderService {
       costServices = allServices;
     }
 
-    let subTotal = costServices.reduce(
+    const subTotal = costServices.reduce(
       (acc, service) => acc + service.price,
       0,
     );
@@ -696,7 +696,7 @@ export class OrderService {
       throw new BadRequestException('You have exceeded the points limit');
     }
 
-    let allServices = [] as PrismaServiceType[];
+    const allServices = [] as PrismaServiceType[];
     const dateWithoutTime = createOrderDto.date.toString().split('T')[0];
 
     const another =
@@ -841,7 +841,7 @@ export class OrderService {
 
     const costServices = allServices.filter((service) => !service.isFree);
 
-    let subTotal = costServices.reduce(
+    const subTotal = costServices.reduce(
       (acc, service) => acc + service.price,
       0,
     );

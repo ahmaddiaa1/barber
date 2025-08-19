@@ -151,11 +151,15 @@ export class OrderService {
     if (!cashier) throw new NotFoundException('Cashier not found');
 
     const fetchedOrders = await this.prisma.order.findMany({
-      where: { branchId: cashier.branchId, status: 'COMPLETED' },
+      where: { branchId: cashier.branchId },
       include: {
         barber: { include: { barber: { include: { user: true } } } },
         client: true,
-        service: true,
+        service: {
+          include: {
+            Translation: { where: { language: lang } },
+          },
+        },
       },
     });
 
@@ -183,12 +187,23 @@ export class OrderService {
 
         const packageServices = await this.prisma.packages.findMany({
           where: { id: { in: usedPackageIds } },
-          include: { services: true },
+          include: {
+            services: {
+              include: {
+                Translation: { where: { language: lang } },
+              },
+            },
+          },
         });
 
         const allServices = [
-          ...service,
-          ...packageServices.flatMap((p) => p.services),
+          ...packageServices.flatMap((p) =>
+            p.services.map((s) => ({
+              ...s,
+              name: s.Translation[0].name,
+              price: s.price.toString(),
+            })),
+          ),
         ];
 
         const duration = (
@@ -196,22 +211,32 @@ export class OrderService {
           30
         ).toString();
 
+        const services = service.map((s) => {
+          const { Translation, ...rest } = s;
+          return {
+            ...rest,
+            nameEN: Translation.find((t) => t.language === 'EN')?.name,
+            nameAR: Translation.find((t) => t.language === 'AR')?.name,
+            name: Translation.find((t) => t.language === lang)?.name,
+          };
+        });
+
         return {
           id,
           promoCode,
           slot,
           date: format(new Date(date), 'yyyy-MM-dd'),
           duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
-          barberFirstName: barber.barber.user.firstName,
+          barberUserName: `${barber.barber.user.firstName} ${barber.barber.user.lastName}`,
           barberAvatar: barber.barber.user.avatar,
-          userName: client?.firstName,
+          userName: `${client?.firstName}${client?.lastName}`,
           userPhone: client?.phone,
           total: total.toString(),
           subTotal: subTotal.toString(),
           discount: (total - subTotal).toString(),
           points: points.toString(),
           usedPackage: packageServices,
-          service,
+          service: services,
         };
       }),
     );
@@ -398,6 +423,7 @@ export class OrderService {
         barber: { include: { barber: { include: { user: true } } } },
         branch: { include: Translation(false) },
         service: { include: { Translation: true } },
+        client: { select: { firstName: true, lastName: true, phone: true } },
       },
     });
 
@@ -413,6 +439,7 @@ export class OrderService {
           service,
           branch: { Translation, ...branchRest },
           booking,
+          client,
           ...rest
         } = order;
 
@@ -465,6 +492,8 @@ export class OrderService {
             nameAR: Translation.find((t) => t.language === 'AR')?.name,
             name: Translation.find((t) => t.language === language)?.name,
           },
+          userName: `${client?.firstName}${client?.lastName}`,
+          userPhone: client?.phone,
         };
       }),
     );

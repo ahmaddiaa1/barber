@@ -67,7 +67,7 @@ export class AuthService {
         break;
 
       case Role.USER:
-        if (!referralCodeStatus && code !== '' && code) {
+        if (code && !referralCodeStatus) {
           throw new BadRequestException('Referral code is invalid');
         }
 

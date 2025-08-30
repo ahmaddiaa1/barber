@@ -681,6 +681,18 @@ export class OrderService {
     const duration =
       allServices.reduce((acc, service) => acc + service.duration, 0) * 15;
 
+    const now = new Date();
+
+    const diffInMs = new Date(dateWithoutTime).getTime() - now.getTime(); // difference in milliseconds
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+    if (!settings) {
+      throw new NotFoundException('Settings not found');
+    }
+    if (diffInDays >= settings.maxDaysBooking)
+      throw new BadRequestException(
+        `You can only book up to ${settings.maxDaysBooking} days in advance`,
+      );
+
     return new AppSuccess(
       {
         date: format(new Date(dateWithoutTime), 'yyyy-MM-dd'),
@@ -787,7 +799,19 @@ export class OrderService {
     }
 
     const settings = await this.prisma.settings.findFirst({});
+    const now = new Date();
 
+    const diffInMs = new Date(dateWithoutTime).getTime() - now.getTime(); // difference in milliseconds
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+    console.log(diffInDays, settings.maxDaysBooking);
+    if (!settings) {
+      throw new NotFoundException('Settings not found');
+    }
+    if (diffInDays > settings.maxDaysBooking) {
+      throw new ConflictException(
+        `You can only book up to ${settings.maxDaysBooking} days in advance`,
+      );
+    }
     if (points && points >= 0 && settings.pointLimit > points) {
       throw new BadRequestException('You have exceeded the points limit');
     }
@@ -1043,16 +1067,6 @@ export class OrderService {
 
     const duration =
       allServices.reduce((acc, service) => acc + service.duration, 0) * 15;
-
-    const now = new Date();
-
-    const diffInMs = order.date.getTime() - now.getTime(); // difference in milliseconds
-    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
-
-    if (diffInDays >= settings.maxDaysBooking)
-      throw new BadRequestException(
-        `You can only book up to ${settings.maxDaysBooking} days in advance`,
-      );
 
     return new AppSuccess(
       {

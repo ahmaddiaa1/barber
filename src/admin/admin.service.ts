@@ -4,6 +4,7 @@ import { UpdateAdminDto } from './dto/update-admin.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { TranslateName } from '../../lib/lib';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class AdminService {
@@ -72,12 +73,19 @@ export class AdminService {
     return new AppSuccess(settings, 'Settings updated successfully');
   }
 
-  async getBarberOrdersWithCounts() {
-    // Fetch all barbers with their branch info
-    const OrdersSummary = await this.OrdersSummary();
-    const ServiceUsageSummary = await this.ServiceUsageSummary();
+  async getBarberOrdersWithCounts(role: Role, fromDate?: Date, toDate?: Date) {
+    const TotalSalesPerStylist = await this.TotalSalesPerStylist(
+      fromDate,
+      toDate,
+    );
+    const AnalyticsSummary =
+      role === 'CASHIER'
+        ? await this.AnalyticsSummary()
+        : await this.AnalyticsSummary(fromDate, toDate);
     return new AppSuccess(
-      { OrdersSummary, ServiceUsageSummary },
+      role === 'CASHIER'
+        ? { AnalyticsSummary }
+        : { TotalSalesPerStylist, AnalyticsSummary },
       'Barber orders with counts fetched successfully',
     );
   }
@@ -174,6 +182,79 @@ export class AdminService {
       }),
     );
     return result;
+  }
+
+  private async AnalyticsSummary(fromDate?: Date, toDate?: Date) {
+    const date = new Date();
+    const TotalOrders = await this.prisma.order.count({
+      where: {
+        ...(fromDate && toDate
+          ? { date: { gte: fromDate, lte: toDate } }
+          : { date: { gte: date, lte: date } }),
+      },
+    });
+    return { TotalOrders };
+  }
+
+  private async TotalSalesPerStylist(fromDate?: Date, toDate?: Date) {
+    const fetchedBranches = await this.prisma.branch.findMany({
+      select: {
+        id: true,
+        Translation: true,
+        barber: {
+          select: {
+            user: {
+              select: {
+                _count: { select: { BarberOrders: true } },
+                firstName: true,
+                lastName: true,
+                phone: true,
+                id: true,
+                BarberOrders: {
+                  where: {
+                    ...(fromDate && toDate
+                      ? { date: { gte: fromDate, lte: toDate } }
+                      : {}),
+                  },
+                  select: {
+                    service: { select: { Translation: true, price: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const branches = fetchedBranches.map((branch) => {
+      const { Translation, barber, id } = branch;
+      const result = barber.map((barber) => {
+        const servicesSummary: Record<string, number> = {};
+        barber.user.BarberOrders.forEach((order) => {
+          order.service.forEach((srv) => {
+            const name =
+              TranslateName({ Translation: srv.Translation }, 'EN')?.name ??
+              'Unknown';
+            servicesSummary[name] = (servicesSummary[name] || 0) + srv.price;
+          });
+        });
+
+        return {
+          barber: `${barber.user.firstName} ${barber.user.lastName}`,
+          orderNum: barber.user._count.BarberOrders,
+          total: Object.values(servicesSummary).reduce((a, b) => a + b, 0),
+          services: servicesSummary,
+        };
+      });
+      return {
+        id,
+        ...TranslateName({ Translation }, 'EN'),
+        barbers: result,
+      };
+    });
+
+    return branches;
   }
 
   private async ServiceUsageSummary() {

@@ -99,6 +99,7 @@ model Settings {
   pointLimit       Int    @default(100)
   canceledOrder    Int    @default(3)
   slotDuration     Int    @default(30)
+  maxDaysBooking   Int    @default(3)
 }
 
 model Static {

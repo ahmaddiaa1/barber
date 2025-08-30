@@ -6,4 +6,5 @@ export class CreateAdminDto {
   @IsNotEmpty() @IsNumber() pointLimit: number;
   @IsNotEmpty() @IsNumber() canceledOrder: number;
   @IsNotEmpty() @IsNumber() slotDuration: number;
+  @IsNotEmpty() @IsNumber() maxDaysBooking: number;
 }

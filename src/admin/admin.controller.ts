@@ -23,6 +23,11 @@ export class AdminController {
     return this.adminService.findAll();
   }
 
+  @Get('/analytics')
+  getAnalytics() {
+    return this.adminService.getBarberOrdersWithCounts();
+  }
+
   @Roles(['ADMIN'])
   @Put()
   update(@Body() updateAdminDto: UpdateAdminDto) {

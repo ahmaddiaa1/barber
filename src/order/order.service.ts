@@ -10,7 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
-import { Language, Role, Service } from '@prisma/client';
+import { Language, Order, Role, Service } from '@prisma/client';
 import { endOfDay, format, startOfDay } from 'date-fns';
 import { Translation } from 'src/class-type/translation';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -891,10 +891,10 @@ export class OrderService {
 
     const point = points >= PointsLimit ? points : 0;
 
-    points > user.client?.points &&
+    if (points > user.client?.points)
       new ConflictException('you do not have enough points');
 
-    PointsLimit > points &&
+    if (PointsLimit > points)
       new ConflictException(
         'the number of Points must be at least equal to the lowest price of the services',
       );
@@ -1043,6 +1043,16 @@ export class OrderService {
 
     const duration =
       allServices.reduce((acc, service) => acc + service.duration, 0) * 15;
+
+    const now = new Date();
+
+    const diffInMs = order.date.getTime() - now.getTime(); // difference in milliseconds
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+
+    if (diffInDays >= settings.maxDaysBooking)
+      throw new BadRequestException(
+        `You can only book up to ${settings.maxDaysBooking} days in advance`,
+      );
 
     return new AppSuccess(
       {

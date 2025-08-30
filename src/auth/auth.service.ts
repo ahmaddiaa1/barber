@@ -67,8 +67,6 @@ export class AuthService {
         break;
 
       case Role.USER:
-        console.log(code, referralCodeStatus);
-        console.log(createAuthDto);
         if (code && !referralCodeStatus) {
           throw new BadRequestException('Referral code is invalid');
         }

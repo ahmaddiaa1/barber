@@ -67,7 +67,7 @@ export class AuthService {
         break;
 
       case Role.USER:
-        if (!referralCodeStatus && code) {
+        if (!referralCodeStatus && code !== '' && code) {
           throw new BadRequestException('Referral code is invalid');
         }
 
@@ -342,11 +342,11 @@ export class AuthService {
 
     const slotsArray = [];
     for (let time = start * 60; time < end * 60; time += duration) {
-      let hour = Math.floor(time / 60);
-      let minute = time % 60;
-      let formattedHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-      let period = hour >= 12 ? 'PM' : 'AM';
-      let slot = `${formattedHour.toString().padStart(2, '0')}:${minute
+      const hour = Math.floor(time / 60);
+      const minute = time % 60;
+      const formattedHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+      const period = hour >= 12 ? 'PM' : 'AM';
+      const slot = `${formattedHour.toString().padStart(2, '0')}:${minute
         .toString()
         .padStart(2, '0')} ${period}`;
       slotsArray.push(slot);

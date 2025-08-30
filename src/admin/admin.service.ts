@@ -77,7 +77,7 @@ export class AdminService {
     const OrdersSummary = await this.OrdersSummary();
     const ServiceUsageSummary = await this.ServiceUsageSummary();
     return new AppSuccess(
-      { ServiceUsageSummary },
+      { OrdersSummary, ServiceUsageSummary },
       'Barber orders with counts fetched successfully',
     );
   }

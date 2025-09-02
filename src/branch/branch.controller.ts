@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   UploadedFile,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { BranchService } from './branch.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
@@ -46,8 +47,12 @@ export class BranchController {
 
   @UseGuards(AuthGuard(false))
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string, @Lang() language: Language) {
-    return this.branchService.findOne(id, language);
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Lang() language: Language,
+    @Query('Date') Date: string,
+  ) {
+    return this.branchService.findOne(id, Date, language);
   }
 
   @UseGuards(AuthGuard(), RolesGuard)

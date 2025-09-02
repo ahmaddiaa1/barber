@@ -63,7 +63,17 @@ export class BranchService {
     return new AppSuccess({ branches }, 'Branches found successfully');
   }
 
-  async findOne(id: string, language?: Language): Promise<AppSuccess<Branch>> {
+  async findOne(
+    id: string,
+    DateTime?: string,
+    language?: Language,
+  ): Promise<AppSuccess<Branch>> {
+    const targetDate = DateTime ? new Date(DateTime) : new Date();
+    const startOfDay = new Date(targetDate);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(targetDate);
+    endOfDay.setUTCHours(23, 59, 59, 999);
     const fetchedBranch = await this.prisma.branch.findUnique({
       where: { id },
       include: {
@@ -82,8 +92,31 @@ export class BranchService {
               },
             },
           },
+          where: {
+            OR: [
+              {
+                NOT: {
+                  vacations: {
+                    some: { date: { gte: startOfDay, lte: endOfDay } },
+                  },
+                },
+              },
+            ],
+          },
+          // where: { vacations: { some: { date: { equals: '2025-08-30' } } } },
         },
         Cashier: {
+          where: {
+            OR: [
+              {
+                NOT: {
+                  vacations: {
+                    some: { date: { gte: startOfDay, lte: endOfDay } },
+                  },
+                },
+              },
+            ],
+          },
           select: {
             id: true,
             user: {
@@ -103,7 +136,11 @@ export class BranchService {
     if (!fetchedBranch)
       throw new NotFoundException(`Branch with ID ${id} not found`);
 
-    const { Translation: branchTranslation, ...rest } = fetchedBranch;
+    const {
+      Translation: branchTranslation,
+
+      ...rest
+    } = fetchedBranch;
 
     const branch = {
       ...rest,

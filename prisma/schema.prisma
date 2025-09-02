@@ -49,20 +49,31 @@ model Client {
 }
 
 model Cashier {
-  id       String @id
-  branchId String
-  branch   Branch @relation(fields: [branchId], references: [id])
-  user     User   @relation(fields: [id], references: [id])
-  Slot     Slot?
+  id        String     @id
+  branchId  String
+  branch    Branch     @relation(fields: [branchId], references: [id])
+  user      User       @relation(fields: [id], references: [id])
+  Slot      Slot?
+  vacations Vacation[]
 }
 
 model Barber {
-  id       String @id
-  branchId String
-  rate     Int    @default(0)
-  branch   Branch @relation(fields: [branchId], references: [id])
-  user     User   @relation(fields: [id], references: [id])
-  Slot     Slot?
+  id        String     @id
+  branchId  String
+  rate      Int        @default(0)
+  branch    Branch     @relation(fields: [branchId], references: [id])
+  user      User       @relation(fields: [id], references: [id])
+  Slot      Slot?
+  vacations Vacation[]
+}
+
+model Vacation {
+  id        String   @id @default(uuid())
+  date      DateTime
+  cashierId String?
+  barberId  String?
+  barber    Barber?  @relation(fields: [barberId], references: [id])
+  cashier   Cashier? @relation(fields: [cashierId], references: [id])
 }
 
 model Admin {

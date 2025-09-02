@@ -48,15 +48,24 @@ export class OrderController {
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['CASHIER'])
   @Get('/cashier')
-  async getCashierOrders(@UserData('user') user: User, @Lang() lang: Language) {
-    return this.orderService.getCashierOrders(user.id, lang);
+  async getCashierOrders(
+    @UserData('user') user: User,
+    @Lang() lang: Language,
+    @Query('from') from: string,
+    @Query('to') to: string,
+  ) {
+    const DateFrom = new Date(from ?? new Date());
+    const DateTo = new Date(to ?? new Date());
+    return this.orderService.getCashierOrders(user.id, lang, DateFrom, DateTo);
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['ADMIN', 'CASHIER'])
   @Get('/paid-orders')
-  async getPaidOrders(@Query('date') date: string) {
-    return this.orderService.billOrders(date);
+  async getPaidOrders(@Query('from') from: string, @Query('to') to: string) {
+    const DateFrom = new Date(from ?? new Date());
+    const DateTo = new Date(to ?? new Date());
+    return this.orderService.billOrders(DateFrom, DateTo);
   }
 
   @UseGuards(AuthGuard(), RolesGuard)

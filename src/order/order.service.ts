@@ -10,7 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
-import { Language, Order, Role, Service } from '@prisma/client';
+import { Language, Role, Service } from '@prisma/client';
 import { endOfDay, format, startOfDay } from 'date-fns';
 import { Translation } from 'src/class-type/translation';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -67,14 +67,13 @@ export class OrderService {
     return new AppSuccess({ category }, 'Services found successfully');
   }
 
-  async billOrders(date?: string) {
-    const targetDate = date ? new Date(date) : new Date();
+  async billOrders(from: Date, to: Date) {
     const order = await this.prisma.order.findMany({
       where: {
         status: 'PAID',
         date: {
-          gte: startOfDay(targetDate),
-          lte: endOfDay(targetDate),
+          gte: startOfDay(from),
+          lte: endOfDay(to),
         },
       },
       select: {
@@ -144,14 +143,17 @@ export class OrderService {
     return new AppSuccess({ orders }, 'Orders fetched successfully');
   }
 
-  async getCashierOrders(id: string, lang: Language) {
+  async getCashierOrders(id: string, lang: Language, from: Date, to: Date) {
     const cashier = await this.prisma.cashier.findUnique({
       where: { id },
     });
     if (!cashier) throw new NotFoundException('Cashier not found');
 
     const fetchedOrders = await this.prisma.order.findMany({
-      where: { branchId: cashier.branchId },
+      where: {
+        branchId: cashier.branchId,
+        date: { gte: startOfDay(from), lte: endOfDay(to) },
+      },
       include: {
         barber: { include: { barber: { include: { user: true } } } },
         client: true,
@@ -160,6 +162,16 @@ export class OrderService {
             Translation: { where: { language: lang } },
           },
         },
+      },
+    });
+
+    const TotalSales = await this.prisma.order.aggregate({
+      where: {
+        date: { gte: startOfDay(from), lte: endOfDay(to) },
+        status: 'PAID',
+      },
+      _sum: {
+        total: true,
       },
     });
 
@@ -177,6 +189,7 @@ export class OrderService {
           slot,
           usedPackage,
           client,
+          status,
         } = order;
 
         const usedPackages = await this.prisma.clientPackages.findMany({
@@ -226,6 +239,7 @@ export class OrderService {
           promoCode,
           slot,
           date: format(new Date(date), 'yyyy-MM-dd'),
+          status,
           duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
           barberUserName: `${barber.barber.user.firstName} ${barber.barber.user.lastName}`,
           barberAvatar: barber.barber.user.avatar,
@@ -241,7 +255,10 @@ export class OrderService {
       }),
     );
 
-    return new AppSuccess({ orders }, 'Orders fetched successfully');
+    return new AppSuccess(
+      { orders, TotalSales: TotalSales._sum.total || 0 },
+      'Orders fetched successfully',
+    );
   }
 
   async getAllOrders(userId: string, lang: Language) {
@@ -331,9 +348,15 @@ export class OrderService {
     );
   }
 
-  async getPayedOrders(lang: Language) {
+  async getPayedOrders(lang: Language, from: string, to: string) {
     const fetchedOrders = await this.prisma.order.findMany({
-      where: { date: new Date(), status: 'COMPLETED' },
+      where: {
+        date: {
+          gte: new Date(from),
+          lte: new Date(to),
+        },
+        status: 'COMPLETED',
+      },
       include: {
         barber: { include: { barber: { include: { user: true } } } },
         branch: { include: Translation(false, lang) },

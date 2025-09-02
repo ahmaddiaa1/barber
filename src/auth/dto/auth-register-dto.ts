@@ -1,6 +1,7 @@
 import { Role } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
+  IsArray,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -53,6 +54,11 @@ export class RegisterDto {
   @IsString()
   branchId: string;
 
+  @IsArray()
+  @IsOptional()
+  @ValidateIf((o) => ['CASHIER', 'BARBER'].includes(o?.role?.toUpperCase()))
+  vacations: Vacation[];
+
   @ValidateIf((o) => ['CASHIER', 'BARBER'].includes(o?.role?.toUpperCase()))
   @Transform(({ value }) => {
     const num = Number(value);
@@ -70,4 +76,9 @@ export class RegisterDto {
   @IsNotEmpty({ message: 'End time is required' })
   @IsInt({ message: 'End must be a whole number' })
   end: number;
+}
+
+export class Vacation {
+  @IsString()
+  date: string;
 }

@@ -113,19 +113,36 @@ export class UserService {
   ) {
     const user = await this.findOne(id);
     if (!user) throw new NotFoundException('User not found');
-
+    const roleKey = user.role.toLowerCase();
+    const { vacations, vacationsToDelete, ...rest } = userData;
     const avatar = file?.path;
-
     const updateUser = await this.prisma.user.update({
       where: { id },
-      data: { ...userData, ...(avatar && { avatar }) },
+      data: {
+        ...rest,
+        ...(avatar && { avatar }),
+        ...((vacations || vacationsToDelete) && {
+          [roleKey]: {
+            update: {
+              vacations: {
+                create: vacations?.map((v) => ({ date: new Date(v.date) })),
+                deleteMany: vacationsToDelete?.length
+                  ? { id: { in: vacationsToDelete } }
+                  : undefined,
+              },
+            },
+          },
+        }),
+      },
       select: {
         firstName: true,
         lastName: true,
         avatar: true,
         phone: true,
+        barber: { select: { vacations: { select: { date: true } } } },
       },
     });
+    console.log(updateUser);
 
     return new AppSuccess(updateUser, 'User updated successfully', 200);
   }

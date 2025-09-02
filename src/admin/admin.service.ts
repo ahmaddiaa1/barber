@@ -74,20 +74,38 @@ export class AdminService {
   }
 
   async getBarberOrdersWithCounts(role: Role, fromDate?: Date, toDate?: Date) {
-    const TotalSalesPerStylist = await this.TotalSalesPerStylist(
-      fromDate,
-      toDate,
-    );
-    const AnalyticsSummary =
-      role === 'CASHIER'
-        ? await this.AnalyticsSummary()
-        : await this.AnalyticsSummary(fromDate, toDate);
-    return new AppSuccess(
-      role === 'CASHIER'
-        ? { AnalyticsSummary }
-        : { TotalSalesPerStylist, AnalyticsSummary },
-      'Barber orders with counts fetched successfully',
-    );
+    const TotalOrdersPerDay = await this.AnalyticsSummary();
+
+    switch (role) {
+      case Role.CASHIER:
+        return new AppSuccess(
+          { TotalOrdersPerDay },
+          'Cashier orders with counts fetched successfully',
+        );
+
+      case Role.ADMIN:
+        const today = new Date();
+        const oneMonthBefore = new Date();
+        oneMonthBefore.setMonth(today.getMonth() - 1);
+        const TotalOrdersPerMonth = await this.AnalyticsSummary(
+          fromDate ?? oneMonthBefore,
+          toDate ?? new Date(),
+        );
+        const TotalSalesPerStylist = await this.TotalSalesPerStylist(
+          fromDate,
+          toDate,
+        );
+        const ServiceUsageSummary = await this.ServiceUsageSummary();
+        return new AppSuccess(
+          {
+            TotalOrdersPerDay,
+            TotalOrdersPerMonth,
+            TotalSalesPerStylist,
+            ServiceUsageSummary,
+          },
+          'Admin orders with counts fetched successfully',
+        );
+    }
   }
 
   private async OrdersSummary() {
@@ -193,7 +211,17 @@ export class AdminService {
           : { date: { gte: date, lte: date } }),
       },
     });
-    return { TotalOrders };
+    const TotalOrdersPrice = await this.prisma.order.aggregate({
+      where: {
+        ...(fromDate && toDate
+          ? { date: { gte: fromDate, lte: toDate } }
+          : { date: { gte: date, lte: date } }),
+      },
+      _sum: {
+        total: true,
+      },
+    });
+    return { TotalOrders, TotalOrdersPrice: TotalOrdersPrice._sum.total || 0 };
   }
 
   private async TotalSalesPerStylist(fromDate?: Date, toDate?: Date) {
@@ -203,6 +231,7 @@ export class AdminService {
         Translation: true,
         barber: {
           select: {
+            id: true,
             user: {
               select: {
                 _count: { select: { BarberOrders: true } },
@@ -241,6 +270,7 @@ export class AdminService {
         });
 
         return {
+          id: barber.id,
           barber: `${barber.user.firstName} ${barber.user.lastName}`,
           orderNum: barber.user._count.BarberOrders,
           total: Object.values(servicesSummary).reduce((a, b) => a + b, 0),

@@ -87,6 +87,7 @@ export class AdminService {
         const today = new Date();
         const oneMonthBefore = new Date();
         oneMonthBefore.setMonth(today.getMonth() - 1);
+
         const TotalOrdersPerMonth = await this.AnalyticsSummary(
           fromDate ?? oneMonthBefore,
           toDate ?? new Date(),
@@ -96,6 +97,7 @@ export class AdminService {
           toDate,
         );
         const ServiceUsageSummary = await this.ServiceUsageSummary();
+
         return new AppSuccess(
           {
             TotalOrdersPerDay,
@@ -108,99 +110,99 @@ export class AdminService {
     }
   }
 
-  private async OrdersSummary() {
-    const Branches = await this.prisma.branch.findMany({
-      include: {
-        Translation: true,
-        barber: {
-          include: {
-            user: {
-              include: {
-                BarberOrders: {
-                  include: { service: { include: { Translation: true } } },
-                },
-                _count: { select: { BarberOrders: true } },
-              },
-            },
-          },
-        },
-      },
-    });
+  // private async OrdersSummary() {
+  //   const Branches = await this.prisma.branch.findMany({
+  //     include: {
+  //       Translation: true,
+  //       barber: {
+  //         include: {
+  //           user: {
+  //             include: {
+  //               BarberOrders: {
+  //                 include: { service: { include: { Translation: true } } },
+  //               },
+  //               _count: { select: { BarberOrders: true } },
+  //             },
+  //           },
+  //         },
+  //       },
+  //     },
+  //   });
 
-    // For each barber, fetch orders and count
-    const result = await Promise.all(
-      Branches.map(async (branch) => {
-        const orders = await this.prisma.order.count({
-          where: { branchId: branch.id },
-        });
-        const {
-          Translation: BranchTranslation,
-          id,
-          barber: BarberMap,
-          ...rest
-        } = branch;
+  //   // For each barber, fetch orders and count
+  //   const result = await Promise.all(
+  //     Branches.map(async (branch) => {
+  //       const orders = await this.prisma.order.count({
+  //         where: { branchId: branch.id },
+  //       });
+  //       const {
+  //         Translation: BranchTranslation,
+  //         id,
+  //         barber: BarberMap,
+  //         ...rest
+  //       } = branch;
 
-        const barber = BarberMap.map((barber) => {
-          const {
-            user: {
-              BarberOrders,
-              _count: { BarberOrders: orderCounts },
-              ...UserRest
-            },
-            ...BarberRest
-          } = barber;
-          const TotalOrdersPrice = BarberOrders.reduce(
-            (sum, order) => sum + order.total,
-            0,
-          );
-          const TotalOrdersPoints = BarberOrders.reduce(
-            (sum, order) => sum + order.points,
-            0,
-          );
-          const orders = BarberOrders.flatMap((order) => {
-            const { id: orderId, service: OrderService, ...OrderRest } = order;
+  //       const barber = BarberMap.map((barber) => {
+  //         const {
+  //           user: {
+  //             BarberOrders,
+  //             _count: { BarberOrders: orderCounts },
+  //             ...UserRest
+  //           },
+  //           ...BarberRest
+  //         } = barber;
+  //         const TotalOrdersPrice = BarberOrders.reduce(
+  //           (sum, order) => sum + order.total,
+  //           0,
+  //         );
+  //         const TotalOrdersPoints = BarberOrders.reduce(
+  //           (sum, order) => sum + order.points,
+  //           0,
+  //         );
+  //         const orders = BarberOrders.flatMap((order) => {
+  //           const { id: orderId, service: OrderService, ...OrderRest } = order;
 
-            const service = OrderService.map((service) => {
-              const {
-                id: serviceId,
-                Translation: serviceTranslate,
-                ...rest
-              } = service;
-              return {
-                serviceId,
-                ...TranslateName({ Translation: serviceTranslate }, 'EN'),
-                ...rest,
-              };
-            });
-            return {
-              orderId,
-              service,
-              ...OrderRest,
-            };
-          });
-          return {
-            ...BarberRest,
-            user: {
-              ...UserRest,
-              orders: orders,
-              orderCounts,
-              TotalOrdersPrice,
-              TotalOrdersPoints,
-            },
-          };
-        });
+  //           const service = OrderService.map((service) => {
+  //             const {
+  //               id: serviceId,
+  //               Translation: serviceTranslate,
+  //               ...rest
+  //             } = service;
+  //             return {
+  //               serviceId,
+  //               ...TranslateName({ Translation: serviceTranslate }, 'EN'),
+  //               ...rest,
+  //             };
+  //           });
+  //           return {
+  //             orderId,
+  //             service,
+  //             ...OrderRest,
+  //           };
+  //         });
+  //         return {
+  //           ...BarberRest,
+  //           user: {
+  //             ...UserRest,
+  //             orders: orders,
+  //             orderCounts,
+  //             TotalOrdersPrice,
+  //             TotalOrdersPoints,
+  //           },
+  //         };
+  //       });
 
-        return {
-          id,
-          ...TranslateName({ Translation: BranchTranslation }, 'EN'),
-          barber,
-          ...rest,
-          totalOrders: orders,
-        };
-      }),
-    );
-    return result;
-  }
+  //       return {
+  //         id,
+  //         ...TranslateName({ Translation: BranchTranslation }, 'EN'),
+  //         barber,
+  //         ...rest,
+  //         totalOrders: orders,
+  //       };
+  //     }),
+  //   );
+  //   return result;
+  // }
 
   private async AnalyticsSummary(fromDate?: Date, toDate?: Date) {
     const date = new Date();
@@ -293,38 +295,27 @@ export class AdminService {
     });
 
     const allServices = await this.prisma.service.findMany({
-      include: { Translation: true },
+      include: { Translation: true, _count: { select: { order: true } } },
+      orderBy: { order: { _count: 'desc' } },
     });
 
-    const result = await Promise.all(
-      branches.map(async (branch) => {
-        const services = await Promise.all(
-          allServices.map(async (service) => {
-            // Count orders in this branch that include this service
-            const usageCount = await this.prisma.order.count({
-              where: {
-                branchId: branch.id,
-                service: {
-                  some: { id: service.id },
-                },
-              },
-            });
+    const result = branches.map((branch) => {
+      const services = allServices
+        .filter((f) => f._count.order)
+        .map((service) => {
+          return {
+            serviceId: service.id,
+            ...TranslateName({ Translation: service.Translation }, 'EN'),
+            usageCount: service._count.order || 0,
+          };
+        });
 
-            return {
-              serviceId: service.id,
-              ...TranslateName({ Translation: service.Translation }, 'EN'),
-              usageCount,
-            };
-          }),
-        );
-
-        return {
-          branchId: branch.id,
-          ...TranslateName({ Translation: branch.Translation }, 'EN'),
-          services: services.sort((a, b) => b.usageCount - a.usageCount),
-        };
-      }),
-    );
+      return {
+        branchId: branch.id,
+        ...TranslateName({ Translation: branch.Translation }, 'EN'),
+        services,
+      };
+    });
 
     return result;
   }

@@ -1494,12 +1494,28 @@ export class OrderService {
 
   async getSlots(date: string, barberId: string) {
     const dateWithoutTime = date.split('T')[0];
-
     const startOfDay = new Date(dateWithoutTime);
     const endOfDay = new Date(dateWithoutTime);
 
     startOfDay.setUTCHours(0, 0, 0, 0);
     endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const barber = await this.prisma.barber.findUnique({
+      where: {
+        id: barberId,
+        OR: [
+          {
+            NOT: {
+              vacations: {
+                some: { date: { gte: startOfDay, lte: endOfDay } },
+              },
+            },
+          },
+        ],
+      },
+    });
+    if (!barber)
+      throw new NotFoundException('barber are not available in this date');
 
     const [orders, allSlotsData] = await Promise.all([
       this.prisma.order.findMany({

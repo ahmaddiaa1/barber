@@ -92,31 +92,31 @@ export class BranchService {
               },
             },
           },
-          where: {
-            OR: [
-              {
-                NOT: {
-                  vacations: {
-                    some: { date: { gte: startOfDay, lte: endOfDay } },
-                  },
-                },
-              },
-            ],
-          },
+          // where: {
+          //   OR: [
+          //     {
+          //       NOT: {
+          //         vacations: {
+          //           some: { date: { gte: startOfDay, lte: endOfDay } },
+          //         },
+          //       },
+          //     },
+          //   ],
+          // },
           // where: { vacations: { some: { date: { equals: '2025-08-30' } } } },
         },
         Cashier: {
-          where: {
-            OR: [
-              {
-                NOT: {
-                  vacations: {
-                    some: { date: { gte: startOfDay, lte: endOfDay } },
-                  },
-                },
-              },
-            ],
-          },
+          // where: {
+          //   OR: [
+          //     {
+          //       NOT: {
+          //         vacations: {
+          //           some: { date: { gte: startOfDay, lte: endOfDay } },
+          //         },
+          //       },
+          //     },
+          //   ],
+          // },
           select: {
             id: true,
             user: {

@@ -1514,8 +1514,9 @@ export class OrderService {
         ],
       },
     });
-    if (!barber)
-      throw new NotFoundException('barber are not available in this date');
+    if (!barber) {
+      return new AppSuccess({ slots: [] }, 'Slots fetched successfully');
+    }
 
     const [orders, allSlotsData] = await Promise.all([
       this.prisma.order.findMany({
@@ -1577,7 +1578,7 @@ export class OrderService {
     const settings = await this.prisma.settings.findFirst({});
 
     for (let hour = start; hour < end; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
+      for (let minute = 0; minute < 60; minute += settings.slotDuration) {
         const slot = `${hour.toString().padStart(2, '0')}:${minute
           .toString()
           .padStart(2, '0')}`;

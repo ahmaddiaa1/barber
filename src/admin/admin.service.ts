@@ -92,7 +92,7 @@ export class AdminService {
           fromDate ?? oneMonthBefore,
           toDate ?? new Date(),
         );
-        const TotalSalesPerStylist = await this.TotalSalesPerStylist(
+        const TotalSalesPerBranch = await this.TotalSalesPerBranch(
           fromDate,
           toDate,
         );
@@ -100,9 +100,9 @@ export class AdminService {
 
         return new AppSuccess(
           {
-            TotalOrdersPerDay,
-            TotalOrdersPerMonth,
-            TotalSalesPerStylist,
+            // TotalOrdersPerDay,
+            ...TotalOrdersPerMonth,
+            TotalSalesPerBranch,
             ServiceUsageSummary,
           },
           'Admin orders with counts fetched successfully',
@@ -110,103 +110,103 @@ export class AdminService {
     }
   }
 
-  // private async OrdersSummary() {
-  //   const Branches = await this.prisma.branch.findMany({
-  //     include: {
-  //       Translation: true,
-  //       barber: {
-  //         include: {
-  //           user: {
-  //             include: {
-  //               BarberOrders: {
-  //                 include: { service: { include: { Translation: true } } },
-  //               },
-  //               _count: { select: { BarberOrders: true } },
-  //             },
-  //           },
-  //         },
-  //       },
-  //     },
-  //   });
+  private async OrdersSummary() {
+    const Branches = await this.prisma.branch.findMany({
+      include: {
+        Translation: true,
+        barber: {
+          include: {
+            user: {
+              include: {
+                BarberOrders: {
+                  include: { service: { include: { Translation: true } } },
+                },
+                _count: { select: { BarberOrders: true } },
+              },
+            },
+          },
+        },
+      },
+    });
 
-  //   // For each barber, fetch orders and count
-  //   const result = await Promise.all(
-  //     Branches.map(async (branch) => {
-  //       const orders = await this.prisma.order.count({
-  //         where: { branchId: branch.id },
-  //       });
-  //       const {
-  //         Translation: BranchTranslation,
-  //         id,
-  //         barber: BarberMap,
-  //         ...rest
-  //       } = branch;
+    // For each barber, fetch orders and count
+    const result = await Promise.all(
+      Branches.map(async (branch) => {
+        const orders = await this.prisma.order.count({
+          where: { branchId: branch.id },
+        });
+        const {
+          Translation: BranchTranslation,
+          id,
+          barber: BarberMap,
+          ...rest
+        } = branch;
 
-  //       const barber = BarberMap.map((barber) => {
-  //         const {
-  //           user: {
-  //             BarberOrders,
-  //             _count: { BarberOrders: orderCounts },
-  //             ...UserRest
-  //           },
-  //           ...BarberRest
-  //         } = barber;
-  //         const TotalOrdersPrice = BarberOrders.reduce(
-  //           (sum, order) => sum + order.total,
-  //           0,
-  //         );
-  //         const TotalOrdersPoints = BarberOrders.reduce(
-  //           (sum, order) => sum + order.points,
-  //           0,
-  //         );
-  //         const orders = BarberOrders.flatMap((order) => {
-  //           const { id: orderId, service: OrderService, ...OrderRest } = order;
+        const barber = BarberMap.map((barber) => {
+          const {
+            user: {
+              BarberOrders,
+              _count: { BarberOrders: orderCounts },
+              ...UserRest
+            },
+            ...BarberRest
+          } = barber;
+          const TotalOrdersPrice = BarberOrders.reduce(
+            (sum, order) => sum + order.total,
+            0,
+          );
+          const TotalOrdersPoints = BarberOrders.reduce(
+            (sum, order) => sum + order.points,
+            0,
+          );
+          const orders = BarberOrders.flatMap((order) => {
+            const { id: orderId, service: OrderService, ...OrderRest } = order;
 
-  //           const service = OrderService.map((service) => {
-  //             const {
-  //               id: serviceId,
-  //               Translation: serviceTranslate,
-  //               ...rest
-  //             } = service;
-  //             return {
-  //               serviceId,
-  //               ...TranslateName({ Translation: serviceTranslate }, 'EN'),
-  //               ...rest,
-  //             };
-  //           });
-  //           return {
-  //             orderId,
-  //             service,
-  //             ...OrderRest,
-  //           };
-  //         });
-  //         return {
-  //           ...BarberRest,
-  //           user: {
-  //             ...UserRest,
-  //             orders: orders,
-  //             orderCounts,
-  //             TotalOrdersPrice,
-  //             TotalOrdersPoints,
-  //           },
-  //         };
-  //       });
+            const service = OrderService.map((service) => {
+              const {
+                id: serviceId,
+                Translation: serviceTranslate,
+                ...rest
+              } = service;
+              return {
+                serviceId,
+                ...TranslateName({ Translation: serviceTranslate }, 'EN'),
+                ...rest,
+              };
+            });
+            return {
+              orderId,
+              service,
+              ...OrderRest,
+            };
+          });
+          return {
+            ...BarberRest,
+            user: {
+              ...UserRest,
+              orders: orders,
+              orderCounts,
+              TotalOrdersPrice,
+              TotalOrdersPoints,
+            },
+          };
+        });
 
-  //       return {
-  //         id,
-  //         ...TranslateName({ Translation: BranchTranslation }, 'EN'),
-  //         barber,
-  //         ...rest,
-  //         totalOrders: orders,
-  //       };
-  //     }),
-  //   );
-  //   return result;
-  // }
+        return {
+          id,
+          ...TranslateName({ Translation: BranchTranslation }, 'EN'),
+          barber,
+          ...rest,
+          totalOrders: orders,
+        };
+      }),
+    );
+    return result;
+  }
 
   private async AnalyticsSummary(fromDate?: Date, toDate?: Date) {
     const date = new Date();
-    const TotalOrders = await this.prisma.order.count({
+    const TotalOrderCount = await this.prisma.order.count({
       where: {
         ...(fromDate && toDate
           ? { date: { gte: fromDate, lte: toDate } }
@@ -223,10 +223,10 @@ export class AdminService {
         total: true,
       },
     });
-    return { TotalOrders, TotalOrdersPrice: TotalOrdersPrice._sum.total || 0 };
+    return { TotalOrderCount, TotalSales: TotalOrdersPrice._sum.total || 0 };
   }
 
-  private async TotalSalesPerStylist(fromDate?: Date, toDate?: Date) {
+  private async TotalSalesPerBranch(fromDate?: Date, toDate?: Date) {
     const fetchedBranches = await this.prisma.branch.findMany({
       select: {
         id: true,
@@ -248,7 +248,9 @@ export class AdminService {
                       : {}),
                   },
                   select: {
-                    service: { select: { Translation: true, price: true } },
+                    service: {
+                      select: { Translation: true, price: true, id: true },
+                    },
                   },
                 },
               },
@@ -261,21 +263,42 @@ export class AdminService {
     const branches = fetchedBranches.map((branch) => {
       const { Translation, barber, id } = branch;
       const result = barber.map((barber) => {
-        const servicesSummary: Record<string, number> = {};
+        const servicesSummary: {
+          id: string;
+          name: string;
+          price: number;
+          count: number;
+        }[] = [];
         barber.user.BarberOrders.forEach((order) => {
           order.service.forEach((srv) => {
             const name =
               TranslateName({ Translation: srv.Translation }, 'EN')?.name ??
               'Unknown';
-            servicesSummary[name] = (servicesSummary[name] || 0) + srv.price;
+
+            // Check if service already exists in summary
+            const existing = servicesSummary.find((s) => s.id === srv.id);
+            if (existing) {
+              existing.price += srv.price; // accumulate price
+              existing.count += 1; // increment count
+            } else {
+              servicesSummary.push({
+                id: srv.id,
+                name: name,
+                price: srv.price,
+                count: 1,
+              });
+            }
           });
         });
 
         return {
           id: barber.id,
           barber: `${barber.user.firstName} ${barber.user.lastName}`,
-          orderNum: barber.user._count.BarberOrders,
-          total: Object.values(servicesSummary).reduce((a, b) => a + b, 0),
+          orderCount: barber.user._count.BarberOrders,
+          sales: Object.values(servicesSummary).reduce(
+            (a, b) => a + b.price,
+            0,
+          ),
           services: servicesSummary,
         };
       });

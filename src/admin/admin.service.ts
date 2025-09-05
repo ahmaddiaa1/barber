@@ -100,12 +100,10 @@ export class AdminService {
 
         return new AppSuccess(
           {
-            analytics: {
-              ...TotalOrdersPerDay,
-              ...TotalOrdersPerMonth,
-              ...TotalSalesPerStylist,
-              ...ServiceUsageSummary,
-            },
+            TotalOrdersPerDay,
+            TotalOrdersPerMonth,
+            TotalSalesPerStylist,
+            ServiceUsageSummary,
           },
           'Admin orders with counts fetched successfully',
         );

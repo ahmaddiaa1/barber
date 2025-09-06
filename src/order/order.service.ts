@@ -1600,6 +1600,18 @@ export class OrderService {
   }
 
   async paidOrder(id: string, user: User, body?: { discount?: number }) {
+    const currentOrder = await this.prisma.order.findUnique({
+      where: {
+        id,
+        NOT: {
+          OR: [{ status: 'PAID' }, { status: 'CANCELLED' }],
+        },
+      },
+      select: { subTotal: true, total: true },
+    });
+    if (!currentOrder) {
+      throw new ConflictException('Order is either PAID or CANCELLED');
+    }
     let code: PromoCode;
     if (body && body.discount) {
       code = await this.promoCodeService
@@ -1612,11 +1624,6 @@ export class OrderService {
         .then((res) => res.data);
     }
     await this.findOneOrFail(id);
-
-    const currentOrder = await this.prisma.order.findUnique({
-      where: { id },
-      select: { subTotal: true, total: true },
-    });
 
     const updatedOrder = await this.prisma.order.update({
       where: { id },

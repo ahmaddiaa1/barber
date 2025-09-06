@@ -32,6 +32,7 @@ export class UserService {
     id: false,
     branch: true,
     Slot: true,
+    vacations: true,
   } as Prisma.BarberSelect;
 
   public async findAllClients(page = 1, pageSize = 10, phone?: string) {
@@ -66,10 +67,12 @@ export class UserService {
         ? {
             [role?.toLowerCase()]: {
               select:
-                Role[role.toUpperCase()] === 'BARBER' ||
-                Role[role.toUpperCase()] === 'CASHIER'
-                  ? this.barberAndCashier
-                  : this.client,
+                Role[role.toUpperCase()] === 'ADMIN'
+                  ? ({ id: true } as Prisma.AdminSelect)
+                  : Role[role.toUpperCase()] === 'BARBER' ||
+                      Role[role.toUpperCase()] === 'CASHIER'
+                    ? this.barberAndCashier
+                    : this.client,
             },
           }
         : {
@@ -84,7 +87,7 @@ export class UserService {
         select: { ...this.user, ...include },
       });
 
-      const users = fetchedUser.map(({ admin, barber, cashier, ...user }) => {
+      const users = fetchedUser.map(({ barber, cashier, ...user }) => {
         return {
           ...user,
           ...(barber && { barber }),
@@ -296,5 +299,20 @@ export class UserService {
     });
 
     return new AppSuccess(null, 'User deleted successfully', 200);
+  }
+
+  async deleteEmployee(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: {},
+    });
+    if (!user) throw new NotFoundException('User not found');
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        deleted: true,
+      },
+    });
+    return new AppSuccess(null, 'Employee deleted successfully', 200);
   }
 }

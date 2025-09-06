@@ -73,8 +73,12 @@ export class UserController {
     return this.userService.CurrentUser(user);
   }
 
-  @Delete('deleteAccount')
-  delete(@UserData('user') user: User) {
-    return this.userService.deleteUser(user.id);
+  @Delete('deleteAccount:id')
+  delete(@UserData('user') user: User, @Param('id') id: string) {
+    return this.userService.deleteUser(id);
+  }
+  @Delete('deleteAccount:id')
+  deleteEmployee(@UserData('user') user: User, @Param('id') id: string) {
+    return this.userService.deleteEmployee(id);
   }
 }

@@ -1612,7 +1612,7 @@ export class OrderService {
         .then((res) => res.data);
     }
     await this.findOneOrFail(id);
-    console.log(code);
+
     const currentOrder = await this.prisma.order.findUnique({
       where: { id },
       select: { subTotal: true, total: true },

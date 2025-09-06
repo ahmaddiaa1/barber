@@ -133,13 +133,6 @@ export class OrderService {
           slot,
           booking,
           status,
-          services: service.map((s) => ({
-            id: s.id,
-            nameEN: s.Translation.find((t) => t.language === 'EN')?.name,
-            nameAR: s.Translation.find((t) => t.language === 'AR')?.name,
-            name: s.Translation.find((t) => t.language === language)?.name,
-            price: s.price.toString(),
-          })),
         };
       }),
       orderCount: branch._count.Order,

@@ -3,6 +3,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role, User } from '@prisma/client';
 import { UserUpdateDto } from './dto/user-update-dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
+import { format } from 'date-fns';
 
 @Injectable()
 export class UserService {
@@ -125,21 +126,46 @@ export class UserService {
           [roleKey]: {
             update: {
               vacations: {
-                create: vacations?.map((v) => ({ date: new Date(v.date) })),
-                deleteMany: vacationsToDelete?.length
-                  ? { id: { in: vacationsToDelete } }
-                  : undefined,
+                ...(vacationsToDelete && {
+                  deleteMany: {
+                    id: { in: vacationsToDelete },
+                  },
+                }),
+                ...(vacations && {
+                  upsert: vacations.map((vacation) => ({
+                    where: { id: vacation.id || 'new' },
+                    create: {
+                      dates: vacation.dates.map((v) => {
+                        const dateWithoutTime = v.split('T')[0];
+                        return new Date(dateWithoutTime);
+                      }),
+                      month: Number(vacation.month),
+                    },
+                    update: {
+                      dates: vacation.dates.map((v) => {
+                        const dateWithoutTime = v.split('T')[0];
+                        return new Date(dateWithoutTime);
+                      }),
+                      month: Number(vacation.month),
+                    },
+                  })),
+                }),
               },
             },
           },
         }),
       },
       select: {
+        id: true,
         firstName: true,
         lastName: true,
         avatar: true,
         phone: true,
-        barber: { select: { vacations: { select: { date: true } } } },
+        [roleKey]: {
+          select: {
+            vacations: { select: { dates: true, month: true, id: true } },
+          },
+        },
       },
     });
     console.log(updateUser);

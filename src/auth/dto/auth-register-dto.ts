@@ -80,5 +80,12 @@ export class RegisterDto {
 
 export class Vacation {
   @IsString()
-  date: string;
+  id: string;
+
+  @IsArray()
+  @IsNotEmpty()
+  dates: string[];
+
+  @IsInt()
+  month: number;
 }

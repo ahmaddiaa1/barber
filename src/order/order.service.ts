@@ -1664,7 +1664,11 @@ export class OrderService {
           {
             NOT: {
               vacations: {
-                some: { date: { gte: startOfDay, lte: endOfDay } },
+                some: {
+                  dates: {
+                    hasSome: [new Date(dateWithoutTime)],
+                  },
+                },
               },
             },
           },

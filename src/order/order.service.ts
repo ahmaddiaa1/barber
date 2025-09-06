@@ -10,7 +10,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
-import { Language, Prisma, Role, Service, User } from '@prisma/client';
+import {
+  Language,
+  Prisma,
+  PromoCode,
+  Role,
+  Service,
+  User,
+} from '@prisma/client';
 import { endOfDay, format, startOfDay } from 'date-fns';
 import { Translation } from 'src/class-type/translation';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -1592,12 +1599,39 @@ export class OrderService {
     });
   }
 
-  async paidOrder(id: string, userId: string) {
+  async paidOrder(id: string, user: User, body?: { discount?: number }) {
+    let code: PromoCode;
+    if (body && body.discount) {
+      code = await this.promoCodeService
+        .createPromoCode({
+          code: undefined,
+          discount: body.discount,
+          type: 'AMOUNT',
+          expiredAt: new Date(Date.now() + 60 * 1000), // 1 minute from now
+        })
+        .then((res) => res.data);
+    }
     await this.findOneOrFail(id);
+    console.log(code);
+    const currentOrder = await this.prisma.order.findUnique({
+      where: { id },
+      select: { subTotal: true, total: true },
+    });
 
     const updatedOrder = await this.prisma.order.update({
       where: { id },
-      data: { status: 'PAID', booking: 'PAST', cashierId: userId },
+      data: {
+        status: 'PAID',
+        booking: 'PAST',
+        ...(user.role === 'CASHIER' && { cashierId: user.id }),
+        ...(code && {
+          promoCode: code.code,
+          discount: code.discount,
+          type: 'AMOUNT',
+          subTotal: currentOrder.subTotal,
+          total: currentOrder.total - code.discount,
+        }),
+      },
       include: {
         service: true,
         barber: { select: { firstName: true, lastName: true } },

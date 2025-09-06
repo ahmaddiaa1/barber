@@ -94,8 +94,12 @@ export class OrderController {
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['ADMIN', 'CASHIER'])
   @Put('/paid-order/:id')
-  async paidOrder(@Param('id') id: string, @UserData('user') user: User) {
-    return this.orderService.paidOrder(id, user.id);
+  async paidOrder(
+    @Param('id') id: string,
+    @UserData('user') user: User,
+    @Body() body?: { discount?: number },
+  ) {
+    return this.orderService.paidOrder(id, user, body);
   }
 
   @UseGuards(AuthGuard(), RolesGuard)

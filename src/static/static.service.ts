@@ -135,7 +135,7 @@ export class StaticService {
       where: { id },
     });
 
-    !ExistQuestion && new NotFoundException('Question not found');
+    if (!ExistQuestion) throw new NotFoundException('Question not found');
 
     const question = await this.prisma.questions.delete({ where: { id } });
     return new AppSuccess(question, 'Question deleted successfully');

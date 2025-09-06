@@ -303,15 +303,45 @@ export class UserService {
   async deleteEmployee(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      include: {},
-    });
-    if (!user) throw new NotFoundException('User not found');
-    await this.prisma.user.update({
-      where: { id },
-      data: {
-        deleted: true,
+      include: {
+        BarberOrders: true,
+        CashierOrders: true,
       },
     });
+
+    switch (user.role) {
+      case Role.BARBER:
+        if (user.BarberOrders.length > 0) {
+          await this.prisma.order.updateMany({
+            where: { barberId: id },
+            data: {
+              barberId: null,
+              barberName: user.firstName + ' ' + user.lastName,
+            },
+          });
+        }
+        await this.prisma.barber.delete({
+          where: { id },
+        });
+        await this.prisma.user.delete({
+          where: { id },
+        });
+        break;
+      case Role.CASHIER:
+        if (user.CashierOrders.length > 0) {
+          await this.prisma.order.updateMany({
+            where: { cashierId: id },
+            data: { cashierId: null },
+          });
+        }
+        await this.prisma.cashier.delete({
+          where: { id },
+        });
+        await this.prisma.user.delete({
+          where: { id },
+        });
+        break;
+    }
     return new AppSuccess(null, 'Employee deleted successfully', 200);
   }
 }

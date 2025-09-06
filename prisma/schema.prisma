@@ -286,15 +286,16 @@ model Order {
   subTotal    Int
   total       Int
   userId      String?
-  barberId    String
+  barberId    String?
   cashierId   String?
   discount    Int           @default(0)
   type        discount      @default(AMOUNT)
   freeService String[]
   deleted     Boolean       @default(false)
+  barberName  String?
   branch      Branch        @relation(fields: [branchId], references: [id])
   client      User?         @relation("UserOrders", fields: [userId], references: [id])
-  barber      User          @relation("BarberOrders", fields: [barberId], references: [id])
+  barber      User?         @relation("BarberOrders", fields: [barberId], references: [id])
   Cashier     User?         @relation("CashierOrders", fields: [cashierId], references: [id])
   service     Service[]     @relation("OrderToServices")
   usedPackage String[]

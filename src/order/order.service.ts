@@ -1216,7 +1216,7 @@ export class OrderService {
     }
 
     const duration =
-      allServices.reduce((acc, service) => acc + service.duration, 0) * 15;
+      allServices.reduce((acc, service) => acc + service.duration, 0) + 15;
 
     return new AppSuccess(
       {

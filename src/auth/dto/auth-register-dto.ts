@@ -86,6 +86,6 @@ export class Vacation {
   @IsNotEmpty()
   dates: string[];
 
-  @IsInt()
-  month: number;
+  @IsString()
+  month: string;
 }

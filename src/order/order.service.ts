@@ -119,6 +119,7 @@ export class OrderService {
           status,
           subTotal,
           type,
+          discount,
         } = order;
 
         return {
@@ -134,6 +135,7 @@ export class OrderService {
           }),
           promoCode,
           subTotal,
+          discount,
           discountType: type,
           total,
           slot,

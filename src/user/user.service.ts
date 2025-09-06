@@ -3,7 +3,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role, User } from '@prisma/client';
 import { UserUpdateDto } from './dto/user-update-dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
-import { format } from 'date-fns';
 
 @Injectable()
 export class UserService {
@@ -142,14 +141,14 @@ export class UserService {
                         const dateWithoutTime = v.split('T')[0];
                         return new Date(dateWithoutTime);
                       }),
-                      month: Number(vacation.month),
+                      month: new Date(vacation.month),
                     },
                     update: {
                       dates: vacation.dates.map((v) => {
                         const dateWithoutTime = v.split('T')[0];
                         return new Date(dateWithoutTime);
                       }),
-                      month: Number(vacation.month),
+                      month: new Date(vacation.month),
                     },
                   })),
                 }),
@@ -189,7 +188,7 @@ export class UserService {
 
     if (!userWithRole) throw new NotFoundException('User not found');
 
-    const { admin, barber, cashier, client, ...rest } = userWithRole;
+    const { barber, cashier, client, ...rest } = userWithRole;
     const userRole =
       user.role === Role.USER ? 'client' : user.role.toLowerCase();
 
@@ -201,7 +200,7 @@ export class UserService {
             cashier || {
               ...client,
               ...(userRole === 'client' &&
-                client.ban && {
+                client?.ban && {
                   BanMessage:
                     "You can't make any Order please get contact with us",
                 }),

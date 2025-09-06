@@ -92,31 +92,8 @@ export class BranchService {
               },
             },
           },
-          // where: {
-          //   OR: [
-          //     {
-          //       NOT: {
-          //         vacations: {
-          //           some: { date: { gte: startOfDay, lte: endOfDay } },
-          //         },
-          //       },
-          //     },
-          //   ],
-          // },
-          // where: { vacations: { some: { date: { equals: '2025-08-30' } } } },
         },
         Cashier: {
-          // where: {
-          //   OR: [
-          //     {
-          //       NOT: {
-          //         vacations: {
-          //           some: { date: { gte: startOfDay, lte: endOfDay } },
-          //         },
-          //       },
-          //     },
-          //   ],
-          // },
           select: {
             id: true,
             user: {
@@ -145,6 +122,9 @@ export class BranchService {
     const branch = {
       ...rest,
       name: branchTranslation[0].name,
+      maxDaysBooking: await this.prisma.settings
+        .findFirst()
+        .then((s) => s?.maxDaysBooking),
     };
 
     return new AppSuccess(branch, 'Branch found successfully');

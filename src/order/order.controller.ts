@@ -29,6 +29,25 @@ export class OrderController {
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(['ADMIN', 'CASHIER'])
+  @Get('/getAllOrders')
+  async getNewOrders(
+    @Lang() lang: Language,
+    @UserData('user') user: User,
+    @Query('fromDate') from: string,
+    @Query('toDate') to: string,
+  ) {
+    const fromDate = new Date(from ?? new Date());
+    const toDate = new Date(to ?? new Date());
+    return this.orderService.getAllOrdersDateRange(
+      user,
+      lang,
+      fromDate,
+      toDate,
+    );
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['BARBER'])
   @Get('/barber-orders')
   async getBarberOrders(
@@ -51,8 +70,8 @@ export class OrderController {
   async getCashierOrders(
     @UserData('user') user: User,
     @Lang() lang: Language,
-    @Query('from') from: string,
-    @Query('to') to: string,
+    @Query('fromDate') from: string,
+    @Query('toDate') to: string,
   ) {
     const DateFrom = new Date(from ?? new Date());
     const DateTo = new Date(to ?? new Date());

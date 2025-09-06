@@ -10,7 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
-import { Language, Role, Service } from '@prisma/client';
+import { Language, Prisma, Role, Service, User } from '@prisma/client';
 import { endOfDay, format, startOfDay } from 'date-fns';
 import { Translation } from 'src/class-type/translation';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -25,6 +25,117 @@ export class OrderService {
     private readonly prisma: PrismaService,
     private readonly promoCodeService: PromoCodeService,
   ) {}
+
+  async getAllOrdersDateRange(
+    user: User,
+    language: Language,
+    fromDate: Date,
+    toDate: Date,
+  ) {
+    const cashier = await this.prisma.cashier.findUnique({
+      where: { id: user.id },
+      select: { branchId: true },
+    });
+
+    const isAdmin = !cashier;
+    const branchFilter = isAdmin
+      ? {}
+      : ({ id: cashier.branchId } as Prisma.BranchWhereInput);
+
+    const branches = await this.prisma.branch.findMany({
+      where: branchFilter,
+      include: {
+        _count: { select: { Order: true } },
+        Translation: true,
+        Order: {
+          where: {
+            date: {
+              gte: fromDate,
+              lte: toDate,
+            },
+          },
+          include: {
+            branch: {
+              include: {
+                Translation: true,
+              },
+            },
+            barber: {
+              include: {
+                barber: {
+                  include: {
+                    user: true,
+                  },
+                },
+              },
+            },
+            client: true,
+            service: {
+              include: {
+                Translation: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+      },
+    });
+
+    const formattedOrders = branches.map((branch) => ({
+      id: branch.id,
+      nameEN: branch.Translation.find((t) => t.language === 'EN')?.name,
+      nameAR: branch.Translation.find((t) => t.language === 'AR')?.name,
+      name: branch.Translation.find((t) => t.language === language)?.name,
+      orders: branch.Order.map((order) => {
+        const {
+          id,
+          barber,
+          service,
+          date,
+          client,
+          promoCode,
+          total,
+          slot,
+          booking,
+          status,
+          subTotal,
+          discount,
+          type,
+        } = order;
+
+        return {
+          id,
+          date: format(new Date(date), 'yyyy-MM-dd'),
+          barberId: barber.id,
+          barberName: `${barber.barber.user.firstName} ${barber.barber.user.lastName}`,
+          clientId: client?.id,
+          ...(client?.id && {
+            clientName: `${client?.firstName} ${client?.lastName}`,
+          }),
+          promoCode,
+          subTotal,
+          discount,
+          discountType: type,
+          total,
+          slot,
+          booking,
+          status,
+          services: service.map((s) => ({
+            id: s.id,
+            nameEN: s.Translation.find((t) => t.language === 'EN')?.name,
+            nameAR: s.Translation.find((t) => t.language === 'AR')?.name,
+            name: s.Translation.find((t) => t.language === language)?.name,
+            price: s.price.toString(),
+          })),
+        };
+      }),
+      orderCount: branch._count.Order,
+    }));
+
+    return new AppSuccess(formattedOrders, 'Orders fetched successfully');
+  }
 
   async getNonSelectedServices(id: string, language: Language) {
     const order = await this.findOneOrFail(id);
@@ -164,6 +275,7 @@ export class OrderService {
         },
       },
     });
+    console.log(fetchedOrders);
 
     const TotalSales = await this.prisma.order.aggregate({
       where: {

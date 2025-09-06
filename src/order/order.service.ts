@@ -61,8 +61,8 @@ export class OrderService {
         Order: {
           where: {
             date: {
-              gte: fromDate,
-              lte: toDate,
+              gte: isAdmin ? fromDate : startOfDay(new Date()),
+              lte: isAdmin ? toDate : endOfDay(new Date()),
             },
           },
           include: {

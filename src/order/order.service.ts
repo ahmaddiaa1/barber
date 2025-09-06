@@ -45,7 +45,18 @@ export class OrderService {
     const branches = await this.prisma.branch.findMany({
       where: branchFilter,
       include: {
-        _count: { select: { Order: true } },
+        _count: {
+          select: {
+            Order: {
+              where: {
+                date: {
+                  gte: fromDate,
+                  lte: toDate,
+                },
+              },
+            },
+          },
+        },
         Translation: true,
         Order: {
           where: {

@@ -37,8 +37,12 @@ export class OrderController {
     @Query('fromDate') from: string,
     @Query('toDate') to: string,
   ) {
-    const fromDate = new Date(from ?? new Date());
+    const today = new Date();
+    const oneMonthBefore = new Date();
+    oneMonthBefore.setMonth(today.getMonth() - 1);
+    const fromDate = new Date(from ?? oneMonthBefore);
     const toDate = new Date(to ?? new Date());
+    console.log(fromDate, toDate);
     return this.orderService.getAllOrdersDateRange(
       user,
       lang,

@@ -110,7 +110,6 @@ export class OrderService {
         const {
           id,
           barber,
-          service,
           date,
           client,
           promoCode,
@@ -119,22 +118,22 @@ export class OrderService {
           booking,
           status,
           subTotal,
-          discount,
           type,
         } = order;
 
         return {
           id,
           date: format(new Date(date), 'yyyy-MM-dd'),
-          barberId: barber.id,
-          barberName: `${barber.barber.user.firstName} ${barber.barber.user.lastName}`,
+          ...(barber && {
+            barberId: barber.id,
+            barberName: `${barber.barber.user.firstName} ${barber.barber.user.lastName}`,
+          }),
           clientId: client?.id,
           ...(client?.id && {
             clientName: `${client?.firstName} ${client?.lastName}`,
           }),
           promoCode,
           subTotal,
-          discount,
           discountType: type,
           total,
           slot,
@@ -313,6 +312,7 @@ export class OrderService {
           usedPackage,
           client,
           status,
+          barberName,
         } = order;
 
         const usedPackages = await this.prisma.clientPackages.findMany({
@@ -364,8 +364,10 @@ export class OrderService {
           date: format(new Date(date), 'yyyy-MM-dd'),
           status,
           duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
-          barberUserName: `${barber.barber.user.firstName} ${barber.barber.user.lastName}`,
-          barberAvatar: barber.barber.user.avatar,
+          barberUserName: barber
+            ? `${barber.barber.user.firstName} ${barber.barber.user.lastName}`
+            : (barberName ?? ''),
+          barberAvatar: barber ? barber.barber.user.avatar : null,
           userName: `${client?.firstName}${client?.lastName}`,
           userPhone: client?.phone,
           total: total.toString(),
@@ -404,7 +406,6 @@ export class OrderService {
           date,
           total,
           subTotal,
-          discount,
           points,
           service,
           branch: { Translation, ...branchRest },
@@ -493,7 +494,6 @@ export class OrderService {
           date,
           total,
           subTotal,
-          discount,
           points,
           service,
           branch: { Translation, ...branchRest },
@@ -580,7 +580,6 @@ export class OrderService {
           date,
           total,
           subTotal,
-          discount,
           points,
           service,
           branch: { Translation, ...branchRest },
@@ -685,7 +684,7 @@ export class OrderService {
       await Promise.all([
         await this.prisma.order.findFirst({
           where: {
-            barberId: barberId,
+            ...(barberId && { barberId: barberId }),
             date: new Date(dateWithoutTime),
             slot: slot,
             OR: [
@@ -707,7 +706,9 @@ export class OrderService {
             },
           },
         }),
-        (await this.getSlots(dateWithoutTime, barberId)).data.slots,
+        barberId
+          ? (await this.getSlots(dateWithoutTime, barberId)).data.slots
+          : [],
         promoCode &&
           (await this.promoCodeService.validatePromoCode(promoCode)).data,
 
@@ -734,7 +735,7 @@ export class OrderService {
 
     if (order) throw new ConflictException(`Slot ${slot} is already booked`);
 
-    if (!slots.includes(slot))
+    if (barberId && !slots.includes(slot))
       throw new ServiceUnavailableException(`Slot ${slot} is Unavailable`);
 
     let costServices = [] as PrismaServiceType[];
@@ -843,7 +844,7 @@ export class OrderService {
       {
         date: format(new Date(dateWithoutTime), 'yyyy-MM-dd'),
         slot,
-        barberId,
+        ...(barberId && { barberId }),
         branchId,
         canUsePoints:
           settings.pointLimit < usedPromoCode?.client?.points ||
@@ -876,7 +877,6 @@ export class OrderService {
       slot,
       service,
       barberId,
-      packages,
       branchId,
       usedPackage,
       promoCode,
@@ -903,7 +903,7 @@ export class OrderService {
       await Promise.all([
         await this.prisma.order.findFirst({
           where: {
-            barberId: barberId,
+            ...(barberId && { barberId: barberId }),
             date: new Date(dateWithoutTime),
             slot: slot,
             OR: [
@@ -924,7 +924,9 @@ export class OrderService {
             },
           },
         }),
-        (await this.getSlots(dateWithoutTime, barberId)).data.slots,
+        barberId
+          ? (await this.getSlots(dateWithoutTime, barberId)).data.slots
+          : [],
         promoCode &&
           (await this.promoCodeService.validatePromoCode(promoCode)).data,
         await this.prisma.user.findUnique({
@@ -972,13 +974,15 @@ export class OrderService {
       throw new ConflictException(`Slot ${slot} is already booked`);
     }
 
-    if (!slots.includes(slot)) {
+    if (barberId && !slots.includes(slot)) {
       throw new ServiceUnavailableException(`Slot ${slot} is Unavailable`);
     }
 
-    const barber = await this.prisma.barber.findUnique({
-      where: { id: barberId },
-    });
+    const barber = barberId
+      ? await this.prisma.barber.findUnique({
+          where: { id: barberId },
+        })
+      : null;
     const branch = await this.prisma.branch.findUnique({
       where: { id: branchId },
     });
@@ -986,7 +990,7 @@ export class OrderService {
       where: { id: { in: service } },
     });
 
-    if (!barber) throw new NotFoundException('Barber not found');
+    if (barberId && !barber) throw new NotFoundException('Barber not found');
     if (!branch) throw new NotFoundException('Branch not found');
     if (!Services || !Services.length)
       throw new NotFoundException('Service not found');
@@ -1088,7 +1092,7 @@ export class OrderService {
           ...(validPromoCode && { promoCode }),
           slot,
           userId,
-          barberId,
+          ...(barberId && { barberId }),
           branchId,
           points: point,
           usedPackage: selectedPackage
@@ -1181,7 +1185,7 @@ export class OrderService {
           ...rest,
           ...(validPromoCode && { promoCode }),
           slot,
-          barberId,
+          ...(barberId && { barberId }),
           branchId,
           points: point,
           discount: validPromoCode ? validPromoCode.discount : 0,
@@ -1218,7 +1222,7 @@ export class OrderService {
       {
         date: format(order.date, 'yyyy-MM-dd'),
         slot: order.slot,
-        barberId: order.barberId,
+        ...(order.barberId && { barberId: order.barberId }),
         branchId: order.branchId,
         points: order.points?.toString(),
         createdAt: order.createdAt,
@@ -1279,7 +1283,6 @@ export class OrderService {
     const multiPackages = clientPackages.filter(
       (pkg) => pkg.type === 'MULTIPLE',
     );
-    let subTotal = order.subTotal;
     let total = order.total;
 
     for (const serviceId of add) {
@@ -1296,17 +1299,11 @@ export class OrderService {
             where: { id: singlePackageService.id },
             data: { remainingCount: singlePackageService.remainingCount - 1 },
           });
-          const service = await this.prisma.service.findUnique({
-            where: { id: singlePackageService.serviceId },
-            select: { price: true },
-          });
-          subTotal += service.price;
         } else {
           const service = await this.prisma.service.findUnique({
             where: { id: serviceId },
             select: { price: true },
           });
-          subTotal += service.price;
           total += service.price;
         }
       } else {
@@ -1314,7 +1311,6 @@ export class OrderService {
           where: { id: serviceId },
           select: { price: true },
         });
-        subTotal += service.price;
         total += service.price;
       }
     }
@@ -1342,7 +1338,6 @@ export class OrderService {
           });
 
           total -= service.price;
-          subTotal -= service.price;
         } else {
           await this.prisma.packagesServices.update({
             where: { id: singlePackageService.id },
@@ -1353,7 +1348,6 @@ export class OrderService {
             select: { price: true },
           });
           total -= service.price;
-          subTotal -= service.price;
         }
       } else {
         const service = await this.prisma.service.findUnique({
@@ -1361,7 +1355,6 @@ export class OrderService {
           select: { price: true },
         });
         total -= service.price;
-        subTotal -= service.price;
       }
     }
 
@@ -1403,7 +1396,7 @@ export class OrderService {
       where: { id },
       data: {
         ...rest,
-        subTotal: total,
+        subTotal: order.subTotal,
         total,
         service: {
           connect: add.map((id) => ({ id })),
@@ -1649,13 +1642,18 @@ export class OrderService {
     return new AppSuccess(updatedOrder, 'Order marked as paid');
   }
 
-  async getSlots(date: string, barberId: string) {
+  async getSlots(date: string, barberId?: string) {
     const dateWithoutTime = date.split('T')[0];
     const startOfDay = new Date(dateWithoutTime);
     const endOfDay = new Date(dateWithoutTime);
 
     startOfDay.setUTCHours(0, 0, 0, 0);
     endOfDay.setUTCHours(23, 59, 59, 999);
+
+    // If no barberId provided, return empty slots
+    if (!barberId) {
+      return new AppSuccess({ slots: [] }, 'No barber specified');
+    }
 
     const barber = await this.prisma.barber.findUnique({
       where: {

@@ -134,7 +134,7 @@ export class OrderController {
 
   @UseGuards(AuthGuard(false), RolesGuard)
   @Get('/slots')
-  async getSlots(@Query('') query: { date: string; barberId: string }) {
+  async getSlots(@Query() query: { date: string; barberId?: string }) {
     return this.orderService.getSlots(query.date, query.barberId);
   }
 

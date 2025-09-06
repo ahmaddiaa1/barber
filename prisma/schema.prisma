@@ -73,8 +73,8 @@ model Vacation {
   month     DateTime   @default(now())
   cashierId String?
   barberId  String?
-  barber    Barber?    @relation(fields: [barberId], references: [id])
-  cashier   Cashier?   @relation(fields: [cashierId], references: [id])
+  barber    Barber?    @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  cashier   Cashier?   @relation(fields: [cashierId], references: [id], onDelete: Cascade)
 }
 
 model Admin {
@@ -255,8 +255,8 @@ model Slot {
   end       Int
   barberId  String?  @unique
   cashierId String?  @unique
-  Cashier   Cashier? @relation(fields: [cashierId], references: [id])
-  barber    Barber?  @relation(fields: [barberId], references: [id])
+  Cashier   Cashier? @relation(fields: [cashierId], references: [id], onDelete: Cascade)
+  barber    Barber?  @relation(fields: [barberId], references: [id], onDelete: Cascade)
   slot      String[]
 }
 

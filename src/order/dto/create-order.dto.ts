@@ -28,9 +28,9 @@ export class CreateOrderDto {
   @IsString()
   slot: string;
 
+  @IsOptional()
   @IsUUID()
-  @IsNotEmpty()
-  barberId: string;
+  barberId?: string;
 
   @ValidateIf((d) => !d.package && !d.service)
   @IsArray()

@@ -24,6 +24,11 @@ import { multerConfig } from 'src/config/multer.config';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Put('reset-canceled-orders')
+  resetCanceledOrders(@Body('phone') phone: string) {
+    return this.userService.resetCanceledOrders(phone);
+  }
+
   @Put('unban')
   unbanUser(@Body('number') number: string) {
     return this.userService.unbanUser(number);

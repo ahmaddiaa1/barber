@@ -7,7 +7,6 @@ import {
   IsInt,
   Min,
   IsUUID,
-  IsNotEmpty,
   ValidateIf,
   Length,
 } from 'class-validator';
@@ -31,6 +30,10 @@ export class CreateOrderDto {
   @IsOptional()
   @IsUUID()
   barberId?: string;
+
+  @IsOptional()
+  @IsString()
+  barberName?: string;
 
   @ValidateIf((d) => !d.package && !d.service)
   @IsArray()

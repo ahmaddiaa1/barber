@@ -884,8 +884,11 @@ export class OrderService {
       promoCode,
       points,
       phone,
+      barberName,
       ...rest
     } = createOrderDto;
+
+    console.log('CreateOrder - barberId received:', barberId);
     if (!Number.isInteger(points)) {
       throw new BadRequestException('Points must be a number');
     }
@@ -983,8 +986,24 @@ export class OrderService {
     const barber = barberId
       ? await this.prisma.barber.findUnique({
           where: { id: barberId },
+          include: {
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
         })
       : null;
+
+    console.log('barber', barber);
+    console.log('barberName from DTO:', barberName);
+    console.log(
+      'Generated barberName:',
+      barberName || `${barber?.user.firstName} ${barber?.user.lastName}`,
+    );
+
     const branch = await this.prisma.branch.findUnique({
       where: { id: branchId },
     });
@@ -1095,6 +1114,7 @@ export class OrderService {
           slot,
           userId,
           ...(barberId && { barberId }),
+          barberName: `${barber?.user.firstName} ${barber?.user.lastName}`,
           branchId,
           points: point,
           usedPackage: selectedPackage
@@ -1187,7 +1207,10 @@ export class OrderService {
           ...rest,
           ...(validPromoCode && { promoCode }),
           slot,
-          ...(barberId && { barberId }),
+          userId,
+          barberId,
+          barberName:
+            barberName || `${barber?.user.firstName} ${barber?.user.lastName}`,
           branchId,
           points: point,
           discount: validPromoCode ? validPromoCode.discount : 0,
@@ -1217,6 +1240,9 @@ export class OrderService {
       });
     }
 
+    console.log('Order created with barberId:', order.barberId);
+    console.log('Order created with barberName:', order.barberName);
+
     const duration =
       allServices.reduce((acc, service) => acc + service.duration, 0) + 15;
 
@@ -1224,8 +1250,9 @@ export class OrderService {
       {
         date: format(order.date, 'yyyy-MM-dd'),
         slot: order.slot,
-        ...(order.barberId && { barberId: order.barberId }),
+        ...(barberId && { barberId: order.barberId }),
         branchId: order.branchId,
+        barberName: order.barberName,
         points: order.points?.toString(),
         createdAt: order.createdAt,
         updatedAt: null,
@@ -1420,7 +1447,11 @@ export class OrderService {
 
   async cancelOrder(id: string) {
     this.findOneOrFail(id);
-    const settings = await this.prisma.settings.findFirst();
+    const settings = await this.prisma.settings.findFirst({
+      select: {
+        canceledOrder: true,
+      },
+    });
     const updatedOrder = await this.prisma.order.update({
       where: { id },
       include: {
@@ -1447,35 +1478,6 @@ export class OrderService {
       });
     }
 
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-
-    const endOfMonth = new Date();
-    endOfMonth.setMonth(endOfMonth.getMonth() + 1);
-    endOfMonth.setDate(0);
-    endOfMonth.setHours(23, 59, 59, 999);
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: updatedOrder.userId },
-      select: {
-        id: true,
-        UserOrders: {
-          where: {
-            status: 'CANCELLED',
-            date: {
-              gte: startOfMonth,
-              lte: endOfMonth,
-            },
-          },
-          select: {
-            id: true,
-            status: true,
-          },
-        },
-      },
-    });
-
     if (
       updatedOrder.status === 'IN_PROGRESS' ||
       updatedOrder.status === 'COMPLETED' ||
@@ -1491,7 +1493,7 @@ export class OrderService {
     );
 
     await this.prisma.$transaction(async (prisma) => {
-      if (packageServiceIds.length >= settings.canceledOrder) {
+      if (packageServiceIds.length >= 1) {
         await prisma.packagesServices.updateMany({
           where: {
             id: { in: packageServiceIds },
@@ -1520,9 +1522,18 @@ export class OrderService {
         });
       }
 
-      if (user?.UserOrders.length >= 1) {
+      const updatedClient = await prisma.client.update({
+        where: { id: updatedOrder.userId },
+        data: {
+          canceledOrders: {
+            increment: 1,
+          },
+        },
+      });
+
+      if (updatedClient.canceledOrders >= settings?.canceledOrder) {
         await prisma.client.update({
-          where: { id: user.id },
+          where: { id: updatedOrder.userId },
           data: {
             ban: true,
           },

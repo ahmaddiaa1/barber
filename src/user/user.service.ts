@@ -176,18 +176,6 @@ export class UserService {
     return new AppSuccess(updateUser, 'User updated successfully', 200);
   }
 
-  public async resetCanceledOrders(phone: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { phone },
-    });
-    if (!user) throw new NotFoundException('User not found');
-    await this.prisma.client.update({
-      where: { id: user.id },
-      data: { canceledOrders: 0 },
-    });
-    return new AppSuccess(null, 'Canceled orders reset successfully', 200);
-  }
-
   public async CurrentUser(user: User) {
     const userWithRole = await this.prisma.user.findUnique({
       where: { id: user.id },

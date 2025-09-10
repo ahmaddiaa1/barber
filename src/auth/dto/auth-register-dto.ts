@@ -1,7 +1,8 @@
-import { Role } from '@prisma/client';
+import { CategoryType, Role } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
   IsArray,
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -67,6 +68,11 @@ export class RegisterDto {
   @IsNotEmpty({ message: 'Start time is required' })
   @IsInt({ message: 'Start must be a whole number' })
   start: number;
+
+  @ValidateIf((o) => ['BARBER'].includes(o?.role?.toUpperCase()))
+  @IsNotEmpty({ message: 'Type is required' })
+  @IsEnum(CategoryType, { message: 'Type must be [BARBER, PEDICURE, MASSAGE]' })
+  type: CategoryType;
 
   @ValidateIf((o) => ['CASHIER', 'BARBER'].includes(o?.role?.toUpperCase()))
   @Transform(({ value }) => {

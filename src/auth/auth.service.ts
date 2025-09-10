@@ -322,7 +322,7 @@ export class AuthService {
     return { status: true, user: isReferralCodeExist };
   }
 
-  private async generateSlots(start: number, end: number) {
+  async generateSlots(start: number, end: number) {
     const duration = (await this.prisma.settings.findFirst({})).slotDuration;
 
     if (!Number.isInteger(start) || !Number.isInteger(end))

@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
-import { Category, Language, User } from '@prisma/client';
+import { Category, CategoryType, Language, User } from '@prisma/client';
 import {
   createTranslation,
   Translation,
@@ -18,6 +18,7 @@ export class CategoryService {
   public async findAllCategories(
     user: User,
     language: Language,
+    type: CategoryType,
   ): Promise<AppSuccess<{ categories: Category[]; package: any }>> {
     let packages;
 
@@ -75,6 +76,7 @@ export class CategoryService {
     }
 
     const fetchedCategories = await this.prisma.category.findMany({
+      where: { type },
       include: {
         services: {
           include: Translation(),

@@ -3,10 +3,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role, User } from '@prisma/client';
 import { UserUpdateDto } from './dto/user-update-dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly AuthService: AuthService,
+  ) {}
 
   private user = {
     id: true,
@@ -117,43 +121,68 @@ export class UserService {
   ) {
     const user = await this.findOne(id);
     if (!user) throw new NotFoundException('User not found');
+    const { maxDaysBooking } = await this.prisma.settings.findFirst({
+      select: { maxDaysBooking: true },
+    });
+    const now = new Date();
+    const effectiveSlotDate = new Date(now);
+    effectiveSlotDate.setDate(now.getDate() + maxDaysBooking + 1);
+
+    const { vacations, vacationsToDelete, type, start, end, ...rest } =
+      userData;
     const roleKey = user.role.toLowerCase();
-    const { vacations, vacationsToDelete, ...rest } = userData;
     const avatar = file?.path;
+    console.log(rest);
     const updateUser = await this.prisma.user.update({
       where: { id },
       data: {
         ...rest,
         ...(avatar && { avatar }),
-        ...((vacations || vacationsToDelete) && {
+        ...((vacations || vacationsToDelete || start || end || type) && {
           [roleKey]: {
             update: {
-              vacations: {
-                ...(vacationsToDelete && {
-                  deleteMany: {
-                    id: { in: vacationsToDelete },
+              ...((vacationsToDelete || vacations) && {
+                vacations: {
+                  ...(vacationsToDelete && {
+                    deleteMany: {
+                      id: { in: vacationsToDelete },
+                    },
+                  }),
+                  ...(vacations && {
+                    upsert: vacations.map((vacation) => ({
+                      where: { id: vacation.id || 'new' },
+                      create: {
+                        dates: vacation.dates.map((v) => {
+                          const dateWithoutTime = v.split('T')[0];
+                          return new Date(dateWithoutTime);
+                        }),
+                        month: new Date(vacation.month),
+                      },
+                      update: {
+                        dates: vacation.dates.map((v) => {
+                          const dateWithoutTime = v.split('T')[0];
+                          return new Date(dateWithoutTime);
+                        }),
+                        month: new Date(vacation.month),
+                      },
+                    })),
+                  }),
+                },
+              }),
+              ...((start || end) && {
+                Slot: {
+                  update: {
+                    updatedSlot: await this.AuthService.generateSlots(
+                      start,
+                      end,
+                    ),
+                    effectiveSlotDate,
+                    end,
+                    start,
                   },
-                }),
-                ...(vacations && {
-                  upsert: vacations.map((vacation) => ({
-                    where: { id: vacation.id || 'new' },
-                    create: {
-                      dates: vacation.dates.map((v) => {
-                        const dateWithoutTime = v.split('T')[0];
-                        return new Date(dateWithoutTime);
-                      }),
-                      month: new Date(vacation.month),
-                    },
-                    update: {
-                      dates: vacation.dates.map((v) => {
-                        const dateWithoutTime = v.split('T')[0];
-                        return new Date(dateWithoutTime);
-                      }),
-                      month: new Date(vacation.month),
-                    },
-                  })),
-                }),
-              },
+                },
+              }),
+              ...(user.role === Role.BARBER && { type }),
             },
           },
         }),
@@ -164,17 +193,89 @@ export class UserService {
         lastName: true,
         avatar: true,
         phone: true,
-        [roleKey]: {
-          select: {
-            vacations: { select: { dates: true, month: true, id: true } },
-          },
-        },
+        [roleKey]: { include: { vacations: true, Slot: true } },
       },
     });
     console.log(updateUser);
 
     return new AppSuccess(updateUser, 'User updated successfully', 200);
   }
+  // public async updateUser(
+  //   id: string,
+  //   userData: UserUpdateDto,
+  //   file?: Express.Multer.File,
+  // ) {
+  //   const user = await this.findOne(id);
+  //   if (!user) throw new NotFoundException('User not found');
+  //   const { maxDaysBooking } = await this.prisma.settings.findFirst({
+  //     select: { maxDaysBooking: true },
+  //   });
+  //   const now = new Date();
+  //   const effectiveSlotDate = new Date(now);
+  //   effectiveSlotDate.setDate(now.getDate() + maxDaysBooking + 1);
+
+  //   const { start, end, vacations, role, vacationsToDelete, ...rest } =
+  //     userData;
+  //   const roleKey = role.toLowerCase();
+  //   const avatar = file?.path;
+
+  //   const updateUser = await this.prisma.user.update({
+  //     where: { id },
+  //     data: {
+  //       ...rest,
+  //       ...(avatar && { avatar }),
+  //       ...((vacations || vacationsToDelete) && {
+  //         [roleKey]: {
+  //           update: {
+  //             ...((vacations || vacationsToDelete) && {
+  //               vacations: {
+  //                 ...(vacationsToDelete && {
+  //                   deleteMany: {
+  //                     id: { in: vacationsToDelete },
+  //                   },
+  //                 }),
+  //                 ...(vacations && {
+  //                   upsert: vacations.map((vacation) => ({
+  //                     where: { id: vacation.id || 'new' },
+  //                     create: {
+  //                       dates: vacation.dates.map((v) => {
+  //                         const dateWithoutTime = v.split('T')[0];
+  //                         return new Date(dateWithoutTime);
+  //                       }),
+  //                       month: new Date(vacation.month),
+  //                     },
+  //                     update: {
+  //                       dates: vacation.dates.map((v) => {
+  //                         const dateWithoutTime = v.split('T')[0];
+  //                         return new Date(dateWithoutTime);
+  //                       }),
+  //                       month: new Date(vacation.month),
+  //                     },
+  //                   })),
+  //                 }),
+  //               },
+  //             }),
+  //           },
+  //         },
+  //       }),
+  //     },
+  //     select: {
+  //       id: true,
+  //       firstName: true,
+  //       lastName: true,
+  //       avatar: true,
+  //       phone: true,
+  //       [roleKey]: {
+  //         select: {
+  //           vacations: { select: { dates: true, month: true, id: true } },
+  //         },
+  //       },
+  //     },
+  //   });
+  //   console.log(updateUser);
+
+  //   return new AppSuccess(updateUser, 'User updated successfully', 200);
+  // }
 
   public async resetCanceledOrders(phone: string) {
     const user = await this.prisma.user.findUnique({

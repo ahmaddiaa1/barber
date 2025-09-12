@@ -139,6 +139,11 @@ export class AuthService {
       case Role.BARBER:
         if (!branchId)
           throw new BadRequestException('Branch ID is required for barbers');
+
+        const barberSlot = await this.generateSlots(start, end);
+        if (!barberSlot.length) {
+          throw new BadRequestException('No slots generated for the barber');
+        }
         user = await this.createUser(
           createAuthDto,
           hashedPassword,
@@ -146,12 +151,13 @@ export class AuthService {
             role: Role.BARBER,
             barber: {
               create: {
+                type: createAuthDto.type,
                 branchId,
                 Slot: {
                   create: {
                     start,
                     end,
-                    slot: await this.generateSlots(start, end),
+                    slot: barberSlot,
                   },
                 },
               },
@@ -161,10 +167,13 @@ export class AuthService {
         );
 
         break;
-
       case Role.CASHIER:
         if (!branchId)
           throw new BadRequestException('Branch ID is required for cashiers');
+        const cashierSlot = await this.generateSlots(start, end);
+        if (!cashierSlot.length) {
+          throw new BadRequestException('No slots generated for the barber');
+        }
         user = await this.createUser(
           createAuthDto,
           hashedPassword,
@@ -177,7 +186,7 @@ export class AuthService {
                   create: {
                     start,
                     end,
-                    slot: await this.generateSlots(start, end),
+                    slot: cashierSlot,
                   },
                 },
               },
@@ -270,10 +279,9 @@ export class AuthService {
     const {
       branchId,
       role: roles = 'user',
-      start,
-      end,
-      referralCode,
-      ...rest
+      firstName,
+      lastName,
+      phone,
     } = createAuthDto;
     const role = roles.toUpperCase() as Role;
 
@@ -288,7 +296,9 @@ export class AuthService {
       return this.prisma.$transaction(async (prisma) => {
         const user = await prisma.user.create({
           data: {
-            ...rest,
+            firstName,
+            lastName,
+            phone,
             role,
             password: hashedPassword,
             ...(avatar && { avatar: avatar }),
@@ -301,9 +311,14 @@ export class AuthService {
             ...data,
             ...(avatar && { avatar: avatar }),
           },
+          include: {
+            barber: { include: { Slot: true } },
+          },
         });
       });
-    } catch (error) {}
+    } catch (error) {
+      throw new BadRequestException('Failed to create user', error.message);
+    }
   }
 
   public async generateToken(userId: string) {
@@ -336,21 +351,47 @@ export class AuthService {
       );
     }
 
+    const slotsArray: string[] = [];
+
+    // Handle case where time spans across midnight (e.g., start: 24, end: 12)
     if (start >= end) {
-      throw new BadRequestException('Start time must be less than end time.');
+      // From start to end of day (24:00)
+      for (let time = start * 60; time < 24 * 60; time += duration) {
+        const hour = Math.floor(time / 60);
+        const minute = time % 60;
+        const formattedHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const slot = `${formattedHour.toString().padStart(2, '0')}:${minute
+          .toString()
+          .padStart(2, '0')} ${period}`;
+        slotsArray.push(slot);
+      }
+
+      // From start of day (00:00) to end
+      for (let time = 0; time < end * 60; time += duration) {
+        const hour = Math.floor(time / 60);
+        const minute = time % 60;
+        const formattedHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const slot = `${formattedHour.toString().padStart(2, '0')}:${minute
+          .toString()
+          .padStart(2, '0')} ${period}`;
+        slotsArray.push(slot);
+      }
+    } else {
+      // Normal case where start < end
+      for (let time = start * 60; time < end * 60; time += duration) {
+        const hour = Math.floor(time / 60);
+        const minute = time % 60;
+        const formattedHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const slot = `${formattedHour.toString().padStart(2, '0')}:${minute
+          .toString()
+          .padStart(2, '0')} ${period}`;
+        slotsArray.push(slot);
+      }
     }
 
-    const slotsArray = [];
-    for (let time = start * 60; time < end * 60; time += duration) {
-      const hour = Math.floor(time / 60);
-      const minute = time % 60;
-      const formattedHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-      const period = hour >= 12 ? 'PM' : 'AM';
-      const slot = `${formattedHour.toString().padStart(2, '0')}:${minute
-        .toString()
-        .padStart(2, '0')} ${period}`;
-      slotsArray.push(slot);
-    }
     return slotsArray;
   }
 }

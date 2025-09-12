@@ -71,7 +71,7 @@ export class RegisterDto {
 
   @ValidateIf((o) => ['BARBER'].includes(o?.role?.toUpperCase()))
   @IsNotEmpty({ message: 'Type is required' })
-  @IsEnum(CategoryType, { message: 'Type must be [BARBER, PEDICURE, MASSAGE]' })
+  @IsEnum(CategoryType)
   type: CategoryType;
 
   @ValidateIf((o) => ['CASHIER', 'BARBER'].includes(o?.role?.toUpperCase()))

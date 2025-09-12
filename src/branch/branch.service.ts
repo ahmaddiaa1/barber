@@ -84,6 +84,7 @@ export class BranchService {
           select: {
             id: true,
             rate: true,
+            type: true,
             user: {
               select: {
                 id: false,

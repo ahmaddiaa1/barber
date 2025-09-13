@@ -202,7 +202,7 @@ export class UserService {
         lastName: true,
         avatar: true,
         phone: true,
-        [roleKey]: { include: { vacations: true, Slot: true, type: true } },
+        [roleKey]: { include: { vacations: true, Slot: true } },
       },
     });
     console.log(updateUser);

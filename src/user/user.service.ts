@@ -36,6 +36,7 @@ export class UserService {
     id: false,
     branch: true,
     Slot: true,
+    type: true,
     vacations: true,
   } as Prisma.BarberSelect;
 
@@ -193,7 +194,7 @@ export class UserService {
         lastName: true,
         avatar: true,
         phone: true,
-        [roleKey]: { include: { vacations: true, Slot: true } },
+        [roleKey]: { include: { vacations: true, Slot: true, type: true } },
       },
     });
     console.log(updateUser);

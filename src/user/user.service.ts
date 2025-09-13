@@ -201,8 +201,7 @@ export class UserService {
         ...rest,
         ...(avatar && { avatar }),
         ...((vacations || vacationsToDelete || start || end || type) && {
-          // [roleKey]: {
-          barber: {
+          [roleKey]: {
             update: {
               ...((vacationsToDelete || vacations) && {
                 vacations: {

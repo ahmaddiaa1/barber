@@ -32,13 +32,20 @@ export class UserService {
     canceledOrders: true,
   } as Prisma.ClientSelect;
 
-  private barberAndCashier = {
+  private barber = {
     id: false,
     branch: true,
     Slot: true,
     type: true,
     vacations: true,
   } as Prisma.BarberSelect;
+
+  private cashier = {
+    id: false,
+    branch: true,
+    Slot: true,
+    vacations: true,
+  } as Prisma.CashierSelect;
 
   public async findAllClients(page = 1, pageSize = 10, phone?: string) {
     try {
@@ -74,16 +81,17 @@ export class UserService {
               select:
                 Role[role.toUpperCase()] === 'ADMIN'
                   ? ({ id: true } as Prisma.AdminSelect)
-                  : Role[role.toUpperCase()] === 'BARBER' ||
-                      Role[role.toUpperCase()] === 'CASHIER'
-                    ? this.barberAndCashier
-                    : this.client,
+                  : Role[role.toUpperCase()] === 'BARBER'
+                    ? this.barber
+                    : Role[role.toUpperCase()] === 'CASHIER'
+                      ? this.cashier
+                      : this.client,
             },
           }
         : {
             admin: false,
-            barber: { select: this.barberAndCashier },
-            cashier: { select: this.barberAndCashier },
+            barber: { select: this.barber },
+            cashier: { select: this.cashier },
           };
       const fetchedUser = await this.prisma.user.findMany({
         where: { role: Role[role?.toUpperCase()] ?? { not: Role.USER } },
@@ -295,8 +303,8 @@ export class UserService {
       where: { id: user.id },
       select: {
         ...this.user,
-        barber: { select: this.barberAndCashier },
-        cashier: { select: this.barberAndCashier },
+        barber: { select: this.barber },
+        cashier: { select: this.cashier },
         client: { select: this.client },
       },
     });
@@ -333,8 +341,8 @@ export class UserService {
       select: {
         ...this.user,
         admin: true,
-        barber: { select: this.barberAndCashier },
-        cashier: { select: this.barberAndCashier },
+        barber: { select: this.barber },
+        cashier: { select: this.cashier },
         client: { select: this.client },
       },
     });

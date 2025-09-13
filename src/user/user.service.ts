@@ -35,7 +35,16 @@ export class UserService {
   private barber = {
     id: false,
     branch: true,
-    Slot: true,
+    Slot: {
+      select: {
+        id: true,
+        start: true,
+        end: true,
+        slot: true,
+        updatedSlot: true,
+        effectiveSlotDate: true,
+      },
+    },
     type: true,
     vacations: true,
   } as Prisma.BarberSelect;
@@ -43,7 +52,16 @@ export class UserService {
   private cashier = {
     id: false,
     branch: true,
-    Slot: true,
+    Slot: {
+      select: {
+        id: true,
+        start: true,
+        end: true,
+        slot: true,
+        updatedSlot: true,
+        effectiveSlotDate: true,
+      },
+    },
     vacations: true,
   } as Prisma.CashierSelect;
 
@@ -101,10 +119,39 @@ export class UserService {
       });
 
       const users = fetchedUser.map(({ barber, cashier, ...user }) => {
+        const processSlotInfo = (employeeData: any) => {
+          if (!employeeData || !employeeData.Slot) return employeeData;
+
+          const { Slot, ...rest } = employeeData;
+          const today = new Date().toISOString().split('T')[0];
+
+          return {
+            ...rest,
+            schedule: {
+              workingHours: {
+                start: Slot.start,
+                end: Slot.end,
+              },
+              currentSlots: Slot.slot || [],
+              ...(Slot.updatedSlot &&
+                Slot.updatedSlot.length > 0 && {
+                  newSlots: Slot.updatedSlot,
+                  effectiveDate: Slot.effectiveSlotDate
+                    ?.toISOString()
+                    .split('T')[0],
+                  isNewSlotActive: Slot.effectiveSlotDate
+                    ? today >=
+                      Slot.effectiveSlotDate.toISOString().split('T')[0]
+                    : false,
+                }),
+            },
+          };
+        };
+
         return {
           ...user,
-          ...(barber && { barber }),
-          ...(cashier && { cashier }),
+          ...(barber && { barber: processSlotInfo(barber) }),
+          ...(cashier && { cashier: processSlotInfo(cashier) }),
         };
       });
 
@@ -315,20 +362,52 @@ export class UserService {
     const userRole =
       user.role === Role.USER ? 'client' : user.role.toLowerCase();
 
+    const processSlotInfo = (employeeData: any) => {
+      if (!employeeData || !employeeData.Slot) return employeeData;
+
+      const { Slot, ...restData } = employeeData;
+      const today = new Date().toISOString().split('T')[0];
+
+      return {
+        ...restData,
+        schedule: {
+          workingHours: {
+            start: Slot.start,
+            end: Slot.end,
+          },
+          currentSlots: Slot.slot || [],
+          ...(Slot.updatedSlot &&
+            Slot.updatedSlot.length > 0 && {
+              newSlots: Slot.updatedSlot,
+              effectiveDate: Slot.effectiveSlotDate
+                ?.toISOString()
+                .split('T')[0],
+              isNewSlotActive: Slot.effectiveSlotDate
+                ? today >= Slot.effectiveSlotDate.toISOString().split('T')[0]
+                : false,
+            }),
+        },
+      };
+    };
+
+    let roleData;
+    if (userRole === 'barber') {
+      roleData = processSlotInfo(barber);
+    } else if (userRole === 'cashier') {
+      roleData = processSlotInfo(cashier);
+    } else if (userRole === 'client') {
+      roleData = {
+        ...client,
+        ...(client?.ban && {
+          BanMessage: "You can't make any Order please get contact with us",
+        }),
+      };
+    }
+
     return new AppSuccess(
       {
         ...rest,
-        ...(userRole !== 'admin' && {
-          [userRole]: barber ||
-            cashier || {
-              ...client,
-              ...(userRole === 'client' &&
-                client?.ban && {
-                  BanMessage:
-                    "You can't make any Order please get contact with us",
-                }),
-            },
-        }),
+        ...(userRole !== 'admin' && { [userRole]: roleData }),
       },
       'User fetched successfully',
       200,
@@ -355,7 +434,42 @@ export class UserService {
 
     if (!user) throw new NotFoundException('User not found');
 
-    return { ...rest, [userRole]: admin || barber || cashier || client };
+    const processSlotInfo = (employeeData: any) => {
+      if (!employeeData || !employeeData.Slot) return employeeData;
+
+      const { Slot, ...restData } = employeeData;
+      const today = new Date().toISOString().split('T')[0];
+
+      return {
+        ...restData,
+        schedule: {
+          workingHours: {
+            start: Slot.start,
+            end: Slot.end,
+          },
+          currentSlots: Slot.slot || [],
+          ...(Slot.updatedSlot &&
+            Slot.updatedSlot.length > 0 && {
+              newSlots: Slot.updatedSlot,
+              effectiveDate: Slot.effectiveSlotDate
+                ?.toISOString()
+                .split('T')[0],
+              isNewSlotActive: Slot.effectiveSlotDate
+                ? today >= Slot.effectiveSlotDate.toISOString().split('T')[0]
+                : false,
+            }),
+        },
+      };
+    };
+
+    let roleData = admin || client;
+    if (barber) {
+      roleData = processSlotInfo(barber);
+    } else if (cashier) {
+      roleData = processSlotInfo(cashier);
+    }
+
+    return { ...rest, [userRole]: roleData };
   }
 
   async unbanUser(phone: string) {

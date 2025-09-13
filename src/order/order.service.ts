@@ -1728,11 +1728,21 @@ export class OrderService {
       : null;
 
     let allSlots: string[] = slot;
+    console.log('🔍 Slot Debug Info:');
+    console.log('dateWithoutTime:', dateWithoutTime);
+    console.log('effectiveSlotDateWithoutTime:', effectiveSlotDateWithoutTime);
+    console.log('today:', today);
+    console.log('original slot array:', slot);
+    console.log('updatedSlot array:', updatedSlot);
+
     if (
-      dateWithoutTime >= effectiveSlotDateWithoutTime &&
-      today < effectiveSlotDateWithoutTime
+      effectiveSlotDateWithoutTime &&
+      dateWithoutTime >= effectiveSlotDateWithoutTime
     ) {
       allSlots = updatedSlot;
+      console.log('✅ Using updatedSlot');
+    } else {
+      console.log('❌ Using original slot');
     }
 
     if (effectiveSlotDateWithoutTime && today >= effectiveSlotDateWithoutTime) {
@@ -1764,6 +1774,15 @@ export class OrderService {
 
     const availableSlots = allSlots.filter(
       (slot) => !blockedSlots.includes(slot),
+    );
+
+    console.log('📋 Final Results:');
+    console.log('allSlots:', allSlots);
+    console.log('blockedSlots:', blockedSlots);
+    console.log('availableSlots:', availableSlots);
+    console.log(
+      'Looking for slot "02:00 AM" in availableSlots:',
+      availableSlots.includes('02:00 AM'),
     );
 
     return new AppSuccess(

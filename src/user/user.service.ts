@@ -4,6 +4,7 @@ import { Prisma, Role, User } from '@prisma/client';
 import { UserUpdateDto } from './dto/user-update-dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { AuthService } from 'src/auth/auth.service';
+import { endOfDay, startOfToday } from 'date-fns';
 
 @Injectable()
 export class UserService {
@@ -188,14 +189,20 @@ export class UserService {
       userData;
     const roleKey = user.role.toLowerCase();
     const avatar = file?.path;
-    console.log(rest);
+    const shouldUpdateImmediately = await this.hasOrdersBetweenDates(
+      user.id,
+      startOfToday(),
+      endOfDay(effectiveSlotDate),
+    );
+
     const updateUser = await this.prisma.user.update({
       where: { id },
       data: {
         ...rest,
         ...(avatar && { avatar }),
         ...((vacations || vacationsToDelete || start || end || type) && {
-          [roleKey]: {
+          // [roleKey]: {
+          barber: {
             update: {
               ...((vacationsToDelete || vacations) && {
                 vacations: {
@@ -227,15 +234,30 @@ export class UserService {
               }),
               ...((start || end) && {
                 Slot: {
-                  update: {
-                    updatedSlot: await this.AuthService.generateSlots(
-                      start,
-                      end,
-                    ),
-                    effectiveSlotDate,
-                    end,
-                    start,
-                  },
+                  update: shouldUpdateImmediately
+                    ? {
+                        data: {
+                          slot: await this.AuthService.generateSlots(
+                            start,
+                            end,
+                          ),
+                          effectiveSlotDate: null,
+                          updatedSlot: [],
+                          end,
+                          start,
+                        },
+                      }
+                    : {
+                        data: {
+                          updatedSlot: await this.AuthService.generateSlots(
+                            start,
+                            end,
+                          ),
+                          effectiveSlotDate,
+                          end,
+                          start,
+                        },
+                      },
                 },
               }),
               ...(user.role === Role.BARBER && { type }),
@@ -256,82 +278,6 @@ export class UserService {
 
     return new AppSuccess(updateUser, 'User updated successfully', 200);
   }
-  // public async updateUser(
-  //   id: string,
-  //   userData: UserUpdateDto,
-  //   file?: Express.Multer.File,
-  // ) {
-  //   const user = await this.findOne(id);
-  //   if (!user) throw new NotFoundException('User not found');
-  //   const { maxDaysBooking } = await this.prisma.settings.findFirst({
-  //     select: { maxDaysBooking: true },
-  //   });
-  //   const now = new Date();
-  //   const effectiveSlotDate = new Date(now);
-  //   effectiveSlotDate.setDate(now.getDate() + maxDaysBooking + 1);
-
-  //   const { start, end, vacations, role, vacationsToDelete, ...rest } =
-  //     userData;
-  //   const roleKey = role.toLowerCase();
-  //   const avatar = file?.path;
-
-  //   const updateUser = await this.prisma.user.update({
-  //     where: { id },
-  //     data: {
-  //       ...rest,
-  //       ...(avatar && { avatar }),
-  //       ...((vacations || vacationsToDelete) && {
-  //         [roleKey]: {
-  //           update: {
-  //             ...((vacations || vacationsToDelete) && {
-  //               vacations: {
-  //                 ...(vacationsToDelete && {
-  //                   deleteMany: {
-  //                     id: { in: vacationsToDelete },
-  //                   },
-  //                 }),
-  //                 ...(vacations && {
-  //                   upsert: vacations.map((vacation) => ({
-  //                     where: { id: vacation.id || 'new' },
-  //                     create: {
-  //                       dates: vacation.dates.map((v) => {
-  //                         const dateWithoutTime = v.split('T')[0];
-  //                         return new Date(dateWithoutTime);
-  //                       }),
-  //                       month: new Date(vacation.month),
-  //                     },
-  //                     update: {
-  //                       dates: vacation.dates.map((v) => {
-  //                         const dateWithoutTime = v.split('T')[0];
-  //                         return new Date(dateWithoutTime);
-  //                       }),
-  //                       month: new Date(vacation.month),
-  //                     },
-  //                   })),
-  //                 }),
-  //               },
-  //             }),
-  //           },
-  //         },
-  //       }),
-  //     },
-  //     select: {
-  //       id: true,
-  //       firstName: true,
-  //       lastName: true,
-  //       avatar: true,
-  //       phone: true,
-  //       [roleKey]: {
-  //         select: {
-  //           vacations: { select: { dates: true, month: true, id: true } },
-  //         },
-  //       },
-  //     },
-  //   });
-  //   console.log(updateUser);
-
-  //   return new AppSuccess(updateUser, 'User updated successfully', 200);
-  // }
 
   public async resetCanceledOrders(phone: string) {
     const user = await this.prisma.user.findUnique({
@@ -580,5 +526,21 @@ export class UserService {
         break;
     }
     return new AppSuccess(null, 'Employee deleted successfully', 200);
+  }
+
+  async hasOrdersBetweenDates(userId: string, startDate: Date, endDate: Date) {
+    const orderCount = await this.prisma.order.count({
+      where: {
+        userId: userId,
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+    });
+
+    const hasOrders = orderCount > 0;
+
+    return !hasOrders;
   }
 }

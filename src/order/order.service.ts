@@ -335,6 +335,7 @@ export class OrderService {
         });
 
         const allServices = [
+          ...service,
           ...packageServices.flatMap((p) =>
             p.services.map((s) => ({
               ...s,
@@ -345,8 +346,8 @@ export class OrderService {
         ];
 
         const duration = (
-          allServices.reduce((total, service) => total + service.duration, 0) *
-          30
+          allServices.reduce((total, service) => total + service.duration, 0) +
+          15
         ).toString();
 
         const services = service.map((s) => {

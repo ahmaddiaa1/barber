@@ -1,11 +1,5 @@
 import { Transform } from 'class-transformer';
-import {
-  IsArray,
-  IsBoolean,
-  IsNotEmpty,
-  IsNumber,
-  IsString,
-} from 'class-validator';
+import { IsArray, IsBoolean, IsNumber, IsString } from 'class-validator';
 import { translationDto } from 'src/class-type/translation';
 
 export class CreateProductDto {
@@ -15,8 +9,12 @@ export class CreateProductDto {
   @IsNumber()
   price: number;
 
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return value;
+  })
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
   available: boolean;
 
   @IsArray()

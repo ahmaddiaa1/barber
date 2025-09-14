@@ -1737,7 +1737,9 @@ export class OrderService {
 
     if (
       effectiveSlotDateWithoutTime &&
-      dateWithoutTime >= effectiveSlotDateWithoutTime
+      dateWithoutTime >= effectiveSlotDateWithoutTime &&
+      updatedSlot &&
+      updatedSlot.length > 0
     ) {
       allSlots = updatedSlot;
       console.log('✅ Using updatedSlot');
@@ -1746,15 +1748,29 @@ export class OrderService {
     }
 
     if (effectiveSlotDateWithoutTime && today >= effectiveSlotDateWithoutTime) {
-      const newSlots = await this.prisma.slot.update({
-        where: { barberId },
-        data: {
-          slot: updatedSlot,
-          effectiveSlotDate: null,
-          updatedSlot: [],
-        },
-      });
-      allSlots = newSlots.slot;
+      // Only update if updatedSlot is not empty
+      if (updatedSlot && updatedSlot.length > 0) {
+        const newSlots = await this.prisma.slot.update({
+          where: { barberId },
+          data: {
+            slot: updatedSlot,
+            effectiveSlotDate: null,
+            updatedSlot: [],
+          },
+        });
+        allSlots = newSlots.slot;
+        console.log('✅ Updated slots to new schedule');
+      } else {
+        console.log('❌ Skipping slot update - updatedSlot is empty');
+        // Just clear the effective date without changing slots
+        await this.prisma.slot.update({
+          where: { barberId },
+          data: {
+            effectiveSlotDate: null,
+            updatedSlot: [],
+          },
+        });
+      }
     }
 
     const blockedSlots = [];

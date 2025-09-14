@@ -263,7 +263,7 @@ model Slot {
   barber            Barber?   @relation(fields: [barberId], references: [id], onDelete: Cascade)
   slot              String[]
   updatedSlot       String[]
-  effectiveSlotDate DateTime? @default(now())
+  effectiveSlotDate DateTime?
 }
 
 model PromoCode {

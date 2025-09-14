@@ -377,6 +377,7 @@ export class UserService {
       if (!employeeData || !employeeData.Slot) return employeeData;
 
       const { Slot, ...restData } = employeeData;
+      console.log('Processing slot info:', Slot);
       const today = new Date().toISOString().split('T')[0];
 
       return {

@@ -7,7 +7,6 @@ import { Category, CategoryType, Language, User } from '@prisma/client';
 import {
   createTranslation,
   Translation,
-  translationDes,
   updateTranslation,
 } from '../../src/class-type/translation';
 
@@ -20,97 +19,124 @@ export class CategoryService {
     language: Language,
     type: CategoryType,
   ): Promise<AppSuccess<{ categories: Category[]; package: any }>> {
-    let packages;
-
-    if (user) {
-      const CurrUser = await this.prisma.user.findUnique({
-        where: { id: user?.id },
+    // Use Promise.all to run queries in parallel instead of sequentially
+    const [fetchedCategories, packages] = await Promise.all([
+      // Optimized category query - only fetch specific language translations
+      this.prisma.category.findMany({
+        where: { type, available: true },
         include: {
-          client: {
+          services: {
+            where: { available: true },
             include: {
-              ClientPackages: {
-                where: { isActive: true, type: 'MULTIPLE' },
-                include: {
-                  Translation: {
-                    where: { language },
-                    ...translationDes().Translation,
-                  },
-                  packageService: {
-                    select: {
-                      service: true,
-                    },
-                  },
+              Translation: {
+                where: { language: { in: ['EN', 'AR', language] } },
+                select: {
+                  name: true,
+                  language: true,
                 },
               },
             },
           },
+          Translation: {
+            where: { language: { in: ['EN', 'AR', language] } },
+            select: {
+              name: true,
+              language: true,
+            },
+          },
         },
-      });
-      if (!CurrUser) throw new NotFoundException('User not found');
-      packages =
-        CurrUser &&
-        CurrUser.role === 'USER' &&
-        CurrUser.client.ClientPackages.map((item) => {
-          const {
-            packageService,
-            clientId,
-            Translation,
-            isActive,
-            id,
-            type,
-            createdAt,
-            updatedAt,
-            description,
-          } = item;
+      }),
 
-          return Translation.map((translate) => ({
-            id,
-            createdAt,
-            updatedAt,
-            type,
-            name: translate.name,
-            description: translate.description,
-            services: packageService.flatMap((service) => service.service),
-          }));
-        }).flat();
-    }
+      // Only fetch user packages if user exists and is a USER role
+      user && user.role === 'USER'
+        ? this.getUserPackages(user.id, language)
+        : null,
+    ]);
 
-    const fetchedCategories = await this.prisma.category.findMany({
-      where: { type, available: true },
-      include: {
-        services: {
-          where: { available: true },
-          include: Translation(),
-        },
-        ...Translation(),
-      },
-    });
-
+    // Optimize data transformation using Maps for O(1) lookups instead of O(n) finds
     const categories = fetchedCategories.map((category) => {
       const { Translation: categoryTranslation, services, ...rest } = category;
 
-      const service = services.map((service) => {
-        const { Translation: serviceTranslation, ...rest } = service;
+      // Create translation map for fast lookups
+      const categoryTransMap = new Map(
+        categoryTranslation.map((t) => [t.language, t.name]),
+      );
+
+      const optimizedServices = services.map((service) => {
+        const { Translation: serviceTranslation, ...serviceRest } = service;
+
+        // Create translation map for fast lookups
+        const serviceTransMap = new Map(
+          serviceTranslation.map((t) => [t.language, t.name]),
+        );
+
         return {
-          ...rest,
-          nameEN: serviceTranslation.find((t) => t.language === 'EN')?.name,
-          nameAR: serviceTranslation.find((t) => t.language === 'AR')?.name,
-          name: serviceTranslation.find((t) => t.language === language)?.name,
+          ...serviceRest,
+          nameEN: serviceTransMap.get('EN'),
+          nameAR: serviceTransMap.get('AR'),
+          name: serviceTransMap.get(language),
         };
       });
 
       return {
         ...rest,
-        nameEN: categoryTranslation.find((t) => t.language === 'EN')?.name,
-        nameAR: categoryTranslation.find((t) => t.language === 'AR')?.name,
-        name: categoryTranslation.find((t) => t.language === language)?.name,
-        services: service,
+        nameEN: categoryTransMap.get('EN'),
+        nameAR: categoryTransMap.get('AR'),
+        name: categoryTransMap.get(language),
+        services: optimizedServices,
       };
     });
 
     return new AppSuccess(
       { categories, ...(packages?.length && { package: packages }) },
       'Categories found successfully',
+    );
+  }
+
+  private async getUserPackages(userId: string, language: Language) {
+    const userWithPackages = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        client: {
+          select: {
+            ClientPackages: {
+              where: { isActive: true, type: 'MULTIPLE' },
+              select: {
+                id: true,
+                createdAt: true,
+                updatedAt: true,
+                type: true,
+                Translation: {
+                  where: { language },
+                  select: {
+                    name: true,
+                    description: true,
+                  },
+                },
+                packageService: {
+                  select: {
+                    service: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!userWithPackages?.client?.ClientPackages) return [];
+
+    return userWithPackages.client.ClientPackages.flatMap((item) =>
+      item.Translation.map((translate) => ({
+        id: item.id,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        type: item.type,
+        name: translate.name,
+        description: translate.description,
+        services: item.packageService.flatMap((service) => service.service),
+      })),
     );
   }
 

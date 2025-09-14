@@ -828,8 +828,10 @@ export class OrderService {
 
     const total = Math.max(subTotal - discount, 0);
 
-    const duration =
-      allServices.reduce((acc, service) => acc + service.duration, 0) + 15;
+    const duration = allServices.reduce(
+      (acc, service) => acc + service.duration,
+      0,
+    );
 
     const now = new Date();
 
@@ -1244,8 +1246,10 @@ export class OrderService {
     console.log('Order created with barberId:', order.barberId);
     console.log('Order created with barberName:', order.barberName);
 
-    const duration =
-      allServices.reduce((acc, service) => acc + service.duration, 0) + 15;
+    const duration = allServices.reduce(
+      (acc, service) => acc + service.duration,
+      0,
+    );
 
     return new AppSuccess(
       {

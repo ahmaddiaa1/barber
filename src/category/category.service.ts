@@ -76,9 +76,10 @@ export class CategoryService {
     }
 
     const fetchedCategories = await this.prisma.category.findMany({
-      where: { type },
+      where: { type, available: true },
       include: {
         services: {
+          where: { available: true },
           include: Translation(),
         },
         ...Translation(),

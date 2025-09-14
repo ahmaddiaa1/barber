@@ -3,10 +3,15 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role, User } from '@prisma/client';
 import { UserUpdateDto } from './dto/user-update-dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
+import { AuthService } from 'src/auth/auth.service';
+import { addDays } from 'date-fns';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly AuthService: AuthService,
+  ) {}
 
   private user = {
     id: true,
@@ -28,12 +33,38 @@ export class UserService {
     canceledOrders: true,
   } as Prisma.ClientSelect;
 
-  private barberAndCashier = {
+  private barber = {
     id: false,
     branch: true,
-    Slot: true,
+    Slot: {
+      select: {
+        id: true,
+        start: true,
+        end: true,
+        slot: true,
+        updatedSlot: true,
+        effectiveSlotDate: true,
+      },
+    },
+    type: true,
     vacations: true,
   } as Prisma.BarberSelect;
+
+  private cashier = {
+    id: false,
+    branch: true,
+    Slot: {
+      select: {
+        id: true,
+        start: true,
+        end: true,
+        slot: true,
+        updatedSlot: true,
+        effectiveSlotDate: true,
+      },
+    },
+    vacations: true,
+  } as Prisma.CashierSelect;
 
   public async findAllClients(page = 1, pageSize = 10, phone?: string) {
     try {
@@ -69,16 +100,17 @@ export class UserService {
               select:
                 Role[role.toUpperCase()] === 'ADMIN'
                   ? ({ id: true } as Prisma.AdminSelect)
-                  : Role[role.toUpperCase()] === 'BARBER' ||
-                      Role[role.toUpperCase()] === 'CASHIER'
-                    ? this.barberAndCashier
-                    : this.client,
+                  : Role[role.toUpperCase()] === 'BARBER'
+                    ? this.barber
+                    : Role[role.toUpperCase()] === 'CASHIER'
+                      ? this.cashier
+                      : this.client,
             },
           }
         : {
             admin: false,
-            barber: { select: this.barberAndCashier },
-            cashier: { select: this.barberAndCashier },
+            barber: { select: this.barber },
+            cashier: { select: this.cashier },
           };
       const fetchedUser = await this.prisma.user.findMany({
         where: { role: Role[role?.toUpperCase()] ?? { not: Role.USER } },
@@ -88,10 +120,39 @@ export class UserService {
       });
 
       const users = fetchedUser.map(({ barber, cashier, ...user }) => {
+        const processSlotInfo = (employeeData: any) => {
+          if (!employeeData || !employeeData.Slot) return employeeData;
+
+          const { Slot, ...rest } = employeeData;
+          const today = new Date().toISOString().split('T')[0];
+
+          return {
+            ...rest,
+            schedule: {
+              workingHours: {
+                start: Slot.start,
+                end: Slot.end,
+              },
+              currentSlots: Slot.slot || [],
+              ...(Slot.updatedSlot &&
+                Slot.updatedSlot.length > 0 && {
+                  newSlots: Slot.updatedSlot,
+                  effectiveDate: Slot.effectiveSlotDate
+                    ?.toISOString()
+                    .split('T')[0],
+                  isNewSlotActive: Slot.effectiveSlotDate
+                    ? today >=
+                      Slot.effectiveSlotDate.toISOString().split('T')[0]
+                    : false,
+                }),
+            },
+          };
+        };
+
         return {
           ...user,
-          ...(barber && { barber }),
-          ...(cashier && { cashier }),
+          ...(barber && { barber: processSlotInfo(barber) }),
+          ...(cashier && { cashier: processSlotInfo(cashier) }),
         };
       });
 
@@ -117,43 +178,94 @@ export class UserService {
   ) {
     const user = await this.findOne(id);
     if (!user) throw new NotFoundException('User not found');
+    const { vacations, vacationsToDelete, type, start, end, ...rest } =
+      userData;
     const roleKey = user.role.toLowerCase();
-    const { vacations, vacationsToDelete, ...rest } = userData;
     const avatar = file?.path;
+
+    // For barbers updating their slots, check if they have future orders
+    let effectiveSlotDate: Date | null = null;
+    let shouldUpdateImmediately = true;
+
+    if (user.role === Role.BARBER && (start || end)) {
+      const latestOrderDate = await this.getLatestOrderDate(user.id);
+
+      if (latestOrderDate) {
+        // Set effective slot date to the day after the last order
+        effectiveSlotDate = addDays(latestOrderDate, 1);
+        shouldUpdateImmediately = false;
+      } else {
+        // No future orders, update immediately
+        shouldUpdateImmediately = true;
+        effectiveSlotDate = null;
+      }
+    }
+
     const updateUser = await this.prisma.user.update({
       where: { id },
       data: {
         ...rest,
         ...(avatar && { avatar }),
-        ...((vacations || vacationsToDelete) && {
+        ...((vacations || vacationsToDelete || start || end || type) && {
           [roleKey]: {
             update: {
-              vacations: {
-                ...(vacationsToDelete && {
-                  deleteMany: {
-                    id: { in: vacationsToDelete },
-                  },
-                }),
-                ...(vacations && {
-                  upsert: vacations.map((vacation) => ({
-                    where: { id: vacation.id || 'new' },
-                    create: {
-                      dates: vacation.dates.map((v) => {
-                        const dateWithoutTime = v.split('T')[0];
-                        return new Date(dateWithoutTime);
-                      }),
-                      month: new Date(vacation.month),
+              ...((vacationsToDelete || vacations) && {
+                vacations: {
+                  ...(vacationsToDelete && {
+                    deleteMany: {
+                      id: { in: vacationsToDelete },
                     },
-                    update: {
-                      dates: vacation.dates.map((v) => {
-                        const dateWithoutTime = v.split('T')[0];
-                        return new Date(dateWithoutTime);
-                      }),
-                      month: new Date(vacation.month),
-                    },
-                  })),
-                }),
-              },
+                  }),
+                  ...(vacations && {
+                    upsert: vacations.map((vacation) => ({
+                      where: { id: vacation.id || 'new' },
+                      create: {
+                        dates: vacation.dates.map((v) => {
+                          const dateWithoutTime = v.split('T')[0];
+                          return new Date(dateWithoutTime);
+                        }),
+                        month: new Date(vacation.month),
+                      },
+                      update: {
+                        dates: vacation.dates.map((v) => {
+                          const dateWithoutTime = v.split('T')[0];
+                          return new Date(dateWithoutTime);
+                        }),
+                        month: new Date(vacation.month),
+                      },
+                    })),
+                  }),
+                },
+              }),
+              ...((start || end) && {
+                Slot: {
+                  update: shouldUpdateImmediately
+                    ? {
+                        data: {
+                          slot: await this.AuthService.generateSlots(
+                            start,
+                            end,
+                          ),
+                          effectiveSlotDate: null,
+                          updatedSlot: [],
+                          end,
+                          start,
+                        },
+                      }
+                    : {
+                        data: {
+                          updatedSlot: await this.AuthService.generateSlots(
+                            start,
+                            end,
+                          ),
+                          effectiveSlotDate,
+                          end,
+                          start,
+                        },
+                      },
+                },
+              }),
+              ...(user.role === Role.BARBER && { type }),
             },
           },
         }),
@@ -164,11 +276,7 @@ export class UserService {
         lastName: true,
         avatar: true,
         phone: true,
-        [roleKey]: {
-          select: {
-            vacations: { select: { dates: true, month: true, id: true } },
-          },
-        },
+        [roleKey]: { include: { vacations: true, Slot: true } },
       },
     });
     console.log(updateUser);
@@ -181,8 +289,8 @@ export class UserService {
       where: { id: user.id },
       select: {
         ...this.user,
-        barber: { select: this.barberAndCashier },
-        cashier: { select: this.barberAndCashier },
+        barber: { select: this.barber },
+        cashier: { select: this.cashier },
         client: { select: this.client },
       },
     });
@@ -193,20 +301,52 @@ export class UserService {
     const userRole =
       user.role === Role.USER ? 'client' : user.role.toLowerCase();
 
+    const processSlotInfo = (employeeData: any) => {
+      if (!employeeData || !employeeData.Slot) return employeeData;
+
+      const { Slot, ...restData } = employeeData;
+      const today = new Date().toISOString().split('T')[0];
+
+      return {
+        ...restData,
+        schedule: {
+          workingHours: {
+            start: Slot.start,
+            end: Slot.end,
+          },
+          currentSlots: Slot.slot || [],
+          ...(Slot.updatedSlot &&
+            Slot.updatedSlot.length > 0 && {
+              newSlots: Slot.updatedSlot,
+              effectiveDate: Slot.effectiveSlotDate
+                ?.toISOString()
+                .split('T')[0],
+              isNewSlotActive: Slot.effectiveSlotDate
+                ? today >= Slot.effectiveSlotDate.toISOString().split('T')[0]
+                : false,
+            }),
+        },
+      };
+    };
+
+    let roleData;
+    if (userRole === 'barber') {
+      roleData = processSlotInfo(barber);
+    } else if (userRole === 'cashier') {
+      roleData = processSlotInfo(cashier);
+    } else if (userRole === 'client') {
+      roleData = {
+        ...client,
+        ...(client?.ban && {
+          BanMessage: "You can't make any Order please get contact with us",
+        }),
+      };
+    }
+
     return new AppSuccess(
       {
         ...rest,
-        ...(userRole !== 'admin' && {
-          [userRole]: barber ||
-            cashier || {
-              ...client,
-              ...(userRole === 'client' &&
-                client?.ban && {
-                  BanMessage:
-                    "You can't make any Order please get contact with us",
-                }),
-            },
-        }),
+        ...(userRole !== 'admin' && { [userRole]: roleData }),
       },
       'User fetched successfully',
       200,
@@ -219,8 +359,8 @@ export class UserService {
       select: {
         ...this.user,
         admin: true,
-        barber: { select: this.barberAndCashier },
-        cashier: { select: this.barberAndCashier },
+        barber: { select: this.barber },
+        cashier: { select: this.cashier },
         client: { select: this.client },
       },
     });
@@ -233,7 +373,42 @@ export class UserService {
 
     if (!user) throw new NotFoundException('User not found');
 
-    return { ...rest, [userRole]: admin || barber || cashier || client };
+    const processSlotInfo = (employeeData: any) => {
+      if (!employeeData || !employeeData.Slot) return employeeData;
+
+      const { Slot, ...restData } = employeeData;
+      const today = new Date().toISOString().split('T')[0];
+
+      return {
+        ...restData,
+        schedule: {
+          workingHours: {
+            start: Slot.start,
+            end: Slot.end,
+          },
+          currentSlots: Slot.slot || [],
+          ...(Slot.updatedSlot &&
+            Slot.updatedSlot.length > 0 && {
+              newSlots: Slot.updatedSlot,
+              effectiveDate: Slot.effectiveSlotDate
+                ?.toISOString()
+                .split('T')[0],
+              isNewSlotActive: Slot.effectiveSlotDate
+                ? today >= Slot.effectiveSlotDate.toISOString().split('T')[0]
+                : false,
+            }),
+        },
+      };
+    };
+
+    let roleData = admin || client;
+    if (barber) {
+      roleData = processSlotInfo(barber);
+    } else if (cashier) {
+      roleData = processSlotInfo(cashier);
+    }
+
+    return { ...rest, [userRole]: roleData };
   }
 
   async unbanUser(phone: string) {
@@ -344,5 +519,44 @@ export class UserService {
         break;
     }
     return new AppSuccess(null, 'Employee deleted successfully', 200);
+  }
+
+  async hasOrdersBetweenDates(userId: string, startDate: Date, endDate: Date) {
+    const orderCount = await this.prisma.order.count({
+      where: {
+        userId: userId,
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+    });
+
+    const hasOrders = orderCount > 0;
+
+    return !hasOrders;
+  }
+
+  async getLatestOrderDate(barberId: string): Promise<Date | null> {
+    const latestOrder = await this.prisma.order.findFirst({
+      where: {
+        barberId: barberId,
+        booking: {
+          in: ['UPCOMING'],
+        },
+        status: {
+          not: 'CANCELLED',
+        },
+        deleted: false,
+      },
+      orderBy: {
+        date: 'desc',
+      },
+      select: {
+        date: true,
+      },
+    });
+
+    return latestOrder?.date || null;
   }
 }

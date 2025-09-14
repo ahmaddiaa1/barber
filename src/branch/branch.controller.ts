@@ -19,7 +19,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from '../../src/config/multer.config';
 
 import { Lang } from '../../decorators/accept.language';
-import { Language } from '@prisma/client';
+import { CategoryType, Language } from '@prisma/client';
 import { AuthGuard } from 'guard/auth.guard';
 import { RolesGuard } from 'guard/role.guard';
 import { Roles } from 'decorators/roles.decorator';
@@ -51,8 +51,9 @@ export class BranchController {
     @Param('id', ParseUUIDPipe) id: string,
     @Lang() language: Language,
     @Query('Date') Date: string,
+    @Query('type') type: CategoryType,
   ) {
-    return this.branchService.findOne(id, Date, language);
+    return this.branchService.findOne(id, type, Date, language);
   }
 
   @UseGuards(AuthGuard(), RolesGuard)

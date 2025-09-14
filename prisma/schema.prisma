@@ -59,11 +59,12 @@ model Cashier {
 }
 
 model Barber {
-  id        String     @id
+  id        String       @id
   branchId  String
-  rate      Int        @default(0)
-  branch    Branch     @relation(fields: [branchId], references: [id])
-  user      User       @relation(fields: [id], references: [id])
+  rate      Int          @default(0)
+  type      CategoryType @default(GENERAL)
+  branch    Branch       @relation(fields: [branchId], references: [id])
+  user      User         @relation(fields: [id], references: [id])
   Slot      Slot?
   vacations Vacation[]
 }
@@ -106,13 +107,14 @@ model ResetPassword {
 }
 
 model Settings {
-  id               String @id @default(uuid())
-  PointsPercentage Int    @default(10)
-  referralPoints   Int    @default(1000)
-  pointLimit       Int    @default(100)
-  canceledOrder    Int    @default(3)
-  slotDuration     Int    @default(30)
-  maxDaysBooking   Int    @default(3)
+  id                        String    @id @default(uuid())
+  PointsPercentage          Int       @default(10)
+  referralPoints            Int       @default(1000)
+  pointLimit                Int       @default(100)
+  canceledOrder             Int       @default(3)
+  slotDuration              Int       @default(30)
+  maxDaysBooking            Int       @default(3)
+  effectiveSlotDurationDate DateTime? @default(now())
 }
 
 model Static {
@@ -217,6 +219,7 @@ model Category {
   available   Boolean       @default(true)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+  type        CategoryType  @default(GENERAL)
   services    Service[]
   Translation Translation[] @relation("category")
 }
@@ -251,14 +254,16 @@ model Product {
 }
 
 model Slot {
-  id        String   @id @default(uuid())
-  start     Int
-  end       Int
-  barberId  String?  @unique
-  cashierId String?  @unique
-  Cashier   Cashier? @relation(fields: [cashierId], references: [id], onDelete: Cascade)
-  barber    Barber?  @relation(fields: [barberId], references: [id], onDelete: Cascade)
-  slot      String[]
+  id                String    @id @default(uuid())
+  start             Int
+  end               Int
+  barberId          String?   @unique
+  cashierId         String?   @unique
+  Cashier           Cashier?  @relation(fields: [cashierId], references: [id], onDelete: Cascade)
+  barber            Barber?   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  slot              String[]
+  updatedSlot       String[]
+  effectiveSlotDate DateTime? @default(now())
 }
 
 model PromoCode {
@@ -410,4 +415,10 @@ enum Role {
   CASHIER
   ADMIN
   USER
+}
+
+enum CategoryType {
+  GENERAL
+  MASSAGE
+  PEDICURE
 }

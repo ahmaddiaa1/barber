@@ -1,4 +1,4 @@
-import { Language, Prisma } from '@prisma/client';
+import { Language } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import { IsOptional, IsString } from 'class-validator';
 
@@ -29,17 +29,20 @@ export const updateTranslation = <
 >(
   data: T,
 ) => {
-  const updates =
-    data.Translation.map((translation) => ({
-      where: { language: translation.language as Language },
-      data: {
-        name: translation.name,
-        language: translation.language as Language,
-        ...(translation.description && {
-          description: translation.description,
-        }),
-      },
-    })) ?? [];
+  if (!data.Translation || !Array.isArray(data.Translation)) {
+    return {};
+  }
+
+  const updates = data.Translation.map((translation) => ({
+    where: { language: translation.language as Language },
+    data: {
+      name: translation.name,
+      language: translation.language as Language,
+      ...(translation.description && {
+        description: translation.description,
+      }),
+    },
+  }));
   return updates.length ? { updateMany: updates } : {};
 };
 

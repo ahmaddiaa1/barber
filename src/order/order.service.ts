@@ -335,6 +335,7 @@ export class OrderService {
         });
 
         const allServices = [
+          ...service,
           ...packageServices.flatMap((p) =>
             p.services.map((s) => ({
               ...s,
@@ -345,8 +346,8 @@ export class OrderService {
         ];
 
         const duration = (
-          allServices.reduce((total, service) => total + service.duration, 0) *
-          30
+          allServices.reduce((total, service) => total + service.duration, 0) +
+          15
         ).toString();
 
         const services = service.map((s) => {
@@ -1687,7 +1688,7 @@ export class OrderService {
       },
     });
     if (!barber) {
-      return new AppSuccess({ slots: [] }, 'Slots fetched successfully');
+      return new AppSuccess({ slots: [] }, 'Barber not available on this date');
     }
 
     const [orders, allSlotsData] = await Promise.all([
@@ -1710,7 +1711,9 @@ export class OrderService {
           id: barberId,
         },
         select: {
-          Slot: { select: { slot: true } },
+          Slot: {
+            select: { slot: true, updatedSlot: true, effectiveSlotDate: true },
+          },
         },
       }),
     ]);
@@ -1718,7 +1721,42 @@ export class OrderService {
     if (!allSlotsData)
       throw new ConflictException('No slots found in the database.');
 
-    const allSlots = allSlotsData.Slot.slot;
+    const today = new Date().toISOString().split('T')[0];
+    const { effectiveSlotDate, updatedSlot, slot } = allSlotsData.Slot;
+    const effectiveSlotDateWithoutTime = effectiveSlotDate
+      ? effectiveSlotDate?.toISOString().split('T')[0]
+      : null;
+
+    let allSlots: string[] = slot;
+    console.log('🔍 Slot Debug Info:');
+    console.log('dateWithoutTime:', dateWithoutTime);
+    console.log('effectiveSlotDateWithoutTime:', effectiveSlotDateWithoutTime);
+    console.log('today:', today);
+    console.log('original slot array:', slot);
+    console.log('updatedSlot array:', updatedSlot);
+
+    if (
+      effectiveSlotDateWithoutTime &&
+      dateWithoutTime >= effectiveSlotDateWithoutTime
+    ) {
+      allSlots = updatedSlot;
+      console.log('✅ Using updatedSlot');
+    } else {
+      console.log('❌ Using original slot');
+    }
+
+    if (effectiveSlotDateWithoutTime && today >= effectiveSlotDateWithoutTime) {
+      const newSlots = await this.prisma.slot.update({
+        where: { barberId },
+        data: {
+          slot: updatedSlot,
+          effectiveSlotDate: null,
+          updatedSlot: [],
+        },
+      });
+      allSlots = newSlots.slot;
+    }
+
     const blockedSlots = [];
 
     for (const order of orders) {
@@ -1736,6 +1774,15 @@ export class OrderService {
 
     const availableSlots = allSlots.filter(
       (slot) => !blockedSlots.includes(slot),
+    );
+
+    console.log('📋 Final Results:');
+    console.log('allSlots:', allSlots);
+    console.log('blockedSlots:', blockedSlots);
+    console.log('availableSlots:', availableSlots);
+    console.log(
+      'Looking for slot "02:00 AM" in availableSlots:',
+      availableSlots.includes('02:00 AM'),
     );
 
     return new AppSuccess(

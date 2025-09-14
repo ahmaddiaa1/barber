@@ -3,7 +3,7 @@ import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
-import { Branch, Language } from '@prisma/client';
+import { Branch, CategoryType, Language } from '@prisma/client';
 import {
   createTranslation,
   Translation,
@@ -65,6 +65,7 @@ export class BranchService {
 
   async findOne(
     id: string,
+    type?: CategoryType,
     DateTime?: string,
     language?: Language,
   ): Promise<AppSuccess<Branch>> {
@@ -79,9 +80,11 @@ export class BranchService {
       include: {
         ...Translation(false, language),
         barber: {
+          where: { type },
           select: {
             id: true,
             rate: true,
+            type: true,
             user: {
               select: {
                 id: false,

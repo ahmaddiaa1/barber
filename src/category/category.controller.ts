@@ -6,10 +6,11 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
-import { Category, Language, User } from '@prisma/client';
+import { Category, CategoryType, Language, User } from '@prisma/client';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { AuthGuard } from 'guard/auth.guard';
 import { RolesGuard } from '../../guard/role.guard';
@@ -28,8 +29,9 @@ export class CategoryController {
   public async findAllCategories(
     @UserData('user') user: User,
     @Lang() lang: Language,
+    @Query('type') type: CategoryType,
   ): Promise<AppSuccess<{ categories: Category[]; package: any }>> {
-    return await this.categoryService.findAllCategories(user, lang);
+    return await this.categoryService.findAllCategories(user, lang, type);
   }
 
   @UseGuards(AuthGuard(false))

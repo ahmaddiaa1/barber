@@ -18,6 +18,7 @@ export class ServiceService {
     language: Language,
   ): Promise<AppSuccess<{ services: Service[] }>> {
     const fetchedServices = await this.prisma.service.findMany({
+      where: { available: true },
       include: serviceTranslation(),
     });
 
@@ -123,7 +124,7 @@ export class ServiceService {
     language?: Language,
   ): Promise<Service> {
     const fetchedService = await this.prisma.service.findUnique({
-      where: { id },
+      where: { id, available: true },
       include: serviceTranslation(false),
     });
     if (!fetchedService) {

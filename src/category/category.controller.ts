@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -73,7 +74,7 @@ export class CategoryController {
 
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['ADMIN'])
-  @Put(':id')
+  @Delete(':id')
   public async deleteCategory(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<AppSuccess<Category>> {

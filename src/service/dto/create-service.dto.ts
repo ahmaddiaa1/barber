@@ -1,11 +1,10 @@
 import { Transform } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsNotEmpty,
-  IsNumber,
-  IsString,
+  IsOptional,
   IsUUID,
-  Matches,
   ValidateIf,
 } from 'class-validator';
 import { translationDto } from '../../../src/class-type/translation';
@@ -38,6 +37,10 @@ export class CreateServiceDto {
   @IsUUID()
   @IsNotEmpty()
   categoryId: string;
+
+  @IsBoolean()
+  @IsOptional()
+  available: boolean;
 
   @IsArray()
   Translation: translationDto[];

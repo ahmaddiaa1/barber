@@ -50,6 +50,10 @@ export class BranchService {
       },
       include: { ...Translation(), barber: true },
     });
+
+    const maxDaysBooking = await this.prisma.settings
+      .findFirst()
+      .then((s) => s?.maxDaysBooking);
     const branches = fetchBranches.map((branch) => {
       const { Translation, ...rest } = branch;
       return {
@@ -57,6 +61,7 @@ export class BranchService {
         nameEN: Translation.find((t) => t.language === 'EN')?.name,
         nameAR: Translation.find((t) => t.language === 'AR')?.name,
         name: Translation.find((t) => t.language === language)?.name,
+        maxDaysBooking,
       };
     });
 

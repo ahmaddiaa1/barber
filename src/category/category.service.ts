@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -198,13 +202,37 @@ export class CategoryService {
   }
 
   public async delete(id: string): Promise<AppSuccess<Category>> {
-    await this.findOneOrFail(id);
+    const category = await this.prisma.category.findUnique({
+      where: { id },
+      include: {
+        services: {
+          include: {
+            order: true,
+          },
+        },
+      },
+    });
+
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
+
+    // Check if any services in this category are used in orders
+    const servicesWithOrders = category.services.filter(
+      (service) => service.order.length > 0,
+    );
+
+    if (servicesWithOrders.length > 0) {
+      throw new ConflictException(
+        `Cannot delete category. It has ${servicesWithOrders.length} service(s) that are already used in orders.`,
+      );
+    }
 
     const deleteCategory = await this.prisma.category.delete({
       where: { id },
     });
 
-    return new AppSuccess(deleteCategory, 'Category updated successfully');
+    return new AppSuccess(deleteCategory, 'Category deleted successfully');
   }
 
   private async findOneOrFail(id: string, language?: Language) {

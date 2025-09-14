@@ -183,8 +183,8 @@ model Translation {
   categoryId String?
   serviceId  String?
   branch     Branch?   @relation("branch", fields: [branchId], references: [id], map: "Translation_branch_key")
-  category   Category? @relation("category", fields: [categoryId], references: [id], map: "Translation_category_key")
-  service    Service?  @relation("service", fields: [serviceId], references: [id], map: "Translation_service_key")
+  category   Category? @relation("category", fields: [categoryId], references: [id], map: "Translation_category_key", onDelete: Cascade)
+  service    Service?  @relation("service", fields: [serviceId], references: [id], map: "Translation_service_key", onDelete: Cascade)
   pointsId   String?
   Product    Product?  @relation(fields: [productId], references: [id])
   productId  String?
@@ -235,7 +235,7 @@ model Service {
   updatedAt        DateTime           @updatedAt
   offersId         String?
   PackagesServices PackagesServices[]
-  category         Category           @relation(fields: [categoryId], references: [id])
+  category         Category           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   order            Order[]            @relation("OrderToServices")
   packagesIds      Packages[]         @relation("PackagesToServices")
   Translation      Translation[]      @relation("service")
@@ -351,7 +351,7 @@ model PackagesServices {
   isActive         Boolean        @default(true)
   usedAt           DateTime?
   createdAt        DateTime       @default(now()) @map("createdAt")
-  service          Service        @relation(fields: [serviceId], references: [id])
+  service          Service        @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   remainingCount   Int?
   ClientPackagesId String
   ClientPackages   ClientPackages @relation(fields: [ClientPackagesId], references: [id])

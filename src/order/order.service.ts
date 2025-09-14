@@ -1795,23 +1795,104 @@ export class OrderService {
         .forEach((slot) => blockedSlots.push(slot));
     }
 
-    const availableSlots = allSlots.filter(
+    let availableSlots = allSlots.filter(
       (slot) => !blockedSlots.includes(slot),
     );
 
-    console.log('📋 Final Results:');
-    console.log('allSlots:', allSlots);
-    console.log('blockedSlots:', blockedSlots);
-    console.log('availableSlots:', availableSlots);
+    // Filter out past slots dynamically based on current time
+    const todayDate = new Date().toISOString().split('T')[0];
+    const currentTime = new Date();
+    const currentHour = currentTime.getHours();
+    const currentMinute = currentTime.getMinutes();
+
     console.log(
-      'Looking for slot "02:00 AM" in availableSlots:',
-      availableSlots.includes('02:00 AM'),
+      `🕐 Current time: ${currentHour}:${currentMinute.toString().padStart(2, '0')} | Requested date: ${dateWithoutTime}`,
     );
+
+    // Apply time filtering for today's slots
+    if (dateWithoutTime === todayDate) {
+      console.log('📅 Filtering slots for today - removing past slots');
+
+      // Get buffer time from settings (outside the filter for performance)
+      const settings = await this.prisma.settings.findFirst({
+        select: { slotDuration: true },
+      });
+      const bufferMinutes = Math.max(10, (settings?.slotDuration || 30) / 3); // Minimum 10 min or 1/3 of slot duration
+      console.log(`⏱️ Using ${bufferMinutes} minute buffer for slot filtering`);
+
+      availableSlots = availableSlots.filter((slot) => {
+        // Parse slot time (e.g., "10:00 AM" or "02:30 PM")
+        const slotTime = this.parseSlotTime(slot);
+        if (!slotTime) {
+          console.log(`⚠️ Could not parse slot time: ${slot} - keeping slot`);
+          return true; // Keep slot if parsing fails
+        }
+
+        const slotTotalMinutes = slotTime.hour * 60 + slotTime.minute;
+        const currentTotalMinutes = currentHour * 60 + currentMinute;
+        const isSlotAvailable =
+          slotTotalMinutes > currentTotalMinutes + bufferMinutes;
+
+        const slotTimeFormatted = `${slotTime.hour.toString().padStart(2, '0')}:${slotTime.minute.toString().padStart(2, '0')}`;
+        const currentTimeFormatted = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+
+        if (!isSlotAvailable) {
+          console.log(
+            `⏰ Filtering out slot: ${slot} (${slotTimeFormatted}) - Current: ${currentTimeFormatted} + ${bufferMinutes}min buffer`,
+          );
+        } else {
+          console.log(`✅ Keeping future slot: ${slot} (${slotTimeFormatted})`);
+        }
+
+        return isSlotAvailable;
+      });
+    } else {
+      console.log('📅 Future date requested - no time filtering applied');
+    }
+
+    console.log('📋 Final Results:');
+    console.log(`Total slots: ${allSlots.length}`);
+    console.log(`Blocked slots: ${blockedSlots.length}`);
+    console.log(`Available slots after filtering: ${availableSlots.length}`);
+    console.log('Available slots:', availableSlots);
+
+    if (dateWithoutTime === todayDate && availableSlots.length === 0) {
+      console.log(
+        '⚠️ No slots available for today - all slots are in the past or too soon',
+      );
+    }
 
     return new AppSuccess(
       { slots: availableSlots },
       'Slots fetched successfully',
     );
+  }
+
+  private parseSlotTime(slot: string): { hour: number; minute: number } | null {
+    try {
+      // Parse slots like "10:00 AM", "02:30 PM", etc.
+      const timeRegex = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i;
+      const match = slot.match(timeRegex);
+
+      if (!match) return null;
+
+      let hour = parseInt(match[1], 10);
+      const minute = parseInt(match[2], 10);
+      const period = match[3].toUpperCase();
+
+      // Convert to 24-hour format
+      if (period === 'AM') {
+        if (hour === 12) hour = 0; // 12:00 AM = 00:00
+      } else {
+        // PM
+        if (hour !== 12) hour += 12; // Add 12 for PM (except 12:00 PM)
+      }
+
+      return { hour, minute };
+    } catch (error) {
+      console.error(`Error parsing slot time "${slot}":`, error);
+      return null;
+    }
   }
 
   async generateSlot(start: number, end: number) {

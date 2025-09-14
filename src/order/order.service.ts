@@ -829,7 +829,7 @@ export class OrderService {
     const total = Math.max(subTotal - discount, 0);
 
     const duration =
-      allServices.reduce((acc, service) => acc + service.duration, 0) * 15;
+      allServices.reduce((acc, service) => acc + service.duration, 0) + 15;
 
     const now = new Date();
 

@@ -720,7 +720,17 @@ export class OrderService {
 
         await this.prisma.user.findUnique({
           where: { id: userId },
-          select: { client: { select: { ban: true } }, role: true },
+          select: {
+            client: {
+              select: {
+                ban: true,
+                user: {
+                  select: { firstName: true, lastName: true, phone: true },
+                },
+              },
+            },
+            role: true,
+          },
         }),
       ]);
 
@@ -858,6 +868,8 @@ export class OrderService {
           settings.pointLimit < usedPromoCode?.client?.points ||
           settings.pointLimit > settings.pointLimit + 1,
         points: points?.toString(),
+        clientName: `${user?.client?.user?.firstName} ${user?.client?.user?.lastName}`,
+        clientPhone: user?.client?.user?.phone,
         createdAt: new Date(),
         updatedAt: null,
         ...(phone && { phone }),

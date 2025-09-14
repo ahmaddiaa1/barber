@@ -4,7 +4,7 @@ import { Prisma, Role, User } from '@prisma/client';
 import { UserUpdateDto } from './dto/user-update-dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { AuthService } from 'src/auth/auth.service';
-import { endOfDay, startOfToday } from 'date-fns';
+import { addDays } from 'date-fns';
 
 @Injectable()
 export class UserService {
@@ -178,22 +178,28 @@ export class UserService {
   ) {
     const user = await this.findOne(id);
     if (!user) throw new NotFoundException('User not found');
-    const { maxDaysBooking } = await this.prisma.settings.findFirst({
-      select: { maxDaysBooking: true },
-    });
-    const now = new Date();
-    const effectiveSlotDate = new Date(now);
-    effectiveSlotDate.setDate(now.getDate() + maxDaysBooking + 1);
-
     const { vacations, vacationsToDelete, type, start, end, ...rest } =
       userData;
     const roleKey = user.role.toLowerCase();
     const avatar = file?.path;
-    const shouldUpdateImmediately = await this.hasOrdersBetweenDates(
-      user.id,
-      startOfToday(),
-      endOfDay(effectiveSlotDate),
-    );
+
+    // For barbers updating their slots, check if they have future orders
+    let effectiveSlotDate: Date | null = null;
+    let shouldUpdateImmediately = true;
+
+    if (user.role === Role.BARBER && (start || end)) {
+      const latestOrderDate = await this.getLatestOrderDate(user.id);
+
+      if (latestOrderDate) {
+        // Set effective slot date to the day after the last order
+        effectiveSlotDate = addDays(latestOrderDate, 1);
+        shouldUpdateImmediately = false;
+      } else {
+        // No future orders, update immediately
+        shouldUpdateImmediately = true;
+        effectiveSlotDate = null;
+      }
+    }
 
     const updateUser = await this.prisma.user.update({
       where: { id },
@@ -541,5 +547,28 @@ export class UserService {
     const hasOrders = orderCount > 0;
 
     return !hasOrders;
+  }
+
+  async getLatestOrderDate(barberId: string): Promise<Date | null> {
+    const latestOrder = await this.prisma.order.findFirst({
+      where: {
+        barberId: barberId,
+        booking: {
+          in: ['UPCOMING'],
+        },
+        status: {
+          not: 'CANCELLED',
+        },
+        deleted: false,
+      },
+      orderBy: {
+        date: 'desc',
+      },
+      select: {
+        date: true,
+      },
+    });
+
+    return latestOrder?.date || null;
   }
 }

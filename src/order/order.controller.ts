@@ -103,6 +103,7 @@ export class OrderController {
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(['ADMIN', 'CASHIER'])
   @Put('/cancel-order/:id')
   async cancelOrder(@Param('id') id: string) {
     return this.orderService.cancelOrder(id);

@@ -1676,6 +1676,8 @@ export class OrderService {
   }
 
   async getSlots(date: string, barberId?: string) {
+    console.log(`🔍 getSlots called with date: ${date}, barberId: ${barberId}`);
+
     const dateWithoutTime = date.split('T')[0];
     const startOfDay = new Date(dateWithoutTime);
     const endOfDay = new Date(dateWithoutTime);
@@ -1685,6 +1687,7 @@ export class OrderService {
 
     // If no barberId provided, return empty slots
     if (!barberId) {
+      console.log('❌ No barberId provided');
       return new AppSuccess({ slots: [] }, 'No barber specified');
     }
 
@@ -1737,22 +1740,33 @@ export class OrderService {
       }),
     ]);
 
-    if (!allSlotsData)
+    if (!allSlotsData) {
       throw new ConflictException('No slots found in the database.');
+    }
+
+    if (!allSlotsData.Slot) {
+      return new AppSuccess(
+        { slots: [] },
+        'No slots configured for this barber',
+      );
+    }
 
     const today = new Date().toISOString().split('T')[0];
     const { effectiveSlotDate, updatedSlot, slot } = allSlotsData.Slot;
+
     const effectiveSlotDateWithoutTime = effectiveSlotDate
       ? effectiveSlotDate?.toISOString().split('T')[0]
       : null;
 
-    let allSlots: string[] = slot;
-    console.log('🔍 Slot Debug Info:');
-    console.log('dateWithoutTime:', dateWithoutTime);
-    console.log('effectiveSlotDateWithoutTime:', effectiveSlotDateWithoutTime);
-    console.log('today:', today);
-    console.log('original slot array:', slot);
-    console.log('updatedSlot array:', updatedSlot);
+    let allSlots: string[] = slot || [];
+
+    // Check if barber has any slots at all
+    if (!slot || slot.length === 0) {
+      return new AppSuccess(
+        { slots: [] },
+        'No working hours configured for this barber',
+      );
+    }
 
     if (
       effectiveSlotDateWithoutTime &&
@@ -1761,9 +1775,7 @@ export class OrderService {
       updatedSlot.length > 0
     ) {
       allSlots = updatedSlot;
-      console.log('✅ Using updatedSlot');
     } else {
-      console.log('❌ Using original slot');
     }
 
     if (effectiveSlotDateWithoutTime && today >= effectiveSlotDateWithoutTime) {
@@ -1778,9 +1790,7 @@ export class OrderService {
           },
         });
         allSlots = newSlots.slot;
-        console.log('✅ Updated slots to new schedule');
       } else {
-        console.log('❌ Skipping slot update - updatedSlot is empty');
         // Just clear the effective date without changing slots
         await this.prisma.slot.update({
           where: { barberId },
@@ -1817,26 +1827,18 @@ export class OrderService {
     const currentHour = currentTime.getHours();
     const currentMinute = currentTime.getMinutes();
 
-    console.log(
-      `🕐 Current time: ${currentHour}:${currentMinute.toString().padStart(2, '0')} | Requested date: ${dateWithoutTime}`,
-    );
-
     // Apply time filtering for today's slots
     if (dateWithoutTime === todayDate) {
-      console.log('📅 Filtering slots for today - removing past slots');
-
       // Get buffer time from settings (outside the filter for performance)
       const settings = await this.prisma.settings.findFirst({
         select: { slotDuration: true },
       });
       const bufferMinutes = Math.max(10, (settings?.slotDuration || 30) / 3); // Minimum 10 min or 1/3 of slot duration
-      console.log(`⏱️ Using ${bufferMinutes} minute buffer for slot filtering`);
 
       availableSlots = availableSlots.filter((slot) => {
         // Parse slot time (e.g., "10:00 AM" or "02:30 PM")
         const slotTime = this.parseSlotTime(slot);
         if (!slotTime) {
-          console.log(`⚠️ Could not parse slot time: ${slot} - keeping slot`);
           return true; // Keep slot if parsing fails
         }
 
@@ -1845,34 +1847,11 @@ export class OrderService {
         const isSlotAvailable =
           slotTotalMinutes > currentTotalMinutes + bufferMinutes;
 
-        const slotTimeFormatted = `${slotTime.hour.toString().padStart(2, '0')}:${slotTime.minute.toString().padStart(2, '0')}`;
-        const currentTimeFormatted = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
-
-        if (!isSlotAvailable) {
-          console.log(
-            `⏰ Filtering out slot: ${slot} (${slotTimeFormatted}) - Current: ${currentTimeFormatted} + ${bufferMinutes}min buffer`,
-          );
-        } else {
-          console.log(`✅ Keeping future slot: ${slot} (${slotTimeFormatted})`);
-        }
-
         return isSlotAvailable;
       });
-    } else {
-      console.log('📅 Future date requested - no time filtering applied');
     }
 
-    console.log('📋 Final Results:');
-    console.log(`Total slots: ${allSlots.length}`);
-    console.log(`Blocked slots: ${blockedSlots.length}`);
-    console.log(`Available slots after filtering: ${availableSlots.length}`);
     console.log('Available slots:', availableSlots);
-
-    if (dateWithoutTime === todayDate && availableSlots.length === 0) {
-      console.log(
-        '⚠️ No slots available for today - all slots are in the past or too soon',
-      );
-    }
 
     return new AppSuccess(
       { slots: availableSlots },
@@ -1911,6 +1890,8 @@ export class OrderService {
     const slotsArray = [];
 
     const settings = await this.prisma.settings.findFirst({});
+
+    console.log('settings', settings);
 
     for (let hour = start; hour < end; hour++) {
       for (let minute = 0; minute < 60; minute += settings.slotDuration) {

@@ -54,6 +54,9 @@ export class AdminService {
         };
       });
 
+      console.log('slots', slots);
+      console.log('updateAdminDto.slotDuration', updateAdminDto.slotDuration);
+
       Promise.all([
         slots.map(async (slot) => {
           return this.prisma.slot.update({

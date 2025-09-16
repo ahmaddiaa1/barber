@@ -1778,7 +1778,7 @@ export class OrderService {
       return new AppSuccess({ slots: [] }, 'Barber not available on this date');
     }
 
-    const [orders, allSlotsData] = await Promise.all([
+    const [orders, allSlotsData, settings] = await Promise.all([
       this.prisma.order.findMany({
         where: {
           barberId,
@@ -1790,7 +1790,7 @@ export class OrderService {
           AND: [
             {
               booking: {
-                in: ['UPCOMING'],
+                in: [BookingStatus.UPCOMING],
               },
             },
             {
@@ -1823,6 +1823,10 @@ export class OrderService {
             select: { slot: true, updatedSlot: true, effectiveSlotDate: true },
           },
         },
+      }),
+
+      this.prisma.settings.findFirst({
+        select: { slotDuration: true },
       }),
     ]);
 
@@ -1890,9 +1894,6 @@ export class OrderService {
     const blockedSlots = [];
 
     // Get slot duration from settings for proper conversion
-    const settings = await this.prisma.settings.findFirst({
-      select: { slotDuration: true },
-    });
     const slotDurationMinutes = settings?.slotDuration || 30;
 
     for (const order of orders) {
@@ -1927,9 +1928,6 @@ export class OrderService {
     // Apply time filtering for today's slots
     if (dateWithoutTime === todayDate) {
       // Get buffer time from settings (outside the filter for performance)
-      const settings = await this.prisma.settings.findFirst({
-        select: { slotDuration: true },
-      });
       const bufferMinutes = Math.max(10, (settings?.slotDuration || 15) / 3); // Minimum 10 min or 1/3 of slot duration
 
       availableSlots = availableSlots.filter((slot) => {
@@ -1949,7 +1947,7 @@ export class OrderService {
     }
 
     // Filter slots based on total duration if provided
-    if (totalDuration && totalDuration > 0) {
+    if (totalDuration && totalDuration > settings.slotDuration) {
       // Reuse slotDurationMinutes from above
       const durationInSlots = Math.ceil(totalDuration / slotDurationMinutes);
 

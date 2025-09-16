@@ -54,9 +54,6 @@ export class AdminService {
         },
       });
 
-      console.log('Found slots to update:', slots.length);
-      console.log('New slot duration:', updateAdminDto.slotDuration);
-
       // Update each slot with new duration
       await Promise.all(
         slots.map(async (slot) => {
@@ -65,10 +62,6 @@ export class AdminService {
               slot.start,
               slot.end,
               updateAdminDto.slotDuration,
-            );
-
-            console.log(
-              `Updating slot ${slot.id} with ${newSlots.length} time slots`,
             );
 
             return this.prisma.slot.update({
@@ -86,8 +79,6 @@ export class AdminService {
           }
         }),
       );
-
-      console.log('✅ All slots updated successfully');
     }
 
     return new AppSuccess(settings, 'Settings updated successfully');

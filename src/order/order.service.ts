@@ -11,7 +11,9 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
 import {
+  BookingStatus,
   Language,
+  OrderStatus,
   Prisma,
   PromoCode,
   Role,
@@ -276,7 +278,15 @@ export class OrderService {
       where: {
         branchId: cashier.branchId,
         NOT: {
-          status: { in: ['CANCELLED', 'PAID'] },
+          status: {
+            in: [
+              OrderStatus.ADMIN_CANCELLED,
+              OrderStatus.CLIENT_CANCELLED,
+              OrderStatus.BARBER_CANCELLED,
+              OrderStatus.CASHIER_CANCELLED,
+              OrderStatus.PAID,
+            ],
+          },
         },
         date: { gte: startOfDay(from), lte: endOfDay(to) },
       },
@@ -295,7 +305,7 @@ export class OrderService {
     const TotalSales = await this.prisma.order.aggregate({
       where: {
         date: { gte: startOfDay(from), lte: endOfDay(to) },
-        status: 'PAID',
+        status: OrderStatus.PAID,
       },
       _sum: {
         total: true,
@@ -468,9 +478,15 @@ export class OrderService {
       }),
     );
 
-    const upcoming = orders.filter((order) => order.booking === 'UPCOMING');
-    const completed = orders.filter((order) => order.booking === 'PAST');
-    const cancelled = orders.filter((order) => order.booking === 'CANCELLED');
+    const upcoming = orders.filter(
+      (order) => order.booking === BookingStatus.UPCOMING,
+    );
+    const completed = orders.filter(
+      (order) => order.booking === BookingStatus.PAST,
+    );
+    const cancelled = orders.filter(
+      (order) => order.booking === BookingStatus.CANCELLED,
+    );
 
     return new AppSuccess(
       { upcoming, completed, cancelled },
@@ -485,7 +501,7 @@ export class OrderService {
           gte: new Date(from),
           lte: new Date(to),
         },
-        status: 'COMPLETED',
+        status: OrderStatus.COMPLETED,
       },
       include: {
         barber: { include: { barber: { include: { user: true } } } },
@@ -566,9 +582,9 @@ export class OrderService {
         barberId: barberId,
         date: { gte: startDate, lte: endDate },
         OR: [
-          { status: 'PENDING' },
-          { status: 'IN_PROGRESS' },
-          { booking: 'UPCOMING' },
+          { status: OrderStatus.PENDING },
+          { status: OrderStatus.IN_PROGRESS },
+          { booking: BookingStatus.UPCOMING },
         ],
       },
       include: {
@@ -686,6 +702,17 @@ export class OrderService {
       (await this.prisma.user.findUnique({ where: { phone } }));
     userId = another ? another.id : userId;
 
+    // Fetch services early to calculate total duration
+    const FetchedServices = await this.prisma.service.findMany({
+      where: { id: { in: service } },
+    });
+
+    // Calculate total duration in minutes for slot validation
+    const totalDuration = FetchedServices.reduce(
+      (acc, service) => acc + service.duration,
+      0,
+    );
+
     const [order, usedPromoCode, slots, validPromoCode, user] =
       await Promise.all([
         await this.prisma.order.findFirst({
@@ -713,7 +740,8 @@ export class OrderService {
           },
         }),
         barberId
-          ? (await this.getSlots(dateWithoutTime, barberId)).data.slots
+          ? (await this.getSlots(dateWithoutTime, barberId, totalDuration)).data
+              .slots
           : [],
         promoCode &&
           (await this.promoCodeService.validatePromoCode(promoCode)).data,
@@ -755,9 +783,6 @@ export class OrderService {
       throw new ServiceUnavailableException(`Slot ${slot} is Unavailable`);
 
     let costServices = [] as PrismaServiceType[];
-    const FetchedServices = await this.prisma.service.findMany({
-      where: { id: { in: service } },
-    });
     if (user?.role === 'USER') {
       const clientPackages = await this.prisma.clientPackages.findMany({
         where: {
@@ -922,6 +947,17 @@ export class OrderService {
 
     userId = another ? another.id : userId;
 
+    // Fetch services early to calculate total duration
+    const FetchedServices = await this.prisma.service.findMany({
+      where: { id: { in: service } },
+    });
+
+    // Calculate total duration in minutes for slot validation
+    const totalDuration = FetchedServices.reduce(
+      (acc, service) => acc + service.duration,
+      0,
+    );
+
     const [existingOrder, usedPromoCode, slots, validPromoCode, user] =
       await Promise.all([
         await this.prisma.order.findFirst({
@@ -948,7 +984,8 @@ export class OrderService {
           },
         }),
         barberId
-          ? (await this.getSlots(dateWithoutTime, barberId)).data.slots
+          ? (await this.getSlots(dateWithoutTime, barberId, totalDuration)).data
+              .slots
           : [],
         promoCode &&
           (await this.promoCodeService.validatePromoCode(promoCode)).data,
@@ -1065,10 +1102,6 @@ export class OrderService {
           return { ...ps.service, pkgId: pkg.id };
         }),
       );
-
-    const FetchedServices = await this.prisma.service.findMany({
-      where: { id: { in: service } },
-    });
 
     const services = FetchedServices.map((srv) => ({
       ...srv,
@@ -1486,28 +1519,35 @@ export class OrderService {
         },
       },
       data: {
-        booking: 'CANCELLED',
-        ...(role === 'ADMIN' && { adminCancelled: true }),
-        ...(role === 'USER' && { clientCancelled: true }),
-        ...(role === 'BARBER' && { barberCancelled: true }),
-        ...(role === 'CASHIER' && { cashierCancelled: true }),
+        booking: BookingStatus.CANCELLED,
+        ...(role === Role.ADMIN && { status: OrderStatus.ADMIN_CANCELLED }),
+        ...(role === Role.USER && { status: OrderStatus.CLIENT_CANCELLED }),
+        ...(role === Role.BARBER && { status: OrderStatus.BARBER_CANCELLED }),
+        ...(role === Role.CASHIER && { status: OrderStatus.CASHIER_CANCELLED }),
       },
     });
     if (updatedOrder.points && updatedOrder.points > 0) {
-      await this.prisma.client.update({
+      // Only update client points if the user has a client record
+      const client = await this.prisma.client.findUnique({
         where: { id: updatedOrder.userId },
-        data: {
-          points: {
-            increment: updatedOrder.points,
-          },
-        },
       });
+
+      if (client) {
+        await this.prisma.client.update({
+          where: { id: updatedOrder.userId },
+          data: {
+            points: {
+              increment: updatedOrder.points,
+            },
+          },
+        });
+      }
     }
 
     if (
-      updatedOrder.status === 'IN_PROGRESS' ||
-      updatedOrder.status === 'COMPLETED' ||
-      updatedOrder.status === 'PAID'
+      updatedOrder.status === OrderStatus.IN_PROGRESS ||
+      updatedOrder.status === OrderStatus.COMPLETED ||
+      updatedOrder.status === OrderStatus.PAID
     ) {
       throw new ConflictException(
         'Order cannot be cancelled, it has already started or completed.',
@@ -1548,22 +1588,29 @@ export class OrderService {
         });
       }
 
-      const updatedClient = await prisma.client.update({
+      // Only update client records if the user has a client role
+      const client = await prisma.client.findUnique({
         where: { id: updatedOrder.userId },
-        data: {
-          canceledOrders: {
-            increment: 1,
-          },
-        },
       });
 
-      if (updatedClient.canceledOrders >= settings?.canceledOrder) {
-        await prisma.client.update({
+      if (client) {
+        const updatedClient = await prisma.client.update({
           where: { id: updatedOrder.userId },
           data: {
-            ban: true,
+            canceledOrders: {
+              increment: 1,
+            },
           },
         });
+
+        if (updatedClient.canceledOrders >= settings?.canceledOrder) {
+          await prisma.client.update({
+            where: { id: updatedOrder.userId },
+            data: {
+              ban: true,
+            },
+          });
+        }
       }
     });
 
@@ -1575,7 +1622,10 @@ export class OrderService {
 
     const updatedOrder = await this.prisma.order.update({
       where: { id },
-      data: { status: 'IN_PROGRESS', booking: 'UPCOMING' },
+      data: {
+        status: OrderStatus.IN_PROGRESS,
+        booking: BookingStatus.UPCOMING,
+      },
     });
 
     return new AppSuccess(updatedOrder, 'Order started successfully');
@@ -1587,7 +1637,7 @@ export class OrderService {
     await this.prisma.$transaction(async (prisma) => {
       const updatedOrder = await this.prisma.order.update({
         where: { id },
-        data: { status: 'COMPLETED', booking: 'PAST' },
+        data: { status: OrderStatus.COMPLETED, booking: BookingStatus.PAST },
         include: {
           service: {
             include: {
@@ -1636,13 +1686,25 @@ export class OrderService {
       where: {
         id,
         NOT: {
-          OR: [{ status: 'PAID' }, { status: 'CANCELLED' }],
+          OR: [
+            { status: OrderStatus.PAID },
+            {
+              status: {
+                in: [
+                  OrderStatus.ADMIN_CANCELLED,
+                  OrderStatus.CLIENT_CANCELLED,
+                  OrderStatus.BARBER_CANCELLED,
+                  OrderStatus.CASHIER_CANCELLED,
+                ],
+              },
+            },
+          ],
         },
       },
       select: { subTotal: true, total: true },
     });
     if (!currentOrder) {
-      throw new ConflictException('Order is either PAID or CANCELLED');
+      throw new ConflictException('Order is either PAID or cancelleded');
     }
     let code: PromoCode;
     if (body && body.discount) {
@@ -1660,7 +1722,7 @@ export class OrderService {
     const updatedOrder = await this.prisma.order.update({
       where: { id },
       data: {
-        status: 'PAID',
+        status: OrderStatus.PAID,
         booking: 'PAST',
         ...(user.role === 'CASHIER' && { cashierId: user.id }),
         ...(code && {
@@ -1681,9 +1743,7 @@ export class OrderService {
     return new AppSuccess(updatedOrder, 'Order marked as paid');
   }
 
-  async getSlots(date: string, barberId?: string) {
-    console.log(`🔍 getSlots called with date: ${date}, barberId: ${barberId}`);
-
+  async getSlots(date: string, barberId?: string, totalDuration?: number) {
     const dateWithoutTime = date.split('T')[0];
     const startOfDay = new Date(dateWithoutTime);
     const endOfDay = new Date(dateWithoutTime);
@@ -1693,7 +1753,6 @@ export class OrderService {
 
     // If no barberId provided, return empty slots
     if (!barberId) {
-      console.log('❌ No barberId provided');
       return new AppSuccess({ slots: [] }, 'No barber specified');
     }
 
@@ -1727,10 +1786,31 @@ export class OrderService {
             gte: startOfDay,
             lte: endOfDay,
           },
+          // Include all orders that occupy time slots (not cancelled)
+          AND: [
+            {
+              booking: {
+                in: ['UPCOMING'],
+              },
+            },
+            {
+              status: {
+                notIn: [
+                  OrderStatus.ADMIN_CANCELLED,
+                  OrderStatus.CLIENT_CANCELLED,
+                  OrderStatus.BARBER_CANCELLED,
+                  OrderStatus.CASHIER_CANCELLED,
+                ],
+              },
+            },
+          ],
         },
         select: {
+          id: true,
           date: true,
           slot: true,
+          booking: true,
+          status: true,
           service: { select: { duration: true } },
         },
       }),
@@ -1781,7 +1861,6 @@ export class OrderService {
       updatedSlot.length > 0
     ) {
       allSlots = updatedSlot;
-    } else {
     }
 
     if (effectiveSlotDateWithoutTime && today >= effectiveSlotDateWithoutTime) {
@@ -1810,16 +1889,28 @@ export class OrderService {
 
     const blockedSlots = [];
 
+    // Get slot duration from settings for proper conversion
+    const settings = await this.prisma.settings.findFirst({
+      select: { slotDuration: true },
+    });
+    const slotDurationMinutes = settings?.slotDuration || 30;
+
     for (const order of orders) {
       const startIndex = allSlots.indexOf(order.slot);
       if (startIndex === -1) continue;
 
-      const totalDuration = order.service.reduce(
+      // Calculate total duration in minutes
+      const totalDurationMinutes = order.service.reduce(
         (sum, s) => sum + s.duration,
         0,
       );
+
+      // Convert to number of slots needed
+      const slotsNeeded = Math.ceil(totalDurationMinutes / slotDurationMinutes);
+
+      // Block all consecutive slots needed for this order
       allSlots
-        .slice(startIndex, startIndex + totalDuration)
+        .slice(startIndex, startIndex + slotsNeeded)
         .forEach((slot) => blockedSlots.push(slot));
     }
 
@@ -1839,7 +1930,7 @@ export class OrderService {
       const settings = await this.prisma.settings.findFirst({
         select: { slotDuration: true },
       });
-      const bufferMinutes = Math.max(10, (settings?.slotDuration || 30) / 3); // Minimum 10 min or 1/3 of slot duration
+      const bufferMinutes = Math.max(10, (settings?.slotDuration || 15) / 3); // Minimum 10 min or 1/3 of slot duration
 
       availableSlots = availableSlots.filter((slot) => {
         // Parse slot time (e.g., "10:00 AM" or "02:30 PM")
@@ -1855,6 +1946,43 @@ export class OrderService {
 
         return isSlotAvailable;
       });
+    }
+
+    // Filter slots based on total duration if provided
+    if (totalDuration && totalDuration > 0) {
+      // Reuse slotDurationMinutes from above
+      const durationInSlots = Math.ceil(totalDuration / slotDurationMinutes);
+
+      // Only return slots where barber has consecutive availability
+      const validStartSlots = availableSlots.filter((slot) => {
+        const startIndex = allSlots.indexOf(slot);
+        if (startIndex === -1) return false;
+
+        // Check if we have enough consecutive slots starting from this slot
+        for (let i = 0; i < durationInSlots; i++) {
+          const requiredSlotIndex = startIndex + i;
+
+          // Check if the required slot index is within bounds
+          if (requiredSlotIndex >= allSlots.length) {
+            return false; // Not enough slots remaining in the day
+          }
+
+          const requiredSlot = allSlots[requiredSlotIndex];
+          if (!requiredSlot || !availableSlots.includes(requiredSlot)) {
+            return false; // Required slot is not available
+          }
+        }
+        return true;
+      });
+      // If no barber has enough consecutive time, return empty array
+      if (validStartSlots.length === 0) {
+        return new AppSuccess(
+          { slots: [] },
+          `Barber doesn't have ${totalDuration} minutes of consecutive time available`,
+        );
+      }
+
+      availableSlots = validStartSlots;
     }
 
     console.log('Available slots:', availableSlots);

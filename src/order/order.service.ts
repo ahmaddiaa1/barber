@@ -445,7 +445,7 @@ export class OrderService {
           booking,
           date: format(new Date(date), 'yyyy-MM-dd'),
           duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
-          barber: barber.barber,
+          barber: barber?.barber || null,
           total: total.toString(),
           subTotal: subTotal.toString(),
           discount: (total - subTotal).toString(),
@@ -533,7 +533,7 @@ export class OrderService {
           booking,
           date: format(new Date(date), 'yyyy-MM-dd'),
           duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
-          barber: barber.barber,
+          barber: barber?.barber || null,
           total: total.toString(),
           subTotal: subTotal.toString(),
           discount: (total - subTotal).toString(),
@@ -630,7 +630,7 @@ export class OrderService {
           booking,
           date: format(new Date(date), 'yyyy-MM-dd'),
           duration: `${duration} ${language === 'EN' ? 'Minutes' : 'دقيقة'}`,
-          barber: barber.barber,
+          barber: barber?.barber || null,
           total: total.toString(),
           subTotal: subTotal.toString(),
           discount: (total - subTotal).toString(),
@@ -1465,7 +1465,7 @@ export class OrderService {
     return new AppSuccess(updatedOrder, 'Order updated successfully');
   }
 
-  async cancelOrder(id: string) {
+  async cancelOrder(id: string, role: Role) {
     this.findOneOrFail(id);
     const settings = await this.prisma.settings.findFirst({
       select: {
@@ -1485,7 +1485,13 @@ export class OrderService {
           },
         },
       },
-      data: { status: 'CANCELLED', booking: 'CANCELLED' },
+      data: {
+        booking: 'CANCELLED',
+        ...(role === 'ADMIN' && { adminCancelled: true }),
+        ...(role === 'USER' && { clientCancelled: true }),
+        ...(role === 'BARBER' && { barberCancelled: true }),
+        ...(role === 'CASHIER' && { cashierCancelled: true }),
+      },
     });
     if (updatedOrder.points && updatedOrder.points > 0) {
       await this.prisma.client.update({

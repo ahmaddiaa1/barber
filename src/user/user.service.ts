@@ -1,6 +1,6 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, Role, User } from '@prisma/client';
+import { BookingStatus, OrderStatus, Prisma, Role, User } from '@prisma/client';
 import { UserUpdateDto } from './dto/user-update-dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { AuthService } from 'src/auth/auth.service';
@@ -434,23 +434,11 @@ export class UserService {
       where: { id: userId },
     });
     if (!user) throw new NotFoundException('User not found');
+
     await this.prisma.user.update({
       where: { id: userId },
       data: {
         deleted: true,
-        UserOrders: {
-          updateMany: {
-            where: { userId },
-            data: {
-              deleted: true,
-            },
-          },
-        },
-      },
-    });
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
         UserOrders: {
           updateMany: {
             where: {
@@ -458,16 +446,17 @@ export class UserService {
                 { userId },
                 {
                   OR: [
-                    { booking: 'UPCOMING' },
-                    { status: 'IN_PROGRESS' },
-                    { status: 'PENDING' },
+                    { booking: BookingStatus.UPCOMING },
+                    { status: OrderStatus.IN_PROGRESS },
+                    { status: OrderStatus.PENDING },
                   ],
                 },
               ],
             },
             data: {
-              booking: 'CANCELLED',
-              status: 'CANCELLED',
+              deleted: true,
+              booking: BookingStatus.CANCELLED,
+              status: OrderStatus.CLIENT_CANCELLED,
             },
           },
         },
@@ -543,10 +532,17 @@ export class UserService {
       where: {
         barberId: barberId,
         booking: {
-          in: ['UPCOMING'],
+          in: [BookingStatus.UPCOMING],
         },
         status: {
-          not: 'CANCELLED',
+          not: {
+            in: [
+              OrderStatus.ADMIN_CANCELLED,
+              OrderStatus.CLIENT_CANCELLED,
+              OrderStatus.BARBER_CANCELLED,
+              OrderStatus.CASHIER_CANCELLED,
+            ],
+          },
         },
         deleted: false,
       },

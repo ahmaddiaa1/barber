@@ -2077,12 +2077,19 @@ export class OrderService {
       include: {
         service: true,
         barber: { include: { barber: true } },
+        client: true,
       },
     });
     if (!order) {
       throw new ConflictException(`Order with ID "${id}" not found`);
     }
 
-    return order;
+    const { client, ...rest } = order;
+
+    return {
+      ...rest,
+      clientName: `${client.firstName} ${client.lastName}`,
+      clientPhone: client.phone,
+    };
   }
 }

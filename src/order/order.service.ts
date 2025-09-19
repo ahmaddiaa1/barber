@@ -358,10 +358,9 @@ export class OrderService {
           ),
         ];
 
-        const duration = (
-          allServices.reduce((total, service) => total + service.duration, 0) +
-          15
-        ).toString();
+        const duration = allServices
+          .reduce((total, service) => total + service.duration, 0)
+          .toString();
 
         const services = service.map((s) => {
           const { Translation, ...rest } = s;
@@ -445,10 +444,9 @@ export class OrderService {
           ...packageServices.flatMap((p) => p.services),
         ];
 
-        const duration = (
-          allServices.reduce((total, service) => total + service.duration, 0) *
-          30
-        ).toString();
+        const duration = allServices
+          .reduce((total, service) => total + service.duration, 0)
+          .toString();
 
         return {
           ...rest,
@@ -539,10 +537,9 @@ export class OrderService {
           ...packageServices.flatMap((p) => p.services),
         ];
 
-        const duration = (
-          allServices.reduce((total, service) => total + service.duration, 0) *
-          30
-        ).toString();
+        const duration = allServices
+          .reduce((total, service) => total + service.duration, 0)
+          .toString();
 
         return {
           ...rest,
@@ -626,10 +623,9 @@ export class OrderService {
           ...packageServices.flatMap((p) => p.services),
         ];
 
-        const duration = (
-          allServices.reduce((total, service) => total + service.duration, 0) *
-          30
-        ).toString();
+        const duration = allServices
+          .reduce((total, service) => total + service.duration, 0)
+          .toString();
 
         const services = service.map((s) => {
           const { Translation, ...rest } = s;

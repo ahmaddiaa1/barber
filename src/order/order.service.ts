@@ -212,6 +212,7 @@ export class OrderService {
         slot: true,
         client: true,
         points: true,
+        barberName: true,
         service: {
           select: {
             id: true,
@@ -235,14 +236,15 @@ export class OrderService {
         branch,
         date,
         slot,
-        barber: { firstName: barberFirstName, lastName: barberLastName },
-        Cashier: { firstName: cashierFirstName, lastName: cashierLastName },
+        barber,
+        Cashier,
         client,
         total,
         type,
         subTotal,
         discount,
         freeService,
+        barberName,
         ...rest
       } = order;
       return {
@@ -257,8 +259,12 @@ export class OrderService {
             : service.price.toString(),
         })),
         branch: branch.Translation[0].name,
-        barberName: `${barberFirstName} ${barberLastName}`,
-        cashierName: `${cashierFirstName} ${cashierLastName}`,
+        barberName: barber
+          ? `${barber.firstName} ${barber.lastName}`
+          : barberName,
+        cashierName: Cashier
+          ? `${Cashier.firstName} ${Cashier.lastName}`
+          : 'N/A',
         clientName: `${client?.firstName} ${client?.lastName}`,
         day: format(new Date(date), 'EEEE'),
         time: slot,

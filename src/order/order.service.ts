@@ -1748,7 +1748,17 @@ export class OrderService {
 
   async getSlots(date: string, barberId?: string, totalDuration?: number) {
     const EGYPT_TIMEZONE = 'Africa/Cairo';
-    const dateWithoutTime = date.split('T')[0];
+
+    // Parse the date string properly - handle both 'T' and space separators
+    let dateWithoutTime: string;
+    if (date.includes('T')) {
+      dateWithoutTime = date.split('T')[0];
+    } else if (date.includes(' ')) {
+      dateWithoutTime = date.split(' ')[0];
+    } else {
+      // If it's just a date string, use it as is
+      dateWithoutTime = date;
+    }
 
     // Create start and end of day in Egypt timezone
     const startOfDayLocal = new Date(`${dateWithoutTime}T00:00:00`);

@@ -1761,6 +1761,18 @@ export class OrderService {
     const startOfDayLocal = new Date(`${dateWithoutTime}T00:00:00`);
     const endOfDayLocal = new Date(`${dateWithoutTime}T23:59:59.999`);
 
+    // Create a proper date for vacation checking (just the date part)
+    const vacationCheckDate = new Date(dateWithoutTime);
+
+    // Validate the input date
+    if (
+      isNaN(vacationCheckDate.getTime()) ||
+      isNaN(startOfDayLocal.getTime()) ||
+      isNaN(endOfDayLocal.getTime())
+    ) {
+      return new AppSuccess({ slots: [] }, 'Invalid date provided');
+    }
+
     // Convert Egypt timezone dates to UTC for database queries
     const startOfDay = fromZonedTime(startOfDayLocal, EGYPT_TIMEZONE);
     const endOfDay = fromZonedTime(endOfDayLocal, EGYPT_TIMEZONE);
@@ -1779,7 +1791,7 @@ export class OrderService {
               vacations: {
                 some: {
                   dates: {
-                    hasSome: [startOfDayLocal],
+                    hasSome: [vacationCheckDate],
                   },
                 },
               },

@@ -1746,13 +1746,6 @@ export class OrderService {
     return new AppSuccess(updatedOrder, 'Order marked as paid');
   }
 
-  /**
-   * Get available slots for a barber on a specific date
-   * All date/time operations are handled in Egypt timezone (Africa/Cairo)
-   * @param date - Date string in YYYY-MM-DD format
-   * @param barberId - Optional barber ID to filter slots
-   * @param totalDuration - Optional total duration in minutes to filter consecutive slots
-   */
   async getSlots(date: string, barberId?: string, totalDuration?: number) {
     const EGYPT_TIMEZONE = 'Africa/Cairo';
     const dateWithoutTime = date.split('T')[0];
@@ -1764,14 +1757,27 @@ export class OrderService {
     // Create a proper date for vacation checking (just the date part)
     const vacationCheckDate = new Date(dateWithoutTime);
 
-    // Validate the input date
+    // Validate the input dates
     if (
       isNaN(vacationCheckDate.getTime()) ||
       isNaN(startOfDayLocal.getTime()) ||
       isNaN(endOfDayLocal.getTime())
     ) {
+      console.log('Invalid date detected:', {
+        dateWithoutTime,
+        vacationCheckDate,
+        startOfDayLocal,
+        endOfDayLocal,
+      });
       return new AppSuccess({ slots: [] }, 'Invalid date provided');
     }
+
+    console.log(
+      'Processing date:',
+      dateWithoutTime,
+      'Egypt timezone check for barber:',
+      barberId,
+    );
 
     // Convert Egypt timezone dates to UTC for database queries
     const startOfDay = fromZonedTime(startOfDayLocal, EGYPT_TIMEZONE);
@@ -1800,6 +1806,9 @@ export class OrderService {
         ],
       },
     });
+
+    console.log('Barber query result:', barber ? 'Found' : 'Not found');
+
     if (!barber) {
       return new AppSuccess({ slots: [] }, 'Barber not available on this date');
     }
@@ -1861,6 +1870,7 @@ export class OrderService {
     }
 
     if (!allSlotsData.Slot) {
+      console.log('No slot configuration found for barber');
       return new AppSuccess(
         { slots: [] },
         'No slots configured for this barber',
@@ -1872,6 +1882,14 @@ export class OrderService {
       .split('T')[0];
     const { effectiveSlotDate, updatedSlot, slot } = allSlotsData.Slot;
 
+    console.log('Slot data:', {
+      slot: slot?.length || 0,
+      updatedSlot: updatedSlot?.length || 0,
+      effectiveSlotDate,
+      todayInEgypt,
+      dateWithoutTime,
+    });
+
     const effectiveSlotDateWithoutTime = effectiveSlotDate
       ? toZonedTime(effectiveSlotDate, EGYPT_TIMEZONE)
           .toISOString()
@@ -1882,6 +1900,7 @@ export class OrderService {
 
     // Check if barber has any slots at all
     if (!slot || slot.length === 0) {
+      console.log('No working hours configured for barber');
       return new AppSuccess(
         { slots: [] },
         'No working hours configured for this barber',
@@ -2016,7 +2035,12 @@ export class OrderService {
       availableSlots = validStartSlots;
     }
 
-    console.log('Available slots:', availableSlots);
+    console.log('Final result:', {
+      totalSlots: allSlots.length,
+      blockedSlots: blockedSlots.length,
+      availableSlots: availableSlots.length,
+      slots: availableSlots,
+    });
 
     return new AppSuccess(
       { slots: availableSlots },

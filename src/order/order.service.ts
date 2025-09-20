@@ -21,6 +21,7 @@ import {
   User,
 } from '@prisma/client';
 import { endOfDay, format, startOfDay } from 'date-fns';
+import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 import { Translation } from 'src/class-type/translation';
 import { UpdateOrderDto } from './dto/update-order.dto';
 
@@ -1745,13 +1746,24 @@ export class OrderService {
     return new AppSuccess(updatedOrder, 'Order marked as paid');
   }
 
+  /**
+   * Get available slots for a barber on a specific date
+   * All date/time operations are handled in Egypt timezone (Africa/Cairo)
+   * @param date - Date string in YYYY-MM-DD format
+   * @param barberId - Optional barber ID to filter slots
+   * @param totalDuration - Optional total duration in minutes to filter consecutive slots
+   */
   async getSlots(date: string, barberId?: string, totalDuration?: number) {
+    const EGYPT_TIMEZONE = 'Africa/Cairo';
     const dateWithoutTime = date.split('T')[0];
-    const startOfDay = new Date(dateWithoutTime);
-    const endOfDay = new Date(dateWithoutTime);
 
-    startOfDay.setUTCHours(0, 0, 0, 0);
-    endOfDay.setUTCHours(23, 59, 59, 999);
+    // Create start and end of day in Egypt timezone
+    const startOfDayLocal = new Date(`${dateWithoutTime}T00:00:00`);
+    const endOfDayLocal = new Date(`${dateWithoutTime}T23:59:59.999`);
+
+    // Convert Egypt timezone dates to UTC for database queries
+    const startOfDay = fromZonedTime(startOfDayLocal, EGYPT_TIMEZONE);
+    const endOfDay = fromZonedTime(endOfDayLocal, EGYPT_TIMEZONE);
 
     // If no barberId provided, return empty slots
     if (!barberId) {
@@ -1767,7 +1779,7 @@ export class OrderService {
               vacations: {
                 some: {
                   dates: {
-                    hasSome: [new Date(dateWithoutTime)],
+                    hasSome: [startOfDayLocal],
                   },
                 },
               },
@@ -1843,11 +1855,15 @@ export class OrderService {
       );
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const todayInEgypt = toZonedTime(new Date(), EGYPT_TIMEZONE)
+      .toISOString()
+      .split('T')[0];
     const { effectiveSlotDate, updatedSlot, slot } = allSlotsData.Slot;
 
     const effectiveSlotDateWithoutTime = effectiveSlotDate
-      ? effectiveSlotDate?.toISOString().split('T')[0]
+      ? toZonedTime(effectiveSlotDate, EGYPT_TIMEZONE)
+          .toISOString()
+          .split('T')[0]
       : null;
 
     let allSlots: string[] = slot || [];
@@ -1869,7 +1885,10 @@ export class OrderService {
       allSlots = updatedSlot;
     }
 
-    if (effectiveSlotDateWithoutTime && today >= effectiveSlotDateWithoutTime) {
+    if (
+      effectiveSlotDateWithoutTime &&
+      todayInEgypt >= effectiveSlotDateWithoutTime
+    ) {
       // Only update if updatedSlot is not empty
       if (updatedSlot && updatedSlot.length > 0) {
         const newSlots = await this.prisma.slot.update({
@@ -1921,11 +1940,11 @@ export class OrderService {
       (slot) => !blockedSlots.includes(slot),
     );
 
-    // Filter out past slots dynamically based on current time
-    const todayDate = new Date().toISOString().split('T')[0];
-    const currentTime = new Date();
-    const currentHour = currentTime.getHours();
-    const currentMinute = currentTime.getMinutes();
+    // Filter out past slots dynamically based on current time in Egypt
+    const currentTimeInEgypt = toZonedTime(new Date(), EGYPT_TIMEZONE);
+    const todayDate = currentTimeInEgypt.toISOString().split('T')[0];
+    const currentHour = currentTimeInEgypt.getHours();
+    const currentMinute = currentTimeInEgypt.getMinutes();
 
     // Apply time filtering for today's slots
     if (dateWithoutTime === todayDate) {

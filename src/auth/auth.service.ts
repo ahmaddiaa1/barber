@@ -153,6 +153,7 @@ export class AuthService {
               create: {
                 type: createAuthDto.type,
                 branchId,
+                rate: 5,
                 Slot: {
                   create: {
                     start,

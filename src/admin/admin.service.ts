@@ -45,32 +45,40 @@ export class AdminService {
     });
 
     if (updateAdminDto.slotDuration) {
-      const slots = (await this.prisma.slot.findMany({})).map((slot) => {
-        return {
-          slot: slot.slot,
-          id: slot.id,
-          start: slot.start,
-          end: slot.end,
-        };
+      const slots = await this.prisma.slot.findMany({
+        select: {
+          id: true,
+          start: true,
+          end: true,
+          slot: true,
+        },
       });
 
-      console.log('slots', slots);
-      console.log('updateAdminDto.slotDuration', updateAdminDto.slotDuration);
-
-      Promise.all([
+      // Update each slot with new duration
+      await Promise.all(
         slots.map(async (slot) => {
-          return this.prisma.slot.update({
-            where: { id: slot.id },
-            data: {
-              slot: await this.generateSlots(
-                slot.start,
-                slot.end,
-                updateAdminDto.slotDuration,
-              ),
-            },
-          });
+          try {
+            const newSlots = await this.generateSlots(
+              slot.start,
+              slot.end,
+              updateAdminDto.slotDuration,
+            );
+
+            return this.prisma.slot.update({
+              where: { id: slot.id },
+              data: {
+                slot: newSlots,
+                // Clear any pending slot updates when duration changes
+                updatedSlot: [],
+                effectiveSlotDate: null,
+              },
+            });
+          } catch (error) {
+            console.error(`Failed to update slot ${slot.id}:`, error);
+            throw error;
+          }
         }),
-      ]);
+      );
     }
 
     return new AppSuccess(settings, 'Settings updated successfully');

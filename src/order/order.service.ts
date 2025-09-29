@@ -11,7 +11,9 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { PromoCodeService } from 'src/promo-code/promo-code.service';
 import {
+  BookingStatus,
   Language,
+  OrderStatus,
   Prisma,
   PromoCode,
   Role,
@@ -19,6 +21,7 @@ import {
   User,
 } from '@prisma/client';
 import { endOfDay, format, startOfDay } from 'date-fns';
+import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 import { Translation } from 'src/class-type/translation';
 import { UpdateOrderDto } from './dto/update-order.dto';
 
@@ -210,6 +213,7 @@ export class OrderService {
         slot: true,
         client: true,
         points: true,
+        barberName: true,
         service: {
           select: {
             id: true,
@@ -233,14 +237,15 @@ export class OrderService {
         branch,
         date,
         slot,
-        barber: { firstName: barberFirstName, lastName: barberLastName },
-        Cashier: { firstName: cashierFirstName, lastName: cashierLastName },
+        barber,
+        Cashier,
         client,
         total,
         type,
         subTotal,
         discount,
         freeService,
+        barberName,
         ...rest
       } = order;
       return {
@@ -255,8 +260,12 @@ export class OrderService {
             : service.price.toString(),
         })),
         branch: branch.Translation[0].name,
-        barberName: `${barberFirstName} ${barberLastName}`,
-        cashierName: `${cashierFirstName} ${cashierLastName}`,
+        barberName: barber
+          ? `${barber.firstName} ${barber.lastName}`
+          : barberName,
+        cashierName: Cashier
+          ? `${Cashier.firstName} ${Cashier.lastName}`
+          : 'N/A',
         clientName: `${client?.firstName} ${client?.lastName}`,
         day: format(new Date(date), 'EEEE'),
         time: slot,
@@ -276,7 +285,15 @@ export class OrderService {
       where: {
         branchId: cashier.branchId,
         NOT: {
-          status: { in: ['CANCELLED', 'PAID'] },
+          status: {
+            in: [
+              OrderStatus.ADMIN_CANCELLED,
+              OrderStatus.CLIENT_CANCELLED,
+              OrderStatus.BARBER_CANCELLED,
+              OrderStatus.CASHIER_CANCELLED,
+              OrderStatus.PAID,
+            ],
+          },
         },
         date: { gte: startOfDay(from), lte: endOfDay(to) },
       },
@@ -295,7 +312,7 @@ export class OrderService {
     const TotalSales = await this.prisma.order.aggregate({
       where: {
         date: { gte: startOfDay(from), lte: endOfDay(to) },
-        status: 'PAID',
+        status: OrderStatus.PAID,
       },
       _sum: {
         total: true,
@@ -348,10 +365,9 @@ export class OrderService {
           ),
         ];
 
-        const duration = (
-          allServices.reduce((total, service) => total + service.duration, 0) +
-          15
-        ).toString();
+        const duration = allServices
+          .reduce((total, service) => total + service.duration, 0)
+          .toString();
 
         const services = service.map((s) => {
           const { Translation, ...rest } = s;
@@ -435,17 +451,16 @@ export class OrderService {
           ...packageServices.flatMap((p) => p.services),
         ];
 
-        const duration = (
-          allServices.reduce((total, service) => total + service.duration, 0) *
-          30
-        ).toString();
+        const duration = allServices
+          .reduce((total, service) => total + service.duration, 0)
+          .toString();
 
         return {
           ...rest,
           booking,
           date: format(new Date(date), 'yyyy-MM-dd'),
           duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
-          barber: barber.barber,
+          barber: barber?.barber || null,
           total: total.toString(),
           subTotal: subTotal.toString(),
           discount: (total - subTotal).toString(),
@@ -468,9 +483,15 @@ export class OrderService {
       }),
     );
 
-    const upcoming = orders.filter((order) => order.booking === 'UPCOMING');
-    const completed = orders.filter((order) => order.booking === 'PAST');
-    const cancelled = orders.filter((order) => order.booking === 'CANCELLED');
+    const upcoming = orders.filter(
+      (order) => order.booking === BookingStatus.UPCOMING,
+    );
+    const completed = orders.filter(
+      (order) => order.booking === BookingStatus.PAST,
+    );
+    const cancelled = orders.filter(
+      (order) => order.booking === BookingStatus.CANCELLED,
+    );
 
     return new AppSuccess(
       { upcoming, completed, cancelled },
@@ -485,7 +506,7 @@ export class OrderService {
           gte: new Date(from),
           lte: new Date(to),
         },
-        status: 'COMPLETED',
+        status: OrderStatus.COMPLETED,
       },
       include: {
         barber: { include: { barber: { include: { user: true } } } },
@@ -523,17 +544,16 @@ export class OrderService {
           ...packageServices.flatMap((p) => p.services),
         ];
 
-        const duration = (
-          allServices.reduce((total, service) => total + service.duration, 0) *
-          30
-        ).toString();
+        const duration = allServices
+          .reduce((total, service) => total + service.duration, 0)
+          .toString();
 
         return {
           ...rest,
           booking,
           date: format(new Date(date), 'yyyy-MM-dd'),
           duration: `${duration} ${lang === 'EN' ? 'Minutes' : 'دقيقة'}`,
-          barber: barber.barber,
+          barber: barber?.barber || null,
           total: total.toString(),
           subTotal: subTotal.toString(),
           discount: (total - subTotal).toString(),
@@ -566,9 +586,9 @@ export class OrderService {
         barberId: barberId,
         date: { gte: startDate, lte: endDate },
         OR: [
-          { status: 'PENDING' },
-          { status: 'IN_PROGRESS' },
-          { booking: 'UPCOMING' },
+          { status: OrderStatus.PENDING },
+          { status: OrderStatus.IN_PROGRESS },
+          { booking: BookingStatus.UPCOMING },
         ],
       },
       include: {
@@ -610,10 +630,9 @@ export class OrderService {
           ...packageServices.flatMap((p) => p.services),
         ];
 
-        const duration = (
-          allServices.reduce((total, service) => total + service.duration, 0) *
-          30
-        ).toString();
+        const duration = allServices
+          .reduce((total, service) => total + service.duration, 0)
+          .toString();
 
         const services = service.map((s) => {
           const { Translation, ...rest } = s;
@@ -630,7 +649,7 @@ export class OrderService {
           booking,
           date: format(new Date(date), 'yyyy-MM-dd'),
           duration: `${duration} ${language === 'EN' ? 'Minutes' : 'دقيقة'}`,
-          barber: barber.barber,
+          barber: barber?.barber || null,
           total: total.toString(),
           subTotal: subTotal.toString(),
           discount: (total - subTotal).toString(),
@@ -686,6 +705,17 @@ export class OrderService {
       (await this.prisma.user.findUnique({ where: { phone } }));
     userId = another ? another.id : userId;
 
+    // Fetch services early to calculate total duration
+    const FetchedServices = await this.prisma.service.findMany({
+      where: { id: { in: service } },
+    });
+
+    // Calculate total duration in minutes for slot validation
+    const totalDuration = FetchedServices.reduce(
+      (acc, service) => acc + service.duration,
+      0,
+    );
+
     const [order, usedPromoCode, slots, validPromoCode, user] =
       await Promise.all([
         await this.prisma.order.findFirst({
@@ -713,7 +743,8 @@ export class OrderService {
           },
         }),
         barberId
-          ? (await this.getSlots(dateWithoutTime, barberId)).data.slots
+          ? (await this.getSlots(dateWithoutTime, barberId, totalDuration)).data
+              .slots
           : [],
         promoCode &&
           (await this.promoCodeService.validatePromoCode(promoCode)).data,
@@ -755,9 +786,6 @@ export class OrderService {
       throw new ServiceUnavailableException(`Slot ${slot} is Unavailable`);
 
     let costServices = [] as PrismaServiceType[];
-    const FetchedServices = await this.prisma.service.findMany({
-      where: { id: { in: service } },
-    });
     if (user?.role === 'USER') {
       const clientPackages = await this.prisma.clientPackages.findMany({
         where: {
@@ -922,6 +950,17 @@ export class OrderService {
 
     userId = another ? another.id : userId;
 
+    // Fetch services early to calculate total duration
+    const FetchedServices = await this.prisma.service.findMany({
+      where: { id: { in: service } },
+    });
+
+    // Calculate total duration in minutes for slot validation
+    const totalDuration = FetchedServices.reduce(
+      (acc, service) => acc + service.duration,
+      0,
+    );
+
     const [existingOrder, usedPromoCode, slots, validPromoCode, user] =
       await Promise.all([
         await this.prisma.order.findFirst({
@@ -948,7 +987,8 @@ export class OrderService {
           },
         }),
         barberId
-          ? (await this.getSlots(dateWithoutTime, barberId)).data.slots
+          ? (await this.getSlots(dateWithoutTime, barberId, totalDuration)).data
+              .slots
           : [],
         promoCode &&
           (await this.promoCodeService.validatePromoCode(promoCode)).data,
@@ -1065,10 +1105,6 @@ export class OrderService {
           return { ...ps.service, pkgId: pkg.id };
         }),
       );
-
-    const FetchedServices = await this.prisma.service.findMany({
-      where: { id: { in: service } },
-    });
 
     const services = FetchedServices.map((srv) => ({
       ...srv,
@@ -1465,7 +1501,7 @@ export class OrderService {
     return new AppSuccess(updatedOrder, 'Order updated successfully');
   }
 
-  async cancelOrder(id: string) {
+  async cancelOrder(id: string, role: Role) {
     this.findOneOrFail(id);
     const settings = await this.prisma.settings.findFirst({
       select: {
@@ -1485,23 +1521,36 @@ export class OrderService {
           },
         },
       },
-      data: { status: 'CANCELLED', booking: 'CANCELLED' },
+      data: {
+        booking: BookingStatus.CANCELLED,
+        ...(role === Role.ADMIN && { status: OrderStatus.ADMIN_CANCELLED }),
+        ...(role === Role.USER && { status: OrderStatus.CLIENT_CANCELLED }),
+        ...(role === Role.BARBER && { status: OrderStatus.BARBER_CANCELLED }),
+        ...(role === Role.CASHIER && { status: OrderStatus.CASHIER_CANCELLED }),
+      },
     });
     if (updatedOrder.points && updatedOrder.points > 0) {
-      await this.prisma.client.update({
+      // Only update client points if the user has a client record
+      const client = await this.prisma.client.findUnique({
         where: { id: updatedOrder.userId },
-        data: {
-          points: {
-            increment: updatedOrder.points,
-          },
-        },
       });
+
+      if (client) {
+        await this.prisma.client.update({
+          where: { id: updatedOrder.userId },
+          data: {
+            points: {
+              increment: updatedOrder.points,
+            },
+          },
+        });
+      }
     }
 
     if (
-      updatedOrder.status === 'IN_PROGRESS' ||
-      updatedOrder.status === 'COMPLETED' ||
-      updatedOrder.status === 'PAID'
+      updatedOrder.status === OrderStatus.IN_PROGRESS ||
+      updatedOrder.status === OrderStatus.COMPLETED ||
+      updatedOrder.status === OrderStatus.PAID
     ) {
       throw new ConflictException(
         'Order cannot be cancelled, it has already started or completed.',
@@ -1542,22 +1591,29 @@ export class OrderService {
         });
       }
 
-      const updatedClient = await prisma.client.update({
+      // Only update client records if the user has a client role
+      const client = await prisma.client.findUnique({
         where: { id: updatedOrder.userId },
-        data: {
-          canceledOrders: {
-            increment: 1,
-          },
-        },
       });
 
-      if (updatedClient.canceledOrders >= settings?.canceledOrder) {
-        await prisma.client.update({
+      if (client) {
+        const updatedClient = await prisma.client.update({
           where: { id: updatedOrder.userId },
           data: {
-            ban: true,
+            canceledOrders: {
+              increment: 1,
+            },
           },
         });
+
+        if (updatedClient.canceledOrders >= settings?.canceledOrder) {
+          await prisma.client.update({
+            where: { id: updatedOrder.userId },
+            data: {
+              ban: true,
+            },
+          });
+        }
       }
     });
 
@@ -1569,7 +1625,10 @@ export class OrderService {
 
     const updatedOrder = await this.prisma.order.update({
       where: { id },
-      data: { status: 'IN_PROGRESS', booking: 'UPCOMING' },
+      data: {
+        status: OrderStatus.IN_PROGRESS,
+        booking: BookingStatus.UPCOMING,
+      },
     });
 
     return new AppSuccess(updatedOrder, 'Order started successfully');
@@ -1581,7 +1640,7 @@ export class OrderService {
     await this.prisma.$transaction(async (prisma) => {
       const updatedOrder = await this.prisma.order.update({
         where: { id },
-        data: { status: 'COMPLETED', booking: 'PAST' },
+        data: { status: OrderStatus.COMPLETED, booking: BookingStatus.PAST },
         include: {
           service: {
             include: {
@@ -1630,13 +1689,25 @@ export class OrderService {
       where: {
         id,
         NOT: {
-          OR: [{ status: 'PAID' }, { status: 'CANCELLED' }],
+          OR: [
+            { status: OrderStatus.PAID },
+            {
+              status: {
+                in: [
+                  OrderStatus.ADMIN_CANCELLED,
+                  OrderStatus.CLIENT_CANCELLED,
+                  OrderStatus.BARBER_CANCELLED,
+                  OrderStatus.CASHIER_CANCELLED,
+                ],
+              },
+            },
+          ],
         },
       },
       select: { subTotal: true, total: true },
     });
     if (!currentOrder) {
-      throw new ConflictException('Order is either PAID or CANCELLED');
+      throw new ConflictException('Order is either PAID or cancelleded');
     }
     let code: PromoCode;
     if (body && body.discount) {
@@ -1654,7 +1725,7 @@ export class OrderService {
     const updatedOrder = await this.prisma.order.update({
       where: { id },
       data: {
-        status: 'PAID',
+        status: OrderStatus.PAID,
         booking: 'PAST',
         ...(user.role === 'CASHIER' && { cashierId: user.id }),
         ...(code && {
@@ -1675,19 +1746,55 @@ export class OrderService {
     return new AppSuccess(updatedOrder, 'Order marked as paid');
   }
 
-  async getSlots(date: string, barberId?: string) {
-    console.log(`🔍 getSlots called with date: ${date}, barberId: ${barberId}`);
+  async getSlots(date: string, barberId?: string, totalDuration?: number) {
+    const EGYPT_TIMEZONE = 'Africa/Cairo';
 
-    const dateWithoutTime = date.split('T')[0];
-    const startOfDay = new Date(dateWithoutTime);
-    const endOfDay = new Date(dateWithoutTime);
+    // Parse the date string properly - handle both 'T' and space separators
+    let dateWithoutTime: string;
+    if (date.includes('T')) {
+      dateWithoutTime = date.split('T')[0];
+    } else if (date.includes(' ')) {
+      dateWithoutTime = date.split(' ')[0];
+    } else {
+      // If it's just a date string, use it as is
+      dateWithoutTime = date;
+    }
 
-    startOfDay.setUTCHours(0, 0, 0, 0);
-    endOfDay.setUTCHours(23, 59, 59, 999);
+    // Create start and end of day in Egypt timezone
+    const startOfDayLocal = new Date(`${dateWithoutTime}T00:00:00`);
+    const endOfDayLocal = new Date(`${dateWithoutTime}T23:59:59.999`);
+
+    // Create a proper date for vacation checking (just the date part)
+    const vacationCheckDate = new Date(dateWithoutTime);
+
+    // Validate the input dates
+    if (
+      isNaN(vacationCheckDate.getTime()) ||
+      isNaN(startOfDayLocal.getTime()) ||
+      isNaN(endOfDayLocal.getTime())
+    ) {
+      console.log('Invalid date detected:', {
+        dateWithoutTime,
+        vacationCheckDate,
+        startOfDayLocal,
+        endOfDayLocal,
+      });
+      return new AppSuccess({ slots: [] }, 'Invalid date provided');
+    }
+
+    console.log(
+      'Processing date:',
+      dateWithoutTime,
+      'Egypt timezone check for barber:',
+      barberId,
+    );
+
+    // Convert Egypt timezone dates to UTC for database queries
+    const startOfDay = fromZonedTime(startOfDayLocal, EGYPT_TIMEZONE);
+    const endOfDay = fromZonedTime(endOfDayLocal, EGYPT_TIMEZONE);
 
     // If no barberId provided, return empty slots
     if (!barberId) {
-      console.log('❌ No barberId provided');
       return new AppSuccess({ slots: [] }, 'No barber specified');
     }
 
@@ -1700,7 +1807,7 @@ export class OrderService {
               vacations: {
                 some: {
                   dates: {
-                    hasSome: [new Date(dateWithoutTime)],
+                    hasSome: [vacationCheckDate],
                   },
                 },
               },
@@ -1709,11 +1816,14 @@ export class OrderService {
         ],
       },
     });
+
+    console.log('Barber query result:', barber ? 'Found' : 'Not found');
+
     if (!barber) {
       return new AppSuccess({ slots: [] }, 'Barber not available on this date');
     }
 
-    const [orders, allSlotsData] = await Promise.all([
+    const [orders, allSlotsData, settings] = await Promise.all([
       this.prisma.order.findMany({
         where: {
           barberId,
@@ -1721,10 +1831,31 @@ export class OrderService {
             gte: startOfDay,
             lte: endOfDay,
           },
+          // Include all orders that occupy time slots (not cancelled)
+          AND: [
+            {
+              booking: {
+                in: [BookingStatus.UPCOMING],
+              },
+            },
+            {
+              status: {
+                notIn: [
+                  OrderStatus.ADMIN_CANCELLED,
+                  OrderStatus.CLIENT_CANCELLED,
+                  OrderStatus.BARBER_CANCELLED,
+                  OrderStatus.CASHIER_CANCELLED,
+                ],
+              },
+            },
+          ],
         },
         select: {
+          id: true,
           date: true,
           slot: true,
+          booking: true,
+          status: true,
           service: { select: { duration: true } },
         },
       }),
@@ -1738,6 +1869,10 @@ export class OrderService {
           },
         },
       }),
+
+      this.prisma.settings.findFirst({
+        select: { slotDuration: true },
+      }),
     ]);
 
     if (!allSlotsData) {
@@ -1745,23 +1880,37 @@ export class OrderService {
     }
 
     if (!allSlotsData.Slot) {
+      console.log('No slot configuration found for barber');
       return new AppSuccess(
         { slots: [] },
         'No slots configured for this barber',
       );
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const todayInEgypt = toZonedTime(new Date(), EGYPT_TIMEZONE)
+      .toISOString()
+      .split('T')[0];
     const { effectiveSlotDate, updatedSlot, slot } = allSlotsData.Slot;
 
+    console.log('Slot data:', {
+      slot: slot?.length || 0,
+      updatedSlot: updatedSlot?.length || 0,
+      effectiveSlotDate,
+      todayInEgypt,
+      dateWithoutTime,
+    });
+
     const effectiveSlotDateWithoutTime = effectiveSlotDate
-      ? effectiveSlotDate?.toISOString().split('T')[0]
+      ? toZonedTime(effectiveSlotDate, EGYPT_TIMEZONE)
+          .toISOString()
+          .split('T')[0]
       : null;
 
     let allSlots: string[] = slot || [];
 
     // Check if barber has any slots at all
     if (!slot || slot.length === 0) {
+      console.log('No working hours configured for barber');
       return new AppSuccess(
         { slots: [] },
         'No working hours configured for this barber',
@@ -1775,10 +1924,12 @@ export class OrderService {
       updatedSlot.length > 0
     ) {
       allSlots = updatedSlot;
-    } else {
     }
 
-    if (effectiveSlotDateWithoutTime && today >= effectiveSlotDateWithoutTime) {
+    if (
+      effectiveSlotDateWithoutTime &&
+      todayInEgypt >= effectiveSlotDateWithoutTime
+    ) {
       // Only update if updatedSlot is not empty
       if (updatedSlot && updatedSlot.length > 0) {
         const newSlots = await this.prisma.slot.update({
@@ -1804,16 +1955,25 @@ export class OrderService {
 
     const blockedSlots = [];
 
+    // Get slot duration from settings for proper conversion
+    const slotDurationMinutes = settings?.slotDuration || 30;
+
     for (const order of orders) {
       const startIndex = allSlots.indexOf(order.slot);
       if (startIndex === -1) continue;
 
-      const totalDuration = order.service.reduce(
+      // Calculate total duration in minutes
+      const totalDurationMinutes = order.service.reduce(
         (sum, s) => sum + s.duration,
         0,
       );
+
+      // Convert to number of slots needed
+      const slotsNeeded = Math.ceil(totalDurationMinutes / slotDurationMinutes);
+
+      // Block all consecutive slots needed for this order
       allSlots
-        .slice(startIndex, startIndex + totalDuration)
+        .slice(startIndex, startIndex + slotsNeeded)
         .forEach((slot) => blockedSlots.push(slot));
     }
 
@@ -1821,19 +1981,16 @@ export class OrderService {
       (slot) => !blockedSlots.includes(slot),
     );
 
-    // Filter out past slots dynamically based on current time
-    const todayDate = new Date().toISOString().split('T')[0];
-    const currentTime = new Date();
-    const currentHour = currentTime.getHours();
-    const currentMinute = currentTime.getMinutes();
+    // Filter out past slots dynamically based on current time in Egypt
+    const currentTimeInEgypt = toZonedTime(new Date(), EGYPT_TIMEZONE);
+    const todayDate = currentTimeInEgypt.toISOString().split('T')[0];
+    const currentHour = currentTimeInEgypt.getHours();
+    const currentMinute = currentTimeInEgypt.getMinutes();
 
     // Apply time filtering for today's slots
     if (dateWithoutTime === todayDate) {
       // Get buffer time from settings (outside the filter for performance)
-      const settings = await this.prisma.settings.findFirst({
-        select: { slotDuration: true },
-      });
-      const bufferMinutes = Math.max(10, (settings?.slotDuration || 30) / 3); // Minimum 10 min or 1/3 of slot duration
+      const bufferMinutes = Math.max(10, (settings?.slotDuration || 15) / 3); // Minimum 10 min or 1/3 of slot duration
 
       availableSlots = availableSlots.filter((slot) => {
         // Parse slot time (e.g., "10:00 AM" or "02:30 PM")
@@ -1851,7 +2008,49 @@ export class OrderService {
       });
     }
 
-    console.log('Available slots:', availableSlots);
+    // Filter slots based on total duration if provided
+    if (totalDuration && totalDuration > settings.slotDuration) {
+      // Reuse slotDurationMinutes from above
+      const durationInSlots = Math.ceil(totalDuration / slotDurationMinutes);
+
+      // Only return slots where barber has consecutive availability
+      const validStartSlots = availableSlots.filter((slot) => {
+        const startIndex = allSlots.indexOf(slot);
+        if (startIndex === -1) return false;
+
+        // Check if we have enough consecutive slots starting from this slot
+        for (let i = 0; i < durationInSlots; i++) {
+          const requiredSlotIndex = startIndex + i;
+
+          // Check if the required slot index is within bounds
+          if (requiredSlotIndex >= allSlots.length) {
+            return false; // Not enough slots remaining in the day
+          }
+
+          const requiredSlot = allSlots[requiredSlotIndex];
+          if (!requiredSlot || !availableSlots.includes(requiredSlot)) {
+            return false; // Required slot is not available
+          }
+        }
+        return true;
+      });
+      // If no barber has enough consecutive time, return empty array
+      if (validStartSlots.length === 0) {
+        return new AppSuccess(
+          { slots: [] },
+          `Barber doesn't have ${totalDuration} minutes of consecutive time available`,
+        );
+      }
+
+      availableSlots = validStartSlots;
+    }
+
+    console.log('Final result:', {
+      totalSlots: allSlots.length,
+      blockedSlots: blockedSlots.length,
+      availableSlots: availableSlots.length,
+      slots: availableSlots,
+    });
 
     return new AppSuccess(
       { slots: availableSlots },
@@ -1943,12 +2142,19 @@ export class OrderService {
       include: {
         service: true,
         barber: { include: { barber: true } },
+        client: true,
       },
     });
     if (!order) {
       throw new ConflictException(`Order with ID "${id}" not found`);
     }
 
-    return order;
+    const { client, ...rest } = order;
+
+    return {
+      ...rest,
+      clientName: `${client.firstName} ${client.lastName}`,
+      clientPhone: client.phone,
+    };
   }
 }

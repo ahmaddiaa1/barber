@@ -103,10 +103,9 @@ export class OrderController {
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(['ADMIN', 'CASHIER'])
   @Put('/cancel-order/:id')
-  async cancelOrder(@Param('id') id: string) {
-    return this.orderService.cancelOrder(id);
+  async cancelOrder(@Param('id') id: string, @UserData('user') user: User) {
+    return this.orderService.cancelOrder(id, user.role);
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
@@ -135,8 +134,14 @@ export class OrderController {
 
   @UseGuards(AuthGuard(false), RolesGuard)
   @Get('/slots')
-  async getSlots(@Query() query: { date: string; barberId?: string }) {
-    return this.orderService.getSlots(query.date, query.barberId);
+  async getSlots(
+    @Query() query: { date: string; barberId?: string; totalDuration?: number },
+  ) {
+    return this.orderService.getSlots(
+      query.date,
+      query.barberId,
+      query.totalDuration,
+    );
   }
 
   @UseGuards(AuthGuard(), RolesGuard)

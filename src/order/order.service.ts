@@ -1055,13 +1055,6 @@ export class OrderService {
         })
       : null;
 
-    console.log('barber', barber);
-    console.log('barberName from DTO:', barberName);
-    console.log(
-      'Generated barberName:',
-      barberName || `${barber?.user.firstName} ${barber?.user.lastName}`,
-    );
-
     const branch = await this.prisma.branch.findUnique({
       where: { id: branchId },
     });
@@ -2002,7 +1995,7 @@ export class OrderService {
         const slotTotalMinutes = slotTime.hour * 60 + slotTime.minute;
         const currentTotalMinutes = currentHour * 60 + currentMinute;
         const isSlotAvailable =
-          slotTotalMinutes > currentTotalMinutes + bufferMinutes;
+          slotTotalMinutes >= currentTotalMinutes + bufferMinutes;
 
         return isSlotAvailable;
       });

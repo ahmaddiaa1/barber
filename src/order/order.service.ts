@@ -1982,9 +1982,6 @@ export class OrderService {
 
     // Apply time filtering for today's slots
     if (dateWithoutTime === todayDate) {
-      // Get buffer time from settings (outside the filter for performance)
-      const bufferMinutes = Math.max(10, (settings?.slotDuration || 15) / 3); // Minimum 10 min or 1/3 of slot duration
-
       availableSlots = availableSlots.filter((slot) => {
         // Parse slot time (e.g., "10:00 AM" or "02:30 PM")
         const slotTime = this.parseSlotTime(slot);
@@ -1994,8 +1991,10 @@ export class OrderService {
 
         const slotTotalMinutes = slotTime.hour * 60 + slotTime.minute;
         const currentTotalMinutes = currentHour * 60 + currentMinute;
-        const isSlotAvailable =
-          slotTotalMinutes >= currentTotalMinutes + bufferMinutes;
+
+        // Show slots that haven't started yet (any future slot)
+        // No buffer needed - clients can book up until the slot time
+        const isSlotAvailable = slotTotalMinutes > currentTotalMinutes;
 
         return isSlotAvailable;
       });

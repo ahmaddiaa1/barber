@@ -85,10 +85,9 @@ export class OrderController {
   @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['ADMIN', 'CASHIER'])
   @Get('/paid-orders')
-  async getPaidOrders(@Query('from') from: string, @Query('to') to: string) {
-    const DateFrom = new Date(from ?? new Date());
-    const DateTo = new Date(to ?? new Date());
-    return this.orderService.billOrders(DateFrom, DateTo);
+  async getPaidOrders(@Query('date') date: string) {
+    const DateFrom = new Date(date ?? new Date());
+    return this.orderService.billOrders(DateFrom);
   }
 
   @UseGuards(AuthGuard(), RolesGuard)

@@ -193,13 +193,13 @@ export class OrderService {
     return new AppSuccess({ category }, 'Services found successfully');
   }
 
-  async billOrders(from: Date, to: Date) {
+  async billOrders(date: Date) {
     const order = await this.prisma.order.findMany({
       where: {
         status: 'PAID',
         date: {
-          gte: startOfDay(from),
-          lte: endOfDay(to),
+          gte: startOfDay(date),
+          lte: endOfDay(date),
         },
       },
       select: {

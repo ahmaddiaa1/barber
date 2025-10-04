@@ -225,6 +225,7 @@ export class AdminService {
 
     const TotalOrderCount = await this.prisma.order.count({
       where: {
+        status: OrderStatus.PAID,
         date: { gte: startDate, lte: endDate },
       },
     });

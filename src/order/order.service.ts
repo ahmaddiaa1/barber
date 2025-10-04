@@ -52,6 +52,10 @@ export class OrderService {
       ? {}
       : ({ id: cashier.branchId } as Prisma.BranchWhereInput);
 
+    // Use startOfDay and endOfDay to ensure we capture the full day range
+    const startDate = isAdmin ? startOfDay(fromDate) : startOfDay(new Date());
+    const endDate = isAdmin ? endOfDay(toDate) : endOfDay(new Date());
+
     const branches = await this.prisma.branch.findMany({
       where: branchFilter,
       include: {
@@ -60,8 +64,8 @@ export class OrderService {
             Order: {
               where: {
                 date: {
-                  gte: fromDate,
-                  lte: toDate,
+                  gte: startDate,
+                  lte: endDate,
                 },
               },
             },
@@ -71,8 +75,8 @@ export class OrderService {
         Order: {
           where: {
             date: {
-              gte: isAdmin ? fromDate : startOfDay(new Date()),
-              lte: isAdmin ? toDate : endOfDay(new Date()),
+              gte: startDate,
+              lte: endDate,
             },
           },
           include: {

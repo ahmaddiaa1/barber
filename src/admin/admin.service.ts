@@ -4,7 +4,8 @@ import { UpdateAdminDto } from './dto/update-admin.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { TranslateName } from '../../lib/lib';
-import { Role } from '@prisma/client';
+import { OrderStatus, Role } from '@prisma/client';
+import { startOfDay, endOfDay } from 'date-fns';
 
 @Injectable()
 export class AdminService {
@@ -216,19 +217,21 @@ export class AdminService {
   // }
 
   private async AnalyticsSummary(fromDate?: Date, toDate?: Date) {
-    const date = new Date();
+    const today = new Date();
+
+    // Use startOfDay and endOfDay to ensure we capture the full day range
+    const startDate = fromDate ? startOfDay(fromDate) : startOfDay(today);
+    const endDate = toDate ? endOfDay(toDate) : endOfDay(today);
+
     const TotalOrderCount = await this.prisma.order.count({
       where: {
-        ...(fromDate && toDate
-          ? { date: { gte: fromDate, lte: toDate } }
-          : { date: { gte: date, lte: date } }),
+        date: { gte: startDate, lte: endDate },
       },
     });
     const TotalOrdersPrice = await this.prisma.order.aggregate({
       where: {
-        ...(fromDate && toDate
-          ? { date: { gte: fromDate, lte: toDate } }
-          : { date: { gte: date, lte: date } }),
+        status: OrderStatus.PAID,
+        date: { gte: startDate, lte: endDate },
       },
       _sum: {
         total: true,
@@ -238,6 +241,12 @@ export class AdminService {
   }
 
   private async TotalSalesPerBranch(fromDate?: Date, toDate?: Date) {
+    // Use startOfDay and endOfDay to ensure we capture the full day range
+    const dateFilter =
+      fromDate && toDate
+        ? { date: { gte: startOfDay(fromDate), lte: endOfDay(toDate) } }
+        : {};
+
     const fetchedBranches = await this.prisma.branch.findMany({
       select: {
         id: true,
@@ -253,11 +262,7 @@ export class AdminService {
                 phone: true,
                 id: true,
                 BarberOrders: {
-                  where: {
-                    ...(fromDate && toDate
-                      ? { date: { gte: fromDate, lte: toDate } }
-                      : {}),
-                  },
+                  where: dateFilter,
                   select: {
                     service: {
                       select: { Translation: true, price: true, id: true },

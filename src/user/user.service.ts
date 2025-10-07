@@ -189,28 +189,43 @@ export class UserService {
     let shouldUpdateImmediately = true;
 
     if (user.role === Role.BARBER && (start || end)) {
-      const latestOrderDate = await this.getLatestOrderDate(user.id);
+      // Check if barber's current slot is empty
+      const barberSlot = await this.prisma.slot.findFirst({
+        where: { barberId: user.id },
+        select: { slot: true },
+      });
 
-      if (latestOrderDate) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
+      const isSlotEmpty =
+        !barberSlot || !barberSlot.slot || barberSlot.slot.length === 0;
 
-        const latestOrderDateOnly = new Date(latestOrderDate);
-        latestOrderDateOnly.setHours(0, 0, 0, 0);
-
-        // If last order day < today, update immediately
-        if (latestOrderDateOnly < today) {
-          shouldUpdateImmediately = true;
-          effectiveSlotDate = null;
-        } else {
-          // Set effective slot date to the day after the last order
-          effectiveSlotDate = addDays(latestOrderDate, 1);
-          shouldUpdateImmediately = false;
-        }
-      } else {
-        // No future orders, update immediately
+      if (isSlotEmpty) {
+        // Slot is empty, update immediately
         shouldUpdateImmediately = true;
         effectiveSlotDate = null;
+      } else {
+        const latestOrderDate = await this.getLatestOrderDate(user.id);
+
+        if (latestOrderDate) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
+
+          const latestOrderDateOnly = new Date(latestOrderDate);
+          latestOrderDateOnly.setHours(0, 0, 0, 0);
+
+          // If last order day < today, update immediately
+          if (latestOrderDateOnly < today) {
+            shouldUpdateImmediately = true;
+            effectiveSlotDate = null;
+          } else {
+            // Set effective slot date to the day after the last order
+            effectiveSlotDate = addDays(latestOrderDate, 1);
+            shouldUpdateImmediately = false;
+          }
+        } else {
+          // No future orders, update immediately
+          shouldUpdateImmediately = true;
+          effectiveSlotDate = null;
+        }
       }
     }
 

@@ -192,9 +192,21 @@ export class UserService {
       const latestOrderDate = await this.getLatestOrderDate(user.id);
 
       if (latestOrderDate) {
-        // Set effective slot date to the day after the last order
-        effectiveSlotDate = addDays(latestOrderDate, 1);
-        shouldUpdateImmediately = false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
+
+        const latestOrderDateOnly = new Date(latestOrderDate);
+        latestOrderDateOnly.setHours(0, 0, 0, 0);
+
+        // If last order day < today, update immediately
+        if (latestOrderDateOnly < today) {
+          shouldUpdateImmediately = true;
+          effectiveSlotDate = null;
+        } else {
+          // Set effective slot date to the day after the last order
+          effectiveSlotDate = addDays(latestOrderDate, 1);
+          shouldUpdateImmediately = false;
+        }
       } else {
         // No future orders, update immediately
         shouldUpdateImmediately = true;

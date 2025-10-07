@@ -305,6 +305,11 @@ model Order {
   Cashier     User?         @relation("CashierOrders", fields: [cashierId], references: [id])
   service     Service[]     @relation("OrderToServices")
   usedPackage String[]
+
+  @@index([barberId, date])
+  @@index([userId, date])
+  @@index([cashierId, date])
+  @@index([date, booking, status])
 }
 
 model Offers {

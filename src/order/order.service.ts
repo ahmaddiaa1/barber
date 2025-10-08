@@ -21,7 +21,7 @@ import {
   User,
 } from '@prisma/client';
 import { endOfDay, format, startOfDay } from 'date-fns';
-import { toZonedTime, fromZonedTime } from 'date-fns-tz';
+import { toZonedTime } from 'date-fns-tz';
 import { Translation } from 'src/class-type/translation';
 import { UpdateOrderDto } from './dto/update-order.dto';
 
@@ -1757,9 +1757,11 @@ export class OrderService {
       dateWithoutTime = date;
     }
 
-    // Create start and end of day in Egypt timezone
-    const startOfDayLocal = new Date(`${dateWithoutTime}T00:00:00`);
-    const endOfDayLocal = new Date(`${dateWithoutTime}T23:59:59.999`);
+    // Create start and end of day - match how orders are stored
+    // Orders are stored as: new Date(dateWithoutTime) which interprets the string as UTC midnight
+    // So we need to query for that exact UTC date
+    const startOfDay = new Date(`${dateWithoutTime}T00:00:00.000Z`);
+    const endOfDay = new Date(`${dateWithoutTime}T23:59:59.999Z`);
 
     // Create a proper date for vacation checking (just the date part)
     const vacationCheckDate = new Date(dateWithoutTime);
@@ -1767,28 +1769,17 @@ export class OrderService {
     // Validate the input dates
     if (
       isNaN(vacationCheckDate.getTime()) ||
-      isNaN(startOfDayLocal.getTime()) ||
-      isNaN(endOfDayLocal.getTime())
+      isNaN(startOfDay.getTime()) ||
+      isNaN(endOfDay.getTime())
     ) {
       console.log('Invalid date detected:', {
         dateWithoutTime,
         vacationCheckDate,
-        startOfDayLocal,
-        endOfDayLocal,
+        startOfDay,
+        endOfDay,
       });
       return new AppSuccess({ slots: [] }, 'Invalid date provided');
     }
-
-    console.log(
-      'Processing date:',
-      dateWithoutTime,
-      'Egypt timezone check for barber:',
-      barberId,
-    );
-
-    // Convert Egypt timezone dates to UTC for database queries
-    const startOfDay = fromZonedTime(startOfDayLocal, EGYPT_TIMEZONE);
-    const endOfDay = fromZonedTime(endOfDayLocal, EGYPT_TIMEZONE);
 
     // If no barberId provided, return empty slots
     if (!barberId) {
@@ -1828,15 +1819,7 @@ export class OrderService {
             gte: startOfDay,
             lte: endOfDay,
           },
-          deleted: false, // Add this to exclude soft-deleted orders
-          // Include all orders that occupy time slots (not cancelled)
-          // AND: [
-          //   {
-          //     booking: {
-          //       notIn: [BookingStatus.PAST, BookingStatus.CANCELLED],
-          //     },
-          //   },
-          //   {
+          deleted: false,
           status: {
             notIn: [
               OrderStatus.ADMIN_CANCELLED,
@@ -1846,8 +1829,6 @@ export class OrderService {
             ],
           },
         },
-        //   ],
-        // },
         select: {
           id: true,
           date: true,

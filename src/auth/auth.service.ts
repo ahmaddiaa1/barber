@@ -354,7 +354,7 @@ export class AuthService {
 
     const slotsArray: string[] = [];
 
-    // Handle case where time spans across midnight (e.g., start: 24, end: 12)
+    // Handle case where time spans across midnight (e.g., start: 14, end: 0)
     if (start >= end) {
       // From start to end of day (24:00)
       for (let time = start * 60; time < 24 * 60; time += duration) {
@@ -368,16 +368,18 @@ export class AuthService {
         slotsArray.push(slot);
       }
 
-      // From start of day (00:00) to end
-      for (let time = 0; time < end * 60; time += duration) {
-        const hour = Math.floor(time / 60);
-        const minute = time % 60;
-        const formattedHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-        const period = hour >= 12 ? 'PM' : 'AM';
-        const slot = `${formattedHour.toString().padStart(2, '0')}:${minute
-          .toString()
-          .padStart(2, '0')} ${period}`;
-        slotsArray.push(slot);
+      // From start of day (00:00) to end - only if end > 0
+      if (end > 0) {
+        for (let time = 0; time < end * 60; time += duration) {
+          const hour = Math.floor(time / 60);
+          const minute = time % 60;
+          const formattedHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+          const period = hour >= 12 ? 'PM' : 'AM';
+          const slot = `${formattedHour.toString().padStart(2, '0')}:${minute
+            .toString()
+            .padStart(2, '0')} ${period}`;
+          slotsArray.push(slot);
+        }
       }
     } else {
       // Normal case where start < end

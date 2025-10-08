@@ -218,7 +218,7 @@ export class UserService {
             effectiveSlotDate = null;
           } else {
             // Set effective slot date to the day after the last order
-            effectiveSlotDate = addDays(latestOrderDate, 1);
+            effectiveSlotDate = addDays(latestOrderDateOnly, 1); // Use latestOrderDateOnly instead of latestOrderDate
             shouldUpdateImmediately = false;
           }
         } else {

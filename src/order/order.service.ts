@@ -1828,25 +1828,26 @@ export class OrderService {
             gte: startOfDay,
             lte: endOfDay,
           },
+          deleted: false, // Add this to exclude soft-deleted orders
           // Include all orders that occupy time slots (not cancelled)
-          AND: [
-            {
-              booking: {
-                in: [BookingStatus.UPCOMING],
-              },
-            },
-            {
-              status: {
-                notIn: [
-                  OrderStatus.ADMIN_CANCELLED,
-                  OrderStatus.CLIENT_CANCELLED,
-                  OrderStatus.BARBER_CANCELLED,
-                  OrderStatus.CASHIER_CANCELLED,
-                ],
-              },
-            },
-          ],
+          // AND: [
+          //   {
+          //     booking: {
+          //       notIn: [BookingStatus.PAST, BookingStatus.CANCELLED],
+          //     },
+          //   },
+          //   {
+          status: {
+            notIn: [
+              OrderStatus.ADMIN_CANCELLED,
+              OrderStatus.CLIENT_CANCELLED,
+              OrderStatus.BARBER_CANCELLED,
+              OrderStatus.CASHIER_CANCELLED,
+            ],
+          },
         },
+        //   ],
+        // },
         select: {
           id: true,
           date: true,
@@ -1953,7 +1954,7 @@ export class OrderService {
     const blockedSlots = [];
 
     // Get slot duration from settings for proper conversion
-    const slotDurationMinutes = settings?.slotDuration || 30;
+    const slotDurationMinutes = settings?.slotDuration || 15;
 
     for (const order of orders) {
       const startIndex = allSlots.indexOf(order.slot);

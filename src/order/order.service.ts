@@ -1820,6 +1820,9 @@ export class OrderService {
             lte: endOfDay,
           },
           deleted: false,
+          booking: {
+            in: [BookingStatus.UPCOMING],
+          },
           status: {
             notIn: [
               OrderStatus.ADMIN_CANCELLED,

@@ -307,6 +307,11 @@ model Order {
   service                 Service[]     @relation("OrderToServices")
   usedPackage             String[]
   shouldBeReviewedByAdmin Boolean       @default(false)
+
+  @@index([barberId, date])
+  @@index([userId, date])
+  @@index([cashierId, date])
+  @@index([date, booking, status])
 }
 
 model Offers {

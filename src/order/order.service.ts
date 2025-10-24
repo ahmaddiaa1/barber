@@ -1557,6 +1557,8 @@ export class OrderService {
 
     const newTotal = newSubTotal - newDiscount;
 
+    console.log('newTotal', newTotal);
+
     const updatedOrder = await this.prisma.order.update({
       where: { id },
       data: {

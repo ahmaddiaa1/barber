@@ -279,34 +279,36 @@ model PromoCode {
 }
 
 model Order {
-  id                      String        @id @default(uuid())
+  id                      String   @id @default(uuid())
   branchId                String
   promoCode               String?
   date                    DateTime
   slot                    String
   note                    String?
-  booking                 BookingStatus @default(UPCOMING)
-  status                  OrderStatus   @default(PENDING)
-  points                  Int           @default(0)
-  createdAt               DateTime      @default(now())
-  updatedAt               DateTime      @updatedAt
+  points                  Int      @default(0)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
   subTotal                Int
   total                   Int
   userId                  String?
   barberId                String?
   cashierId               String?
-  discount                Int           @default(0)
-  type                    discount      @default(AMOUNT)
+  discount                Int      @default(0)
   freeService             String[]
-  deleted                 Boolean       @default(false)
+  deleted                 Boolean  @default(false)
   barberName              String?
-  branch                  Branch        @relation(fields: [branchId], references: [id])
-  client                  User?         @relation("UserOrders", fields: [userId], references: [id])
-  barber                  User?         @relation("BarberOrders", fields: [barberId], references: [id])
-  Cashier                 User?         @relation("CashierOrders", fields: [cashierId], references: [id])
-  service                 Service[]     @relation("OrderToServices")
   usedPackage             String[]
-  shouldBeReviewedByAdmin Boolean       @default(false)
+  shouldBeReviewedByAdmin Boolean  @default(false)
+  servicesToDelete        String[]
+
+  booking BookingStatus @default(UPCOMING)
+  type    discount      @default(AMOUNT)
+  status  OrderStatus   @default(PENDING)
+  branch  Branch        @relation(fields: [branchId], references: [id])
+  client  User?         @relation("UserOrders", fields: [userId], references: [id])
+  barber  User?         @relation("BarberOrders", fields: [barberId], references: [id])
+  Cashier User?         @relation("CashierOrders", fields: [cashierId], references: [id])
+  service Service[]     @relation("OrderToServices")
 
   @@index([barberId, date])
   @@index([userId, date])

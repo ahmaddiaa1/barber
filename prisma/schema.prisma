@@ -300,6 +300,7 @@ model Order {
   usedPackage             String[]
   shouldBeReviewedByAdmin Boolean  @default(false)
   servicesToDelete        String[]
+  reminderSent            Boolean  @default(false)
 
   booking BookingStatus @default(UPCOMING)
   type    discount      @default(AMOUNT)

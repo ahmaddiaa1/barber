@@ -24,6 +24,8 @@ import { endOfDay, format, startOfDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { Translation } from 'src/class-type/translation';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { UpdateOrderServicesDto } from './dto/update-order-services.dto';
+import { comparePassword } from 'src/utils/lib';
 
 interface PrismaServiceType extends Service {
   isFree: boolean;
@@ -1496,6 +1498,56 @@ export class OrderService {
     });
 
     return new AppSuccess(updatedOrder, 'Order updated successfully');
+  }
+
+  async updateOrderServices(
+    id: string,
+    updateOrderServicesDto: UpdateOrderServicesDto,
+  ) {
+    const order = await this.findOneOrFail(id);
+    const { serviceToDelete } = updateOrderServicesDto;
+
+    await this.prisma.order.update({
+      where: { id },
+      data: {
+        shouldBeReviewedByAdmin: true,
+        servicesToDelete: serviceToDelete,
+      },
+    });
+
+    return new AppSuccess(order, 'Order services updated successfully');
+  }
+
+  async deleteOrderServices(id: string, password: string) {
+    const order = await this.findOneOrFail(id);
+    const settings = await this.prisma.settings.findFirst({
+      select: {
+        password: true,
+      },
+    });
+
+    if (!(await comparePassword(password, settings.password))) {
+      throw new BadRequestException('Invalid password');
+    }
+    const { servicesToDelete, service } = order;
+
+    if (servicesToDelete.length === 0) {
+      throw new BadRequestException('No services to delete');
+    }
+
+    if (servicesToDelete.length === service.length) {
+      await this.cancelOrder(id, Role.ADMIN);
+    }
+
+    await this.prisma.order.update({
+      where: { id },
+      data: {
+        service: { disconnect: servicesToDelete.map((id) => ({ id })) },
+        servicesToDelete: [],
+        shouldBeReviewedByAdmin: true,
+      },
+    });
+    return new AppSuccess(order, 'Order services deleted successfully');
   }
 
   async cancelOrder(id: string, role: Role) {

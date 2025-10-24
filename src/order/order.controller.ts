@@ -92,13 +92,23 @@ export class OrderController {
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(['ADMIN', 'CASHIER'])
+  @Roles(['ADMIN'])
   @Put('/delete-order-services/:id')
   async deleteOrderServices(
     @Param('id') id: string,
     @Body('password') password: string,
   ) {
     return this.orderService.deleteOrderServices(id, password);
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(['ADMIN'])
+  @Put('/cancel-deleted-services/:id')
+  async cancelDeletedServices(
+    @Param('id') id: string,
+    @Body('password') password: string,
+  ) {
+    return this.orderService.cancelDeletedServices(id, password);
   }
 
   @UseGuards(AuthGuard(), RolesGuard)

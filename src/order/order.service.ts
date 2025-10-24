@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -1565,10 +1566,36 @@ export class OrderService {
         shouldBeReviewedByAdmin: true,
         total: newTotal,
         subTotal: newSubTotal,
-        discount: newDiscount,
       },
     });
     return new AppSuccess(updatedOrder, 'Order services deleted successfully');
+  }
+
+  async cancelDeletedServices(id: string, password: string) {
+    const settings = await this.prisma.settings.findFirst({
+      select: {
+        password: true,
+      },
+    });
+    if (!password || !(await comparePassword(password, settings.password))) {
+      throw new BadRequestException('Invalid password');
+    }
+    try {
+      await this.findOneOrFail(id);
+      await this.prisma.order.update({
+        where: { id },
+        data: {
+          servicesToDelete: [],
+          shouldBeReviewedByAdmin: false,
+        },
+      });
+      return new AppSuccess(null, 'Deleted services cancelled successfully');
+    } catch (error) {
+      console.log('error', error);
+      throw new InternalServerErrorException(
+        'Failed to cancel deleted services',
+      );
+    }
   }
 
   async cancelOrder(id: string, role: Role) {

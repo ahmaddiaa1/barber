@@ -21,6 +21,7 @@ import {
   User,
 } from '@prisma/client';
 import { endOfDay, format, startOfDay } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { Translation } from 'src/class-type/translation';
 import { UpdateOrderDto } from './dto/update-order.dto';
 
@@ -51,6 +52,10 @@ export class OrderService {
       ? {}
       : ({ id: cashier.branchId } as Prisma.BranchWhereInput);
 
+    // Use startOfDay and endOfDay to ensure we capture the full day range
+    const startDate = isAdmin ? startOfDay(fromDate) : startOfDay(new Date());
+    const endDate = isAdmin ? endOfDay(toDate) : endOfDay(new Date());
+
     const branches = await this.prisma.branch.findMany({
       where: branchFilter,
       include: {
@@ -59,8 +64,8 @@ export class OrderService {
             Order: {
               where: {
                 date: {
-                  gte: fromDate,
-                  lte: toDate,
+                  gte: startDate,
+                  lte: endDate,
                 },
               },
             },
@@ -70,8 +75,8 @@ export class OrderService {
         Order: {
           where: {
             date: {
-              gte: isAdmin ? fromDate : startOfDay(new Date()),
-              lte: isAdmin ? toDate : endOfDay(new Date()),
+              gte: startDate,
+              lte: endDate,
             },
           },
           include: {
@@ -192,13 +197,13 @@ export class OrderService {
     return new AppSuccess({ category }, 'Services found successfully');
   }
 
-  async billOrders(from: Date, to: Date) {
+  async billOrders(date: Date) {
     const order = await this.prisma.order.findMany({
       where: {
         status: 'PAID',
         date: {
-          gte: startOfDay(from),
-          lte: endOfDay(to),
+          gte: startOfDay(date),
+          lte: endOfDay(date),
         },
       },
       select: {
@@ -1054,13 +1059,6 @@ export class OrderService {
         })
       : null;
 
-    console.log('barber', barber);
-    console.log('barberName from DTO:', barberName);
-    console.log(
-      'Generated barberName:',
-      barberName || `${barber?.user.firstName} ${barber?.user.lastName}`,
-    );
-
     const branch = await this.prisma.branch.findUnique({
       where: { id: branchId },
     });
@@ -1746,12 +1744,42 @@ export class OrderService {
   }
 
   async getSlots(date: string, barberId?: string, totalDuration?: number) {
-    const dateWithoutTime = date.split('T')[0];
-    const startOfDay = new Date(dateWithoutTime);
-    const endOfDay = new Date(dateWithoutTime);
+    const EGYPT_TIMEZONE = 'Africa/Cairo';
 
-    startOfDay.setUTCHours(0, 0, 0, 0);
-    endOfDay.setUTCHours(23, 59, 59, 999);
+    // Parse the date string properly - handle both 'T' and space separators
+    let dateWithoutTime: string;
+    if (date.includes('T')) {
+      dateWithoutTime = date.split('T')[0];
+    } else if (date.includes(' ')) {
+      dateWithoutTime = date.split(' ')[0];
+    } else {
+      // If it's just a date string, use it as is
+      dateWithoutTime = date;
+    }
+
+    // Create start and end of day - match how orders are stored
+    // Orders are stored as: new Date(dateWithoutTime) which interprets the string as UTC midnight
+    // So we need to query for that exact UTC date
+    const startOfDay = new Date(`${dateWithoutTime}T00:00:00.000Z`);
+    const endOfDay = new Date(`${dateWithoutTime}T23:59:59.999Z`);
+
+    // Create a proper date for vacation checking (just the date part)
+    const vacationCheckDate = new Date(dateWithoutTime);
+
+    // Validate the input dates
+    if (
+      isNaN(vacationCheckDate.getTime()) ||
+      isNaN(startOfDay.getTime()) ||
+      isNaN(endOfDay.getTime())
+    ) {
+      console.log('Invalid date detected:', {
+        dateWithoutTime,
+        vacationCheckDate,
+        startOfDay,
+        endOfDay,
+      });
+      return new AppSuccess({ slots: [] }, 'Invalid date provided');
+    }
 
     // If no barberId provided, return empty slots
     if (!barberId) {
@@ -1767,7 +1795,7 @@ export class OrderService {
               vacations: {
                 some: {
                   dates: {
-                    hasSome: [new Date(dateWithoutTime)],
+                    hasSome: [vacationCheckDate],
                   },
                 },
               },
@@ -1776,6 +1804,9 @@ export class OrderService {
         ],
       },
     });
+
+    console.log('Barber query result:', barber ? 'Found' : 'Not found');
+
     if (!barber) {
       return new AppSuccess({ slots: [] }, 'Barber not available on this date');
     }
@@ -1788,24 +1819,18 @@ export class OrderService {
             gte: startOfDay,
             lte: endOfDay,
           },
-          // Include all orders that occupy time slots (not cancelled)
-          AND: [
-            {
-              booking: {
-                in: [BookingStatus.UPCOMING],
-              },
-            },
-            {
-              status: {
-                notIn: [
-                  OrderStatus.ADMIN_CANCELLED,
-                  OrderStatus.CLIENT_CANCELLED,
-                  OrderStatus.BARBER_CANCELLED,
-                  OrderStatus.CASHIER_CANCELLED,
-                ],
-              },
-            },
-          ],
+          deleted: false,
+          booking: {
+            in: [BookingStatus.UPCOMING],
+          },
+          status: {
+            notIn: [
+              OrderStatus.ADMIN_CANCELLED,
+              OrderStatus.CLIENT_CANCELLED,
+              OrderStatus.BARBER_CANCELLED,
+              OrderStatus.CASHIER_CANCELLED,
+            ],
+          },
         },
         select: {
           id: true,
@@ -1837,23 +1862,37 @@ export class OrderService {
     }
 
     if (!allSlotsData.Slot) {
+      console.log('No slot configuration found for barber');
       return new AppSuccess(
         { slots: [] },
         'No slots configured for this barber',
       );
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const todayInEgypt = toZonedTime(new Date(), EGYPT_TIMEZONE)
+      .toISOString()
+      .split('T')[0];
     const { effectiveSlotDate, updatedSlot, slot } = allSlotsData.Slot;
 
+    console.log('Slot data:', {
+      slot: slot?.length || 0,
+      updatedSlot: updatedSlot?.length || 0,
+      effectiveSlotDate,
+      todayInEgypt,
+      dateWithoutTime,
+    });
+
     const effectiveSlotDateWithoutTime = effectiveSlotDate
-      ? effectiveSlotDate?.toISOString().split('T')[0]
+      ? toZonedTime(effectiveSlotDate, EGYPT_TIMEZONE)
+          .toISOString()
+          .split('T')[0]
       : null;
 
     let allSlots: string[] = slot || [];
 
     // Check if barber has any slots at all
     if (!slot || slot.length === 0) {
+      console.log('No working hours configured for barber');
       return new AppSuccess(
         { slots: [] },
         'No working hours configured for this barber',
@@ -1869,7 +1908,10 @@ export class OrderService {
       allSlots = updatedSlot;
     }
 
-    if (effectiveSlotDateWithoutTime && today >= effectiveSlotDateWithoutTime) {
+    if (
+      effectiveSlotDateWithoutTime &&
+      todayInEgypt >= effectiveSlotDateWithoutTime
+    ) {
       // Only update if updatedSlot is not empty
       if (updatedSlot && updatedSlot.length > 0) {
         const newSlots = await this.prisma.slot.update({
@@ -1896,7 +1938,7 @@ export class OrderService {
     const blockedSlots = [];
 
     // Get slot duration from settings for proper conversion
-    const slotDurationMinutes = settings?.slotDuration || 30;
+    const slotDurationMinutes = settings?.slotDuration || 15;
 
     for (const order of orders) {
       const startIndex = allSlots.indexOf(order.slot);
@@ -1921,17 +1963,14 @@ export class OrderService {
       (slot) => !blockedSlots.includes(slot),
     );
 
-    // Filter out past slots dynamically based on current time
-    const todayDate = new Date().toISOString().split('T')[0];
-    const currentTime = new Date();
-    const currentHour = currentTime.getHours();
-    const currentMinute = currentTime.getMinutes();
+    // Filter out past slots dynamically based on current time in Egypt
+    const currentTimeInEgypt = toZonedTime(new Date(), EGYPT_TIMEZONE);
+    const todayDate = currentTimeInEgypt.toISOString().split('T')[0];
+    const currentHour = currentTimeInEgypt.getHours();
+    const currentMinute = currentTimeInEgypt.getMinutes();
 
     // Apply time filtering for today's slots
     if (dateWithoutTime === todayDate) {
-      // Get buffer time from settings (outside the filter for performance)
-      const bufferMinutes = Math.max(10, (settings?.slotDuration || 15) / 3); // Minimum 10 min or 1/3 of slot duration
-
       availableSlots = availableSlots.filter((slot) => {
         // Parse slot time (e.g., "10:00 AM" or "02:30 PM")
         const slotTime = this.parseSlotTime(slot);
@@ -1941,8 +1980,10 @@ export class OrderService {
 
         const slotTotalMinutes = slotTime.hour * 60 + slotTime.minute;
         const currentTotalMinutes = currentHour * 60 + currentMinute;
-        const isSlotAvailable =
-          slotTotalMinutes > currentTotalMinutes + bufferMinutes;
+
+        // Show slots that haven't started yet (any future slot)
+        // No buffer needed - clients can book up until the slot time
+        const isSlotAvailable = slotTotalMinutes > currentTotalMinutes;
 
         return isSlotAvailable;
       });
@@ -1985,7 +2026,12 @@ export class OrderService {
       availableSlots = validStartSlots;
     }
 
-    console.log('Available slots:', availableSlots);
+    console.log('Final result:', {
+      totalSlots: allSlots.length,
+      blockedSlots: blockedSlots.length,
+      availableSlots: availableSlots.length,
+      slots: availableSlots,
+    });
 
     return new AppSuccess(
       { slots: availableSlots },

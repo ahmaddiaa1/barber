@@ -111,7 +111,7 @@ model Settings {
   PointsPercentage          Int       @default(10)
   referralPoints            Int       @default(1000)
   pointLimit                Int       @default(100)
-  password                  String
+  password                  String?
   canceledOrder             Int       @default(3)
   slotDuration              Int       @default(30)
   maxDaysBooking            Int       @default(3)

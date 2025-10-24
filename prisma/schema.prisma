@@ -111,6 +111,7 @@ model Settings {
   PointsPercentage          Int       @default(10)
   referralPoints            Int       @default(1000)
   pointLimit                Int       @default(100)
+  password                  String
   canceledOrder             Int       @default(3)
   slotDuration              Int       @default(30)
   maxDaysBooking            Int       @default(3)
@@ -278,33 +279,34 @@ model PromoCode {
 }
 
 model Order {
-  id          String        @id @default(uuid())
-  branchId    String
-  promoCode   String?
-  date        DateTime
-  slot        String
-  note        String?
-  booking     BookingStatus @default(UPCOMING)
-  status      OrderStatus   @default(PENDING)
-  points      Int           @default(0)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  subTotal    Int
-  total       Int
-  userId      String?
-  barberId    String?
-  cashierId   String?
-  discount    Int           @default(0)
-  type        discount      @default(AMOUNT)
-  freeService String[]
-  deleted     Boolean       @default(false)
-  barberName  String?
-  branch      Branch        @relation(fields: [branchId], references: [id])
-  client      User?         @relation("UserOrders", fields: [userId], references: [id])
-  barber      User?         @relation("BarberOrders", fields: [barberId], references: [id])
-  Cashier     User?         @relation("CashierOrders", fields: [cashierId], references: [id])
-  service     Service[]     @relation("OrderToServices")
-  usedPackage String[]
+  id                      String        @id @default(uuid())
+  branchId                String
+  promoCode               String?
+  date                    DateTime
+  slot                    String
+  note                    String?
+  booking                 BookingStatus @default(UPCOMING)
+  status                  OrderStatus   @default(PENDING)
+  points                  Int           @default(0)
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+  subTotal                Int
+  total                   Int
+  userId                  String?
+  barberId                String?
+  cashierId               String?
+  discount                Int           @default(0)
+  type                    discount      @default(AMOUNT)
+  freeService             String[]
+  deleted                 Boolean       @default(false)
+  barberName              String?
+  branch                  Branch        @relation(fields: [branchId], references: [id])
+  client                  User?         @relation("UserOrders", fields: [userId], references: [id])
+  barber                  User?         @relation("BarberOrders", fields: [barberId], references: [id])
+  Cashier                 User?         @relation("CashierOrders", fields: [cashierId], references: [id])
+  service                 Service[]     @relation("OrderToServices")
+  usedPackage             String[]
+  shouldBeReviewedByAdmin Boolean       @default(false)
 }
 
 model Offers {

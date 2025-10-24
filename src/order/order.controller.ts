@@ -96,7 +96,7 @@ export class OrderController {
   @Put('/delete-order-services/:id')
   async deleteOrderServices(
     @Param('id') id: string,
-    @Query('password') password: string,
+    @Body('password') password: string,
   ) {
     return this.orderService.deleteOrderServices(id, password);
   }

@@ -1540,27 +1540,21 @@ export class OrderService {
       await this.cancelOrder(id, Role.ADMIN);
     }
 
-    // Calculate the total price of services to be deleted
     const totalServicesToDelete = servicesToDelete.reduce((acc, id) => {
       const services = service.find((s) => s.id === id);
       return acc + services?.price || 0;
     }, 0);
 
-    // Calculate the new subtotal (remaining services)
     const newSubTotal = order.subTotal - totalServicesToDelete;
 
-    // Recalculate discount based on the new subtotal
     let newDiscount = 0;
 
     if (order.type === 'PERCENTAGE') {
-      // If percentage, recalculate based on new subtotal
       newDiscount = (order.discount * newSubTotal) / 100;
     } else {
-      // If fixed amount, keep the same discount but cap it at the new subtotal
       newDiscount = order.discount;
     }
 
-    // Calculate the new total after discount
     const newTotal = newSubTotal - newDiscount;
 
     const updatedOrder = await this.prisma.order.update({

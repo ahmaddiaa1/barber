@@ -59,14 +59,15 @@ model Cashier {
 }
 
 model Barber {
-  id        String       @id
-  branchId  String
-  rate      Int          @default(0)
-  type      CategoryType @default(GENERAL)
-  branch    Branch       @relation(fields: [branchId], references: [id])
-  user      User         @relation(fields: [id], references: [id])
-  Slot      Slot?
-  vacations Vacation[]
+  id          String       @id
+  branchId    String
+  rate        Int          @default(0)
+  type        CategoryType @default(GENERAL)
+  isAvailable Boolean      @default(true)
+  branch      Branch       @relation(fields: [branchId], references: [id])
+  user        User         @relation(fields: [id], references: [id])
+  Slot        Slot?
+  vacations   Vacation[]
 }
 
 model Vacation {

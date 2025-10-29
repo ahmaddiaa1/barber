@@ -57,7 +57,7 @@ export class CreateOrderDto {
   @IsOptional()
   @Transform(({ value }) => value ?? null)
   @IsInt()
-  @Min(0)
+  @Min(1000, { message: 'Minimum points required is 1000' })
   points?: number;
 
   @IsOptional()

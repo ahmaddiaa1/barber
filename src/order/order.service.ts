@@ -861,8 +861,26 @@ export class OrderService {
       0,
     );
 
-    if (points && points > subTotal) {
-      throw new BadRequestException('Cannot use points more than the total');
+    // Points validation: minimum 1000 points, conversion rate: 1000 points = 50 EGP
+    let pointsDiscount = 0;
+
+    if (points) {
+      if (points < 1000) {
+        throw new BadRequestException('Minimum points required is 1000');
+      }
+
+      if (points > usedPromoCode?.client?.points) {
+        throw new BadRequestException('You do not have enough points');
+      }
+
+      // Convert points to EGP: every 1000 points = 50 EGP
+      pointsDiscount = Math.floor(points / 1000) * 50;
+
+      if (pointsDiscount > subTotal) {
+        throw new BadRequestException(
+          'Points discount cannot exceed the subtotal',
+        );
+      }
     }
 
     const discount = promoCode
@@ -871,7 +889,7 @@ export class OrderService {
         : validPromoCode?.discount
       : 0;
 
-    const total = Math.max(subTotal - discount, 0);
+    const total = Math.max(subTotal - discount - pointsDiscount, 0);
 
     const duration = allServices.reduce(
       (acc, service) => acc + service.duration,
@@ -913,7 +931,8 @@ export class OrderService {
             ? `${validPromoCode?.discount}%`
             : `${validPromoCode?.discount}EGP`
           : '0',
-        total: (points ? total - points : total).toString(),
+        pointsDiscount: pointsDiscount.toString(),
+        total: total.toString(),
         limit: settings.pointLimit.toString(),
       },
       'Data fetched successfully',
@@ -939,11 +958,11 @@ export class OrderService {
     } = createOrderDto;
 
     console.log('CreateOrder - barberId received:', barberId);
-    if (!Number.isInteger(points)) {
+    if (points !== undefined && points !== null && !Number.isInteger(points)) {
       throw new BadRequestException('Points must be a number');
     }
-    if (points && points <= 0) {
-      throw new BadRequestException('You have exceeded the points limit');
+    if (points && points < 1000) {
+      throw new BadRequestException('Minimum points required is 1000');
     }
 
     const allServices = [] as PrismaServiceType[];
@@ -1026,9 +1045,6 @@ export class OrderService {
       throw new ConflictException(
         `You can only book up to ${settings.maxDaysBooking} days in advance`,
       );
-    }
-    if (points && points >= 0 && settings.pointLimit > points) {
-      throw new BadRequestException('You have exceeded the points limit');
     }
 
     if (usedPromoCode.UserOrders.length && promoCode) {
@@ -1129,21 +1145,30 @@ export class OrderService {
       0,
     );
 
-    if (points && points > subTotal) {
-      throw new BadRequestException('Cannot use points more than the total');
+    // Points validation: minimum 1000 points, conversion rate: 1000 points = 50 EGP
+    let pointsToUse = 0;
+    let pointsDiscount = 0;
+
+    if (points) {
+      if (points < 1000) {
+        throw new BadRequestException('Minimum points required is 1000');
+      }
+
+      if (points > user.client?.points) {
+        throw new BadRequestException('You do not have enough points');
+      }
+
+      // Convert points to EGP: every 1000 points = 50 EGP
+      pointsDiscount = Math.floor(points / 1000) * 50;
+
+      if (pointsDiscount > subTotal) {
+        throw new BadRequestException(
+          'Points discount cannot exceed the subtotal',
+        );
+      }
+
+      pointsToUse = points;
     }
-
-    const PointsLimit = allServices.sort((a, b) => a.price - b.price)[0].price;
-
-    const point = points >= PointsLimit ? points : 0;
-
-    if (points > user.client?.points)
-      new ConflictException('you do not have enough points');
-
-    if (PointsLimit > points)
-      new ConflictException(
-        'the number of Points must be at least equal to the lowest price of the services',
-      );
 
     const discount = promoCode
       ? validPromoCode?.type === 'PERCENTAGE'
@@ -1151,7 +1176,7 @@ export class OrderService {
         : validPromoCode?.discount
       : 0;
 
-    const total = Math.max(subTotal - discount, 0);
+    const total = Math.max(subTotal - discount - pointsDiscount, 0);
 
     if (user?.client?.ban) throw new ForbiddenException('You are banned');
 
@@ -1167,7 +1192,7 @@ export class OrderService {
           ...(barberId && { barberId }),
           barberName: `${barber?.user.firstName} ${barber?.user.lastName}`,
           branchId,
-          points: point,
+          points: pointsToUse,
           usedPackage: selectedPackage
             ? selectedPackage.flatMap((e) => e.id)
             : [],
@@ -1176,7 +1201,7 @@ export class OrderService {
             connect: allServices.map((service) => ({ id: service.id })),
           },
           subTotal,
-          total: points ? total - points : total,
+          total,
         },
         include: {
           service: {
@@ -1238,14 +1263,14 @@ export class OrderService {
           });
         }
       });
-      if (points || points > 0) {
+      if (pointsToUse > 0) {
         await this.prisma.user.update({
           where: { id: userId },
           data: {
             client: {
               update: {
                 points: {
-                  decrement: points,
+                  decrement: pointsToUse,
                 },
               },
             },
@@ -1263,7 +1288,7 @@ export class OrderService {
           barberName:
             barberName || `${barber?.user.firstName} ${barber?.user.lastName}`,
           branchId,
-          points: point,
+          points: pointsToUse,
           discount: validPromoCode ? validPromoCode.discount : 0,
           type: validPromoCode ? validPromoCode.type : 'AMOUNT',
           usedPackage: selectedPackage
@@ -1275,7 +1300,7 @@ export class OrderService {
             connect: allServices.map((service) => ({ id: service.id })),
           },
           subTotal,
-          total: points ? total - points : total,
+          total,
         },
         include: {
           service: {

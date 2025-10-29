@@ -175,7 +175,7 @@ export class OrderController {
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(['ADMIN', 'CASHIER', 'CASHIER'])
+  @Roles(['ADMIN', 'CASHIER', 'BARBER'])
   @Put('/:id')
   async updateOrder(
     @Body() updateOrderDto: UpdateOrderDto,

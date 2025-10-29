@@ -35,16 +35,18 @@ model User {
 }
 
 model Client {
-  id             String           @id
-  referralCode   String?          @unique
-  points         Int              @default(0)
-  ban            Boolean          @default(false)
+  id             String  @id
+  referralCode   String? @unique
+  points         Int     @default(0)
+  ban            Boolean @default(false)
+  offersId       String?
+  canceledOrders Int     @default(0)
+
   user           User             @relation(fields: [id], references: [id])
   complain       Complain[]
   ClientPackages ClientPackages[]
   Offers         Offers[]         @relation("ClientOffers")
-  offersId       String?
-  canceledOrders Int              @default(0)
+  BarberRating   BarberRating[]
 
   @@index([referralCode])
 }
@@ -59,15 +61,32 @@ model Cashier {
 }
 
 model Barber {
-  id          String       @id
+  id          String  @id
   branchId    String
-  rate        Int          @default(0)
-  type        CategoryType @default(GENERAL)
-  isAvailable Boolean      @default(true)
-  branch      Branch       @relation(fields: [branchId], references: [id])
-  user        User         @relation(fields: [id], references: [id])
-  Slot        Slot?
-  vacations   Vacation[]
+  rate        Float   @default(0)
+  isAvailable Boolean @default(true)
+
+  type         CategoryType   @default(GENERAL)
+  branch       Branch         @relation(fields: [branchId], references: [id])
+  user         User           @relation(fields: [id], references: [id])
+  Slot         Slot?
+  vacations    Vacation[]
+  BarberRating BarberRating[]
+}
+
+model BarberRating {
+  id        String   @id @default(uuid()) @map("id")
+  barberId  String
+  clientId  String
+  rate      Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  barber Barber @relation(fields: [barberId], references: [id])
+  client Client @relation(fields: [clientId], references: [id])
+
+  @@unique([barberId, clientId])
+  @@index([barberId, clientId])
 }
 
 model Vacation {

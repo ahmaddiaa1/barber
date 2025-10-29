@@ -598,91 +598,66 @@ export class UserService {
     return latestOrder?.date || null;
   }
 
-  async rateBarber(userId: string, barberId: string, rating: number) {
-    // Verify the barber exists
+  async rateBarber(clientId: string, barberId: string, rate: number) {
+    // 1. Verify barber exists
     const barber = await this.prisma.barber.findUnique({
       where: { id: barberId },
       include: {
-        user: {
-          select: {
-            firstName: true,
-            lastName: true,
-          },
-        },
+        user: { select: { firstName: true, lastName: true, avatar: true } },
       },
     });
 
-    if (!barber) {
-      throw new NotFoundException('Barber not found');
-    }
+    if (!barber) throw new NotFoundException('Barber not found');
 
-    // Verify the client has completed at least one order with this barber
-    const completedOrder = await this.prisma.order.findFirst({
-      where: {
-        // userId: userId,
-        barberId: barberId,
-        status: {
-          in: [OrderStatus.COMPLETED, OrderStatus.PAID],
-        },
-        deleted: false,
-      },
+    // 2. Verify client completed an order with this barber
+    // const completedOrder = await this.prisma.order.findFirst({
+    //   where: {
+    //     client: { id: clientId },
+    //     barberId,
+    //     status: { in: [OrderStatus.COMPLETED, OrderStatus.PAID] },
+    //     deleted: false,
+    //   },
+    // });
+
+    // if (!completedOrder) {
+    //   throw new ForbiddenException(
+    //     'You must complete an order with this barber before rating.',
+    //   );
+    // }
+
+    // 3. Upsert rating (create or update)
+    await this.prisma.barberRating.upsert({
+      where: { barberId_clientId: { barberId, clientId } },
+      update: { rate },
+      create: { barberId, clientId, rate },
     });
 
-    if (!completedOrder) {
-      throw new NotFoundException(
-        'You must complete an order with this barber before rating',
-      );
-    }
-
-    // Calculate new average rating
-    // Note: This is a simple implementation. For better accuracy, you might want to store
-    // individual ratings in a separate table and calculate the average from there
-    const currentRate = barber.rate || 0;
-
-    // Get the count of completed orders for this barber to calculate weighted average
-    const completedOrdersCount = await this.prisma.order.count({
-      where: {
-        barberId: barberId,
-        status: {
-          in: [OrderStatus.COMPLETED, OrderStatus.PAID],
-        },
-        deleted: false,
-      },
+    // 4. Recalculate average rating
+    const { _avg } = await this.prisma.barberRating.aggregate({
+      where: { barberId },
+      _avg: { rate: true },
+      _count: { rate: true },
     });
 
-    // Calculate new average: (current_rate * count + new_rating) / (count + 1)
-    // If current rate is 0 (no ratings yet), just use the new rating
-    const newRate =
-      currentRate === 0
-        ? rating
-        : (currentRate * completedOrdersCount + rating) /
-          (completedOrdersCount + 1);
-
-    // Update barber's rating
+    // 5. Update barber's average rating
     const updatedBarber = await this.prisma.barber.update({
       where: { id: barberId },
-      data: { rate: Math.round(newRate) }, // Round and store as integer
+      data: { rate: _avg.rate || 0 },
       include: {
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatar: true,
-          },
-        },
+        user: { select: { firstName: true, lastName: true, avatar: true } },
       },
     });
 
+    // 6. Return success
     return new AppSuccess(
       {
         barber: {
           id: updatedBarber.id,
           name: `${updatedBarber.user.firstName} ${updatedBarber.user.lastName}`,
           avatar: updatedBarber.user.avatar,
-          rate: updatedBarber.rate,
+          rate: Number(updatedBarber.rate.toFixed(1)),
         },
-        yourRating: rating,
+        yourRate: rate,
       },
       'Barber rated successfully',
       200,

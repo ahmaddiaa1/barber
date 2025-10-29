@@ -293,13 +293,7 @@ export class OrderService {
         branchId: cashier.branchId,
         NOT: {
           status: {
-            in: [
-              OrderStatus.ADMIN_CANCELLED,
-              OrderStatus.CLIENT_CANCELLED,
-              OrderStatus.BARBER_CANCELLED,
-              OrderStatus.CASHIER_CANCELLED,
-              OrderStatus.PAID,
-            ],
+            in: [OrderStatus.PAID],
           },
         },
         date: { gte: startOfDay(from), lte: endOfDay(to) },
@@ -1330,6 +1324,7 @@ export class OrderService {
     const order = await this.findOneOrFail(id);
 
     if (
+      Role !== 'ADMIN' &&
       !(
         (order.status === 'PENDING' && Role === 'USER') ||
         (order.status === 'IN_PROGRESS' && Role === 'BARBER')
@@ -1356,7 +1351,11 @@ export class OrderService {
       },
     });
 
-    if (order.service.flatMap((s) => s.id).some((id) => add.includes(id))) {
+    if (
+      Array.isArray(add) &&
+      add.length > 0 &&
+      order.service.flatMap((s) => s.id).some((id) => add.includes(id))
+    ) {
       throw new BadRequestException('Service already added');
     }
 
@@ -1370,7 +1369,7 @@ export class OrderService {
     );
     let total = order.total;
 
-    for (const serviceId of add) {
+    for (const serviceId of add ?? []) {
       const singlePackageService = singlePackages
         .flatMap((pkg) => pkg.packageService)
         .find((pkgService) => pkgService.serviceId === serviceId);
@@ -1400,7 +1399,7 @@ export class OrderService {
       }
     }
 
-    for (const serviceId of remove) {
+    for (const serviceId of remove ?? []) {
       const singlePackageService = singlePackages
         .flatMap((pkg) => pkg.packageService)
         .find((pkgService) => pkgService.serviceId === serviceId);
@@ -1444,7 +1443,8 @@ export class OrderService {
     }
 
     if (
-      removePackage &&
+      Array.isArray(removePackage) &&
+      removePackage.length > 0 &&
       multiPackages.some((pkg) => removePackage.includes(pkg.id))
     ) {
       await this.prisma.clientPackages.updateMany({
@@ -1461,7 +1461,8 @@ export class OrderService {
     }
 
     if (
-      addPackage &&
+      Array.isArray(addPackage) &&
+      addPackage.length > 0 &&
       multiPackages.some((pkg) => addPackage.includes(pkg.id))
     ) {
       await this.prisma.clientPackages.updateMany({
@@ -1484,14 +1485,15 @@ export class OrderService {
         subTotal: order.subTotal,
         total,
         service: {
-          connect: add.map((id) => ({ id })),
-          disconnect: remove.map((id) => ({ id })),
+          connect: (add ?? []).map((id) => ({ id })),
+          disconnect: (remove ?? []).map((id) => ({ id })),
         },
-        usedPackage: removePackage
-          ? [...order.usedPackage, ...addPackage].filter(
-              (i) => !removePackage.includes(i),
-            )
-          : [...order.usedPackage, ...addPackage],
+        usedPackage:
+          Array.isArray(removePackage) && removePackage.length > 0
+            ? [...order.usedPackage, ...(addPackage ?? [])].filter(
+                (i) => !removePackage.includes(i),
+              )
+            : [...order.usedPackage, ...(addPackage ?? [])],
       },
       include: {
         service: true,

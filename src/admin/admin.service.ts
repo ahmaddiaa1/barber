@@ -4,18 +4,24 @@ import { UpdateAdminDto } from './dto/update-admin.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppSuccess } from 'src/utils/AppSuccess';
 import { TranslateName } from '../../lib/lib';
-import { OrderStatus, Role } from '@prisma/client';
+import { OrderStatus, Prisma, Role } from '@prisma/client';
 import { startOfDay, endOfDay } from 'date-fns';
+import { hashedPassword } from 'src/utils/lib';
 
 @Injectable()
 export class AdminService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createAdminDto: CreateAdminDto) {
+    const { password, ...rest } = createAdminDto;
     const settings = await this.prisma.settings.findFirst();
+
     if (!settings) {
       return this.prisma.settings.create({
-        data: createAdminDto,
+        data: {
+          ...rest,
+          ...(password && { password: await hashedPassword(password) }),
+        },
       });
     }
   }
@@ -31,18 +37,23 @@ export class AdminService {
   }
 
   async update(updateAdminDto: UpdateAdminDto) {
+    const { password, ...rest } = updateAdminDto;
     const ExistingSettings = await this.prisma.settings.findFirst();
+
     if (!ExistingSettings) {
-      return new AppSuccess(
-        await this.prisma.settings.create({
-          data: updateAdminDto,
-        }),
-        'Settings not found',
-      );
+      return new AppSuccess(ExistingSettings, 'Settings not found');
     }
-    const settings = await this.prisma.settings.update({
+
+    const settingsData = {
+      ...rest,
+      ...(password && { password: await hashedPassword(password) }),
+    } as Prisma.SettingsUpsertArgs['create'] &
+      Prisma.SettingsUpsertArgs['update'];
+
+    const settings = await this.prisma.settings.upsert({
       where: { id: ExistingSettings.id },
-      data: updateAdminDto,
+      update: settingsData,
+      create: settingsData,
     });
 
     if (updateAdminDto.slotDuration) {
@@ -122,100 +133,6 @@ export class AdminService {
     }
   }
 
-  // private async OrdersSummary() {
-  //   const Branches = await this.prisma.branch.findMany({
-  //     include: {
-  //       Translation: true,
-  //       barber: {
-  //         include: {
-  //           user: {
-  //             include: {
-  //               BarberOrders: {
-  //                 include: { service: { include: { Translation: true } } },
-  //               },
-  //               _count: { select: { BarberOrders: true } },
-  //             },
-  //           },
-  //         },
-  //       },
-  //     },
-  //   });
-
-  //   // For each barber, fetch orders and count
-  //   const result = await Promise.all(
-  //     Branches.map(async (branch) => {
-  //       const orders = await this.prisma.order.count({
-  //         where: { branchId: branch.id },
-  //       });
-  //       const {
-  //         Translation: BranchTranslation,
-  //         id,
-  //         barber: BarberMap,
-  //         ...rest
-  //       } = branch;
-
-  //       const barber = BarberMap.map((barber) => {
-  //         const {
-  //           user: {
-  //             BarberOrders,
-  //             _count: { BarberOrders: orderCounts },
-  //             ...UserRest
-  //           },
-  //           ...BarberRest
-  //         } = barber;
-  //         const TotalOrdersPrice = BarberOrders.reduce(
-  //           (sum, order) => sum + order.total,
-  //           0,
-  //         );
-  //         const TotalOrdersPoints = BarberOrders.reduce(
-  //           (sum, order) => sum + order.points,
-  //           0,
-  //         );
-  //         const orders = BarberOrders.flatMap((order) => {
-  //           const { id: orderId, service: OrderService, ...OrderRest } = order;
-
-  //           const service = OrderService.map((service) => {
-  //             const {
-  //               id: serviceId,
-  //               Translation: serviceTranslate,
-  //               ...rest
-  //             } = service;
-  //             return {
-  //               serviceId,
-  //               ...TranslateName({ Translation: serviceTranslate }, 'EN'),
-  //               ...rest,
-  //             };
-  //           });
-  //           return {
-  //             orderId,
-  //             service,
-  //             ...OrderRest,
-  //           };
-  //         });
-  //         return {
-  //           ...BarberRest,
-  //           user: {
-  //             ...UserRest,
-  //             orders: orders,
-  //             orderCounts,
-  //             TotalOrdersPrice,
-  //             TotalOrdersPoints,
-  //           },
-  //         };
-  //       });
-
-  //       return {
-  //         id,
-  //         ...TranslateName({ Translation: BranchTranslation }, 'EN'),
-  //         barber,
-  //         ...rest,
-  //         totalOrders: orders,
-  //       };
-  //     }),
-  //   );
-  //   return result;
-  // }
-
   private async AnalyticsSummary(fromDate?: Date, toDate?: Date) {
     const today = new Date();
 
@@ -242,7 +159,6 @@ export class AdminService {
   }
 
   private async TotalSalesPerBranch(fromDate?: Date, toDate?: Date) {
-    // Use startOfDay and endOfDay to ensure we capture the full day range
     const dateFilter =
       fromDate && toDate
         ? { date: { gte: startOfDay(fromDate), lte: endOfDay(toDate) } }
@@ -257,14 +173,17 @@ export class AdminService {
             id: true,
             user: {
               select: {
-                _count: { select: { BarberOrders: true } },
                 firstName: true,
                 lastName: true,
                 phone: true,
                 id: true,
                 BarberOrders: {
-                  where: dateFilter,
+                  where: {
+                    status: OrderStatus.PAID, // Add this to match TotalSales logic
+                    ...dateFilter,
+                  },
                   select: {
+                    total: true, // ✅ Get the actual order total
                     service: {
                       select: { Translation: true, price: true, id: true },
                     },
@@ -285,24 +204,32 @@ export class AdminService {
           name: string;
           price: number;
           count: number;
+          totalRevenue: number;
         }[] = [];
+
+        // ✅ Calculate total sales from actual order totals
+        const totalSales = barber.user.BarberOrders.reduce(
+          (sum, order) => sum + (order.total || 0),
+          0,
+        );
+
         barber.user.BarberOrders.forEach((order) => {
           order.service.forEach((srv) => {
             const name =
               TranslateName({ Translation: srv.Translation }, 'EN')?.name ??
               'Unknown';
 
-            // Check if service already exists in summary
             const existing = servicesSummary.find((s) => s.id === srv.id);
             if (existing) {
-              existing.price += srv.price; // accumulate price
-              existing.count += 1; // increment count
+              existing.count += 1;
+              existing.totalRevenue += srv.price; // Keep this for service breakdown
             } else {
               servicesSummary.push({
                 id: srv.id,
                 name: name,
                 price: srv.price,
                 count: 1,
+                totalRevenue: srv.price,
               });
             }
           });
@@ -311,12 +238,9 @@ export class AdminService {
         return {
           id: barber.id,
           barber: `${barber.user.firstName} ${barber.user.lastName}`,
-          orderCount: barber.user._count.BarberOrders,
-          sales: Object.values(servicesSummary).reduce(
-            (a, b) => a + b.price,
-            0,
-          ),
-          services: servicesSummary,
+          orderCount: barber.user.BarberOrders.length,
+          sales: totalSales, // ✅ Use actual order totals
+          services: servicesSummary, // Service breakdown (for reference)
         };
       });
       return {

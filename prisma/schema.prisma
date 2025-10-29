@@ -35,16 +35,18 @@ model User {
 }
 
 model Client {
-  id             String           @id
-  referralCode   String?          @unique
-  points         Int              @default(0)
-  ban            Boolean          @default(false)
+  id             String  @id
+  referralCode   String? @unique
+  points         Int     @default(0)
+  ban            Boolean @default(false)
+  offersId       String?
+  canceledOrders Int     @default(0)
+
   user           User             @relation(fields: [id], references: [id])
   complain       Complain[]
   ClientPackages ClientPackages[]
   Offers         Offers[]         @relation("ClientOffers")
-  offersId       String?
-  canceledOrders Int              @default(0)
+  BarberRating   BarberRating[]
 
   @@index([referralCode])
 }
@@ -59,14 +61,32 @@ model Cashier {
 }
 
 model Barber {
-  id        String       @id
-  branchId  String
-  rate      Int          @default(0)
-  type      CategoryType @default(GENERAL)
-  branch    Branch       @relation(fields: [branchId], references: [id])
-  user      User         @relation(fields: [id], references: [id])
-  Slot      Slot?
-  vacations Vacation[]
+  id          String  @id
+  branchId    String
+  rate        Float   @default(0)
+  isAvailable Boolean @default(true)
+
+  type         CategoryType   @default(GENERAL)
+  branch       Branch         @relation(fields: [branchId], references: [id])
+  user         User           @relation(fields: [id], references: [id])
+  Slot         Slot?
+  vacations    Vacation[]
+  BarberRating BarberRating[]
+}
+
+model BarberRating {
+  id        String   @id @default(uuid()) @map("id")
+  barberId  String
+  clientId  String
+  rate      Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  barber Barber @relation(fields: [barberId], references: [id])
+  client Client @relation(fields: [clientId], references: [id])
+
+  @@unique([barberId, clientId])
+  @@index([barberId, clientId])
 }
 
 model Vacation {
@@ -111,6 +131,7 @@ model Settings {
   PointsPercentage          Int       @default(10)
   referralPoints            Int       @default(1000)
   pointLimit                Int       @default(100)
+  password                  String?
   canceledOrder             Int       @default(3)
   slotDuration              Int       @default(30)
   maxDaysBooking            Int       @default(3)
@@ -278,33 +299,37 @@ model PromoCode {
 }
 
 model Order {
-  id          String        @id @default(uuid())
-  branchId    String
-  promoCode   String?
-  date        DateTime
-  slot        String
-  note        String?
-  booking     BookingStatus @default(UPCOMING)
-  status      OrderStatus   @default(PENDING)
-  points      Int           @default(0)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  subTotal    Int
-  total       Int
-  userId      String?
-  barberId    String?
-  cashierId   String?
-  discount    Int           @default(0)
-  type        discount      @default(AMOUNT)
-  freeService String[]
-  deleted     Boolean       @default(false)
-  barberName  String?
-  branch      Branch        @relation(fields: [branchId], references: [id])
-  client      User?         @relation("UserOrders", fields: [userId], references: [id])
-  barber      User?         @relation("BarberOrders", fields: [barberId], references: [id])
-  Cashier     User?         @relation("CashierOrders", fields: [cashierId], references: [id])
-  service     Service[]     @relation("OrderToServices")
-  usedPackage String[]
+  id                      String   @id @default(uuid())
+  branchId                String
+  promoCode               String?
+  date                    DateTime
+  slot                    String
+  note                    String?
+  points                  Int      @default(0)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  subTotal                Int
+  total                   Int
+  userId                  String?
+  barberId                String?
+  cashierId               String?
+  discount                Int      @default(0)
+  freeService             String[]
+  deleted                 Boolean  @default(false)
+  barberName              String?
+  usedPackage             String[]
+  shouldBeReviewedByAdmin Boolean  @default(false)
+  servicesToDelete        String[]
+  reminderSent            Boolean  @default(false)
+
+  booking BookingStatus @default(UPCOMING)
+  type    discount      @default(AMOUNT)
+  status  OrderStatus   @default(PENDING)
+  branch  Branch        @relation(fields: [branchId], references: [id])
+  client  User?         @relation("UserOrders", fields: [userId], references: [id])
+  barber  User?         @relation("BarberOrders", fields: [barberId], references: [id])
+  Cashier User?         @relation("CashierOrders", fields: [cashierId], references: [id])
+  service Service[]     @relation("OrderToServices")
 
   @@index([barberId, date])
   @@index([userId, date])

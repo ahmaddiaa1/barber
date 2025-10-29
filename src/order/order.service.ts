@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -24,6 +25,8 @@ import { endOfDay, format, startOfDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { Translation } from 'src/class-type/translation';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { UpdateOrderServicesDto } from './dto/update-order-services.dto';
+import { comparePassword } from 'src/utils/lib';
 
 interface PrismaServiceType extends Service {
   isFree: boolean;
@@ -290,13 +293,7 @@ export class OrderService {
         branchId: cashier.branchId,
         NOT: {
           status: {
-            in: [
-              OrderStatus.ADMIN_CANCELLED,
-              OrderStatus.CLIENT_CANCELLED,
-              OrderStatus.BARBER_CANCELLED,
-              OrderStatus.CASHIER_CANCELLED,
-              OrderStatus.PAID,
-            ],
+            in: [OrderStatus.PAID],
           },
         },
         date: { gte: startOfDay(from), lte: endOfDay(to) },
@@ -1352,6 +1349,7 @@ export class OrderService {
     const order = await this.findOneOrFail(id);
 
     if (
+      Role !== 'ADMIN' &&
       !(
         (order.status === 'PENDING' && Role === 'USER') ||
         (order.status === 'IN_PROGRESS' && Role === 'BARBER')
@@ -1378,7 +1376,11 @@ export class OrderService {
       },
     });
 
-    if (order.service.flatMap((s) => s.id).some((id) => add.includes(id))) {
+    if (
+      Array.isArray(add) &&
+      add.length > 0 &&
+      order.service.flatMap((s) => s.id).some((id) => add.includes(id))
+    ) {
       throw new BadRequestException('Service already added');
     }
 
@@ -1392,7 +1394,7 @@ export class OrderService {
     );
     let total = order.total;
 
-    for (const serviceId of add) {
+    for (const serviceId of add ?? []) {
       const singlePackageService = singlePackages
         .flatMap((pkg) => pkg.packageService)
         .find((pkgService) => pkgService.serviceId === serviceId);
@@ -1422,7 +1424,7 @@ export class OrderService {
       }
     }
 
-    for (const serviceId of remove) {
+    for (const serviceId of remove ?? []) {
       const singlePackageService = singlePackages
         .flatMap((pkg) => pkg.packageService)
         .find((pkgService) => pkgService.serviceId === serviceId);
@@ -1466,7 +1468,8 @@ export class OrderService {
     }
 
     if (
-      removePackage &&
+      Array.isArray(removePackage) &&
+      removePackage.length > 0 &&
       multiPackages.some((pkg) => removePackage.includes(pkg.id))
     ) {
       await this.prisma.clientPackages.updateMany({
@@ -1483,7 +1486,8 @@ export class OrderService {
     }
 
     if (
-      addPackage &&
+      Array.isArray(addPackage) &&
+      addPackage.length > 0 &&
       multiPackages.some((pkg) => addPackage.includes(pkg.id))
     ) {
       await this.prisma.clientPackages.updateMany({
@@ -1506,14 +1510,15 @@ export class OrderService {
         subTotal: order.subTotal,
         total,
         service: {
-          connect: add.map((id) => ({ id })),
-          disconnect: remove.map((id) => ({ id })),
+          connect: (add ?? []).map((id) => ({ id })),
+          disconnect: (remove ?? []).map((id) => ({ id })),
         },
-        usedPackage: removePackage
-          ? [...order.usedPackage, ...addPackage].filter(
-              (i) => !removePackage.includes(i),
-            )
-          : [...order.usedPackage, ...addPackage],
+        usedPackage:
+          Array.isArray(removePackage) && removePackage.length > 0
+            ? [...order.usedPackage, ...(addPackage ?? [])].filter(
+                (i) => !removePackage.includes(i),
+              )
+            : [...order.usedPackage, ...(addPackage ?? [])],
       },
       include: {
         service: true,
@@ -1521,6 +1526,103 @@ export class OrderService {
     });
 
     return new AppSuccess(updatedOrder, 'Order updated successfully');
+  }
+
+  async updateOrderServices(
+    id: string,
+    updateOrderServicesDto: UpdateOrderServicesDto,
+  ) {
+    const order = await this.findOneOrFail(id);
+    const { serviceToDelete } = updateOrderServicesDto;
+
+    await this.prisma.order.update({
+      where: { id },
+      data: {
+        shouldBeReviewedByAdmin: true,
+        servicesToDelete: serviceToDelete,
+      },
+    });
+
+    return new AppSuccess(order, 'Order services updated successfully');
+  }
+
+  async deleteOrderServices(id: string, password: string) {
+    const order = await this.findOneOrFail(id);
+    const settings = await this.prisma.settings.findFirst({
+      select: {
+        password: true,
+      },
+    });
+
+    if (!password || !(await comparePassword(password, settings.password))) {
+      throw new BadRequestException('Invalid password');
+    }
+
+    const { servicesToDelete, service } = order;
+
+    if (servicesToDelete.length === 0) {
+      throw new BadRequestException('No services to delete');
+    }
+
+    if (servicesToDelete.length === service.length) {
+      await this.cancelOrder(id, Role.ADMIN);
+    }
+
+    const totalServicesToDelete = servicesToDelete.reduce((acc, id) => {
+      const services = service.find((s) => s.id === id);
+      return acc + services?.price || 0;
+    }, 0);
+
+    const newSubTotal = order.subTotal - totalServicesToDelete;
+
+    let newDiscount = 0;
+
+    if (order.type === 'PERCENTAGE') {
+      newDiscount = (order.discount * newSubTotal) / 100;
+    } else {
+      newDiscount = order.discount;
+    }
+
+    const newTotal = newSubTotal - newDiscount;
+
+    const updatedOrder = await this.prisma.order.update({
+      where: { id },
+      data: {
+        service: { disconnect: servicesToDelete.map((id) => ({ id })) },
+        servicesToDelete: [],
+        shouldBeReviewedByAdmin: true,
+        total: newTotal,
+        subTotal: newSubTotal,
+      },
+    });
+    return new AppSuccess(updatedOrder, 'Order services deleted successfully');
+  }
+
+  async cancelDeletedServices(id: string, password: string) {
+    const settings = await this.prisma.settings.findFirst({
+      select: {
+        password: true,
+      },
+    });
+    if (!password || !(await comparePassword(password, settings.password))) {
+      throw new BadRequestException('Invalid password');
+    }
+    try {
+      await this.findOneOrFail(id);
+      await this.prisma.order.update({
+        where: { id },
+        data: {
+          servicesToDelete: [],
+          shouldBeReviewedByAdmin: false,
+        },
+      });
+      return new AppSuccess(null, 'Deleted services cancelled successfully');
+    } catch (error) {
+      console.log('error', error);
+      throw new InternalServerErrorException(
+        'Failed to cancel deleted services',
+      );
+    }
   }
 
   async cancelOrder(id: string, role: Role) {

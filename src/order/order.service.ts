@@ -293,7 +293,13 @@ export class OrderService {
         branchId: cashier.branchId,
         NOT: {
           status: {
-            in: [OrderStatus.PAID],
+            in: [
+              OrderStatus.CASHIER_CANCELLED,
+              OrderStatus.CLIENT_CANCELLED,
+              OrderStatus.BARBER_CANCELLED,
+              OrderStatus.ADMIN_CANCELLED,
+              OrderStatus.PAID,
+            ],
           },
         },
         date: { gte: startOfDay(from), lte: endOfDay(to) },

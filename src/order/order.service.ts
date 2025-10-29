@@ -26,7 +26,7 @@ import { toZonedTime } from 'date-fns-tz';
 import { Translation } from 'src/class-type/translation';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { UpdateOrderServicesDto } from './dto/update-order-services.dto';
-import { comparePassword } from 'src/utils/lib';
+import { comparePassword } from '../utils/lib';
 
 interface PrismaServiceType extends Service {
   isFree: boolean;

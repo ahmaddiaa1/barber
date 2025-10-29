@@ -33,7 +33,7 @@ export class AuthService {
       referralCode: code,
     } = createAuthDto;
 
-    let user: User;
+    let user: Omit<User, 'password'>;
     const saltOrRounds = 10;
     const settings = await this.prisma.settings.findFirst({});
     const existReferralCode = await this.checkReferralCode(code);
@@ -97,6 +97,7 @@ export class AuthService {
                 },
               },
             },
+            omit: { password: true },
           });
           if (existReferralCode.user) {
             await this.prisma.client.update({
@@ -203,10 +204,9 @@ export class AuthService {
     }
 
     const token = await this.generateToken(user.id);
-    const { password: _, ...data } = user;
 
     return {
-      data,
+      data: user,
       ...(role.toUpperCase() === Role.USER && { token }),
       message: 'User registered successfully',
       statusCode: 201,
@@ -228,12 +228,15 @@ export class AuthService {
     if (!isPasswordCorrect)
       throw new NotFoundException('Invalid Phone number or password');
 
+    const userWithoutPassword = await this.prisma.user.findUnique({
+      where: { phone },
+      omit: { password: true },
+    });
+
     const token = await this.generateToken(user.id);
 
-    const { password: _, ...data } = user;
-
     return {
-      data,
+      data: userWithoutPassword,
       token,
       message: 'login successfully',
       statusCode: 201,
@@ -312,6 +315,7 @@ export class AuthService {
             ...data,
             ...(avatar && { avatar: avatar }),
           },
+          omit: { password: true },
           include: {
             barber: { include: { Slot: true } },
           },

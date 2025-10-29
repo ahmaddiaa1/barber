@@ -8,6 +8,7 @@ import {
   UploadedFile,
   UseInterceptors,
   Put,
+  Post,
   ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
@@ -15,6 +16,7 @@ import { UserService } from './user.service';
 import { AuthGuard } from 'guard/auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UserUpdateDto } from './dto/user-update-dto';
+import { RateBarberDto } from './dto/rate-barber.dto';
 import { UserData } from 'decorators/user.decorator';
 import { Role, User } from '@prisma/client';
 import { multerConfig } from 'src/config/multer.config';
@@ -81,5 +83,17 @@ export class UserController {
   @Delete('deleteEmployeeAccount/:id')
   deleteEmployee(@UserData('user') user: User, @Param('id') id: string) {
     return this.userService.deleteEmployee(id);
+  }
+
+  @Post('rate-barber')
+  rateBarber(
+    @UserData('user') user: User,
+    @Body() rateBarberDto: RateBarberDto,
+  ) {
+    return this.userService.rateBarber(
+      user.id,
+      rateBarberDto.barberId,
+      rateBarberDto.rating,
+    );
   }
 }

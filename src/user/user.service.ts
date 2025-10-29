@@ -46,6 +46,7 @@ export class UserService {
         effectiveSlotDate: true,
       },
     },
+    rate: true,
     type: true,
     vacations: true,
   } as Prisma.BarberSelect;
@@ -595,5 +596,71 @@ export class UserService {
     });
 
     return latestOrder?.date || null;
+  }
+
+  async rateBarber(clientId: string, barberId: string, rate: number) {
+    // 1. Verify barber exists
+    const barber = await this.prisma.barber.findUnique({
+      where: { id: barberId },
+      include: {
+        user: { select: { firstName: true, lastName: true, avatar: true } },
+      },
+    });
+
+    if (!barber) throw new NotFoundException('Barber not found');
+
+    // 2. Verify client completed an order with this barber
+    // const completedOrder = await this.prisma.order.findFirst({
+    //   where: {
+    //     client: { id: clientId },
+    //     barberId,
+    //     status: { in: [OrderStatus.COMPLETED, OrderStatus.PAID] },
+    //     deleted: false,
+    //   },
+    // });
+
+    // if (!completedOrder) {
+    //   throw new ForbiddenException(
+    //     'You must complete an order with this barber before rating.',
+    //   );
+    // }
+
+    // 3. Upsert rating (create or update)
+    await this.prisma.barberRating.upsert({
+      where: { barberId_clientId: { barberId, clientId } },
+      update: { rate },
+      create: { barberId, clientId, rate },
+    });
+
+    // 4. Recalculate average rating
+    const { _avg } = await this.prisma.barberRating.aggregate({
+      where: { barberId },
+      _avg: { rate: true },
+      _count: { rate: true },
+    });
+
+    // 5. Update barber's average rating
+    const updatedBarber = await this.prisma.barber.update({
+      where: { id: barberId },
+      data: { rate: _avg.rate || 0 },
+      include: {
+        user: { select: { firstName: true, lastName: true, avatar: true } },
+      },
+    });
+
+    // 6. Return success
+    return new AppSuccess(
+      {
+        barber: {
+          id: updatedBarber.id,
+          name: `${updatedBarber.user.firstName} ${updatedBarber.user.lastName}`,
+          avatar: updatedBarber.user.avatar,
+          rate: Number(updatedBarber.rate.toFixed(1)),
+        },
+        yourRate: rate,
+      },
+      'Barber rated successfully',
+      200,
+    );
   }
 }

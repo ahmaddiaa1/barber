@@ -17,6 +17,7 @@ import { RolesGuard } from 'guard/role.guard';
 import { Roles } from 'decorators/roles.decorator';
 import { Lang } from 'decorators/accept.language';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { UpdateOrderServicesDto } from './dto/update-order-services.dto';
 
 @Controller('order')
 export class OrderController {
@@ -91,6 +92,36 @@ export class OrderController {
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(['ADMIN'])
+  @Put('/delete-order-services/:id')
+  async deleteOrderServices(
+    @Param('id') id: string,
+    @Body('password') password: string,
+  ) {
+    return this.orderService.deleteOrderServices(id, password);
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(['ADMIN'])
+  @Put('/cancel-deleted-services/:id')
+  async cancelDeletedServices(
+    @Param('id') id: string,
+    @Body('password') password: string,
+  ) {
+    return this.orderService.cancelDeletedServices(id, password);
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(['ADMIN', 'CASHIER'])
+  @Put('/update-order-services/:id')
+  async updateOrderServices(
+    @Param('id') id: string,
+    @Body() updateOrderServicesDto: UpdateOrderServicesDto,
+  ) {
+    return this.orderService.updateOrderServices(id, updateOrderServicesDto);
+  }
+
+  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(['ADMIN', 'CASHIER'])
   @Put('/paid-order/:id')
   async paidOrder(
@@ -144,7 +175,7 @@ export class OrderController {
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(['ADMIN', 'CASHIER', 'CASHIER'])
+  @Roles(['ADMIN', 'CASHIER', 'BARBER'])
   @Put('/:id')
   async updateOrder(
     @Body() updateOrderDto: UpdateOrderDto,

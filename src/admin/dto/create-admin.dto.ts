@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateAdminDto {
   @IsNotEmpty() @IsNumber() PointsPercentage: number;
@@ -7,4 +7,6 @@ export class CreateAdminDto {
   @IsNotEmpty() @IsNumber() canceledOrder: number;
   @IsNotEmpty() @IsNumber() slotDuration: number;
   @IsNotEmpty() @IsNumber() maxDaysBooking: number;
+  @IsNotEmpty() @IsNumber() maxBookingsPerDay: number;
+  @IsNotEmpty() @IsString() password: string;
 }
